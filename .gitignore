@@ -1,0 +1,7 @@
+# Cargo
+debug/
+target/
+Cargo.lock
+
+# JetBrains
+/.idea
