@@ -98,5 +98,5 @@ The following command compiles and then flashes the application on the micro:bit
 cable.
 
 ```console
-$ cargo embed --target thumbv7em-none-eabihf
+$ cargo embed
 ```
