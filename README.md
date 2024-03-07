@@ -60,7 +60,7 @@ $ sudo apt-get install minicom
 
 Create the file `/etc/udev/rules.d/99-microbit.rules` and add the following content to it:
 
-```console
+```text
 # CMSIS-DAP for microbit
 SUBSYSTEM=="usb", ATTR{idVendor}=="0d28", ATTR{idProduct}=="0204", MODE:="666"
 ```
