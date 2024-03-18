@@ -9,6 +9,7 @@ use microbit::hal::{spi, Timer};
 use microbit::hal::gpio::Level;
 use microbit::hal::gpio::p0::Parts;
 use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+use panic_rtt_target as _;
 use rand::{Rng, SeedableRng};
 use rand::rngs::SmallRng;
 use rtt_target::rtt_init_print;
@@ -18,7 +19,7 @@ use ws2812_spi::Ws2812;
 mod controls;
 mod cookie_monster;
 
-const NUM_LEDS: usize = 256;
+const NUM_LEDS: usize = 96;
 
 #[entry]
 fn main() -> ! {
@@ -49,11 +50,12 @@ fn main() -> ! {
     // init_buttons(board.GPIOTE, board.buttons, cookie_monster);
 
     let mut uni_color_sparkle = UniColorSparkle::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::MEDIUM_FAST, rng.random_u64());
-    let mut forward_wave = ForwardWave::new(RGB8::new(0x00, 0x00, 0xff), Brightness::TWENTY_FIVE, Speed::FAST);
+    let mut forward_wave = ForwardWave::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::FASTER);
+
+    let mut effect: [&mut dyn Effect; 2] = [&mut uni_color_sparkle, &mut forward_wave];
 
     loop {
-        // uni_color_sparkle.render(&mut ws2812, &mut delay);
-        forward_wave.render(&mut ws2812, &mut delay);
+        effect[1].render(&mut ws2812, &mut delay);
     }
 }
 
