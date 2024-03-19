@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use core::cell::RefCell;
 use cortex_m_rt::entry;
 use embedded_time::duration::Milliseconds;
 use embedded_time::fixed_point::FixedPoint;
@@ -19,7 +20,7 @@ use ws2812_spi::Ws2812;
 mod controls;
 mod cookie_monster;
 
-const NUM_LEDS: usize = 96;
+const NUM_LEDS: usize = 256;
 
 #[entry]
 fn main() -> ! {
@@ -49,13 +50,23 @@ fn main() -> ! {
     // let cookie_monster = CookieMonster::new(board.display_pins, board.TIMER0);
     // init_buttons(board.GPIOTE, board.buttons, cookie_monster);
 
-    let mut uni_color_sparkle = UniColorSparkle::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::MEDIUM_FAST, rng.random_u64());
-    let mut forward_wave = ForwardWave::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::FASTER);
+    let data = RefCell::new([RGB8::default(); NUM_LEDS]);
+    let settings = Settings::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::FAST);
+
+    let mut uni_color_sparkle = UniColorSparkle::new(&data, &settings, rng.random_u64());
+    let mut forward_wave = ForwardWave::new(&data, &settings);
 
     let mut effect: [&mut dyn Effect; 2] = [&mut uni_color_sparkle, &mut forward_wave];
 
     loop {
-        effect[1].render(&mut ws2812, &mut delay);
+        effect[0].render(&mut ws2812, &mut delay);
+    }
+}
+
+fn reset_data(data: &RefCell<[RGB8; NUM_LEDS]>) {
+    let mut data = data.borrow_mut();
+    for i in 0..NUM_LEDS {
+        data[i] = RGB8::default();
     }
 }
 
@@ -71,6 +82,22 @@ impl Brightness {
     const FIFTY: Brightness = Brightness { value: 0.5 };
     const SEVENTY_FIVE: Brightness = Brightness { value: 0.75 };
     const HUNDRED: Brightness = Brightness { value: 1.0 };
+}
+
+struct Settings {
+    brightness: Brightness,
+    color: RGB8,
+    delay: Milliseconds<u32>,
+}
+
+impl Settings {
+    fn new(color: RGB8, brightness: Brightness, speed: Speed) -> Self {
+        Settings {
+            brightness,
+            color,
+            delay: Milliseconds::<u32>(speed.value),
+        }
+    }
 }
 
 struct Speed {
@@ -91,74 +118,68 @@ trait Effect {
     fn render(&mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>, delay: &mut Timer<microbit::pac::TIMER0>);
 }
 
-struct ForwardWave {
-    brightness_max: Brightness,
-    color: RGB8,
-    data: [RGB8; NUM_LEDS],
-    delay_max: Milliseconds<u32>,
+struct ForwardWave<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
     position: usize,
+    settings: &'a Settings,
 }
 
-impl ForwardWave {
-    fn new(color: RGB8, brightness: Brightness, speed: Speed) -> Self {
-        let data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
+impl <'a> ForwardWave<'a> {
+    fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, settings: &'a Settings) -> Self {
         ForwardWave {
-            brightness_max: brightness,
-            color,
             data,
-            delay_max: Milliseconds::<u32>(speed.value),
             position: 0,
+            settings,
         }
     }
 }
 
-impl Effect for ForwardWave {
+impl Effect for ForwardWave<'_> {
     fn render(&mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>, delay: &mut Timer<microbit::pac::TIMER0>) {
-        let wave = [self.brightness_max.value / 10.0, self.brightness_max.value / 6.0 , self.brightness_max.value / 4.0, self.brightness_max.value, self.brightness_max.value / 10.0];
-        self.data = [RGB8::default(); NUM_LEDS];
+        reset_data(self.data);
+
+        let wave = [self.settings.brightness.value / 10.0, self.settings.brightness.value / 6.0 , self.settings.brightness.value / 4.0, self.settings.brightness.value, self.settings.brightness.value / 10.0];
         for i in 0..wave.len() {
-            self.data[self.position + i] = RGB8::new((self.color.r as f32 * wave[i]) as u8, (self.color.g as f32 * wave[i]) as u8, (self.color.b as f32 * wave[i]) as u8);
+            self.data.borrow_mut()[self.position + i] = RGB8::new((self.settings.color.r as f32 * wave[i]) as u8, (self.settings.color.g as f32 * wave[i]) as u8, (self.settings.color.b as f32 * wave[i]) as u8);
         }
         self.position += 1;
         if self.position >= NUM_LEDS - wave.len() {
             self.position = 0;
         }
-        ws2812.write(self.data.iter().cloned()).unwrap();
-        delay.delay_ms(self.delay_max.integer() as u16);
+
+        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        delay.delay_ms(self.settings.delay.integer() as u16);
     }
 }
 
-struct UniColorSparkle {
-    brightness_max: Brightness,
-    color: RGB8,
-    data: [RGB8; NUM_LEDS],
-    delay_max: Milliseconds<u32>,
+struct UniColorSparkle<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
+    settings: &'a Settings,
 }
 
-impl UniColorSparkle {
-    fn new(color: RGB8, brightness_max: Brightness, speed: Speed, random_seed: u64) -> Self {
-        let data: [RGB8; NUM_LEDS] = [RGB8::default(); NUM_LEDS];
+impl <'a> UniColorSparkle<'a> {
+    fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, settings: &'a Settings, random_seed: u64) -> Self {
         UniColorSparkle {
-            brightness_max,
-            color,
             data,
-            delay_max: Milliseconds::<u32>(speed.value),
             prng : SmallRng::seed_from_u64(random_seed),
+            settings,
         }
     }
 }
 
-impl Effect for UniColorSparkle {
+impl Effect for UniColorSparkle<'_> {
     fn render(&mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>, delay: &mut Timer<microbit::pac::TIMER0>) {
-        self.data = [RGB8::default(); NUM_LEDS];
+        reset_data(self.data);
+
         let sparkle_amount = self.prng.gen_range(0..(NUM_LEDS / 10));
         for _ in 0..sparkle_amount {
             let index = self.prng.gen_range(0..NUM_LEDS);
-            let brightness = self.prng.gen_range(Brightness::ONE.value..self.brightness_max.value);
-            self.data[index] = RGB8::new((self.color.r as f32 * brightness) as u8, (self.color.g as f32 * brightness) as u8, (self.color.b as f32 * brightness) as u8);
+            let brightness = self.prng.gen_range(Brightness::ONE.value..self.settings.brightness.value);
+            self.data.borrow_mut()[index] = RGB8::new((self.settings.color.r as f32 * brightness) as u8, (self.settings.color.g as f32 * brightness) as u8, (self.settings.color.b as f32 * brightness) as u8);
         }
-        ws2812.write(self.data.iter().cloned()).unwrap();
-        delay.delay_ms(self.delay_max.integer() as u16);
+
+        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        delay.delay_ms(self.settings.delay.integer() as u16);
     }
 }
