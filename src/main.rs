@@ -4,7 +4,7 @@
 use core::cell::RefCell;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
-use effects::{Effect, ForwardWave, Settings, UniColorSparkle, NUM_LEDS, SETTINGS};
+use effects::{Effect, ForwardWave, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS};
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
@@ -21,6 +21,7 @@ use ws2812_spi::Ws2812;
 mod cookie_monster;
 mod effects;
 
+static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
 static EFFECT: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
@@ -69,14 +70,9 @@ fn main() -> ! {
 
     // Get the maximum value of the potentiometer. Must match the resolution of the ADC which is set to 12 bits above.
     let max_value = 2u32.pow(12) - 1;
-
     rprintln!("Max potentiometer value: {}", max_value);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
-    let settings = Settings::new(RGB8::new(0x00, 0x00, 0xff), 0.5, 500);
-    free(|cs| {
-        SETTINGS.borrow(cs).replace(Some(settings));
-    });
 
     rprintln!("Creating effects...");
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
@@ -86,9 +82,7 @@ fn main() -> ! {
 
     rprintln!("Starting main loop...");
     loop {
-        let brightness = adc
-            .read(&mut brightness_pin)
-            .unwrap_or((max_value / 2) as i16);
+        let brightness = adc.read(&mut brightness_pin).unwrap_or((max_value / 2) as i16);
         let speed = adc.read(&mut speed_pin).unwrap_or((max_value / 2) as i16);
         let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
 
@@ -97,9 +91,10 @@ fn main() -> ! {
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
 
-        let mut settings = free(|cs| *SETTINGS.borrow(cs).borrow()).unwrap();
-        settings = Settings::new(
-            settings.color,
+        // let mut settings = free(|cs| *SETTINGS.borrow(cs).borrow()).unwrap();
+        let settings = Settings::new(
+            // settings.color_index,
+            free(|cs| *COLOR.borrow(cs).borrow()),
             // Value between 0 and 1
             brightness as f32 / max_value as f32,
             // The 12-bit value is too high for a good delay, so we divide it by 2.
@@ -110,7 +105,7 @@ fn main() -> ! {
 
         rprintln!("Current effect: {}", current_effect);
 
-        effect[1].render(
+        effect[0].render(
             &mut ws2812,
             &mut delay,
             &settings,
@@ -123,7 +118,11 @@ fn convert_color(value: i16) -> RGB8 {
     let b: u8 = (value & 0x00f) as u8;
     let g: u8 = ((value >> 4) & 0x00f) as u8;
     let r: u8 = ((value >> 8) & 0x00f) as u8;
-    RGB8::new(r << 4 | r, g << 4 | g, b << 4 | b)
+    RGB8 {
+        r: r << 4 | r,
+        g: g << 4 | g,
+        b: b << 4 | b,
+    }
 }
 
 fn init_buttons(
@@ -174,6 +173,12 @@ fn GPIOTE() {
                 }
             } else if b_pressed {
                 // Cycle color
+                let mut color = COLOR.borrow(cs).borrow_mut();
+                if *color + 1 >= NUM_COLORS {
+                    *color = 0;
+                } else {
+                    *color += 1;
+                }
             }
 
             gpiote.channel0().reset_events();
