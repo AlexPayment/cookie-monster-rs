@@ -1,0 +1,7 @@
+fn_params_layout = "Compressed"
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
+indent_style = "Visual"
+reorder_impl_items = true
+version = "Two"
+wrap_comments = true

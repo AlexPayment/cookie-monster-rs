@@ -3,15 +3,15 @@
 
 use core::cell::RefCell;
 use cortex_m_rt::entry;
-use microbit::{hal, Peripherals};
-use microbit::hal::{spi, Timer};
-use microbit::hal::gpio::Level;
+use effects::{Brightness, Effect, ForwardWave, Settings, Speed, UniColorSparkle, NUM_LEDS};
 use microbit::hal::gpio::p0::Parts;
+use microbit::hal::gpio::Level;
+use microbit::hal::{spi, Timer};
+use microbit::{hal, Peripherals};
 use panic_rtt_target as _;
 use rtt_target::rtt_init_print;
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
-use effects::{Brightness, Effect, ForwardWave, NUM_LEDS, Settings, Speed, UniColorSparkle};
 
 mod controls;
 mod cookie_monster;
@@ -44,7 +44,11 @@ fn main() -> ! {
     // init_buttons(board.GPIOTE, board.buttons, cookie_monster);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
-    let settings = Settings::new(RGB8::new(0x00, 0x00, 0xff), Brightness::HUNDRED, Speed::FAST);
+    let settings = Settings::new(
+        RGB8::new(0x00, 0x00, 0xff),
+        Brightness::HUNDRED,
+        Speed::FAST,
+    );
 
     let mut uni_color_sparkle = UniColorSparkle::new(&data, &settings, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data, &settings);

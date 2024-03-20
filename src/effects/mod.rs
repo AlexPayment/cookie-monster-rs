@@ -5,15 +5,14 @@ use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use microbit::hal::{spi, Timer};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::{RGB8, SmartLedsWrite};
+use smart_leds::{SmartLedsWrite, RGB8};
 use ws2812_spi::Ws2812;
 
 pub(crate) const NUM_LEDS: usize = 256;
 
 pub(crate) trait Effect {
     fn render(
-        &mut self,
-        ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
+        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
         delay: &mut Timer<microbit::pac::TIMER0>,
     );
 }
@@ -80,8 +79,7 @@ impl<'a> ForwardWave<'a> {
 
 impl Effect for ForwardWave<'_> {
     fn render(
-        &mut self,
-        ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
+        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
         delay: &mut Timer<microbit::pac::TIMER0>,
     ) {
         reset_data(self.data);
@@ -115,9 +113,7 @@ pub(crate) struct UniColorSparkle<'a> {
 
 impl<'a> UniColorSparkle<'a> {
     pub(crate) fn new(
-        data: &'a RefCell<[RGB8; NUM_LEDS]>,
-        settings: &'a Settings,
-        random_seed: u64,
+        data: &'a RefCell<[RGB8; NUM_LEDS]>, settings: &'a Settings, random_seed: u64,
     ) -> Self {
         UniColorSparkle {
             data,
@@ -129,8 +125,7 @@ impl<'a> UniColorSparkle<'a> {
 
 impl Effect for UniColorSparkle<'_> {
     fn render(
-        &mut self,
-        ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
+        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
         delay: &mut Timer<microbit::pac::TIMER0>,
     ) {
         reset_data(self.data);
