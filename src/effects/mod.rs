@@ -46,18 +46,40 @@ impl Speed {
 }
 
 pub(crate) struct Settings {
-    brightness: Brightness,
+    brightness: usize,
+    brightnesses: [Brightness; 7],
     color: RGB8,
     delay: Milliseconds<u32>,
 }
 
 impl Settings {
-    pub(crate) fn new(color: RGB8, brightness: Brightness, speed: Speed) -> Self {
+    pub(crate) fn new(color: RGB8, speed: Speed) -> Self {
         Settings {
-            brightness,
+            brightness: 4,
+            brightnesses: [
+                Brightness::ONE,
+                Brightness::FIVE,
+                Brightness::TEN,
+                Brightness::TWENTY_FIVE,
+                Brightness::FIFTY,
+                Brightness::SEVENTY_FIVE,
+                Brightness::HUNDRED,
+            ],
             color,
             delay: Milliseconds::<u32>(speed.value),
         }
+    }
+
+    pub(crate) fn cycle_brightness(&mut self) {
+        if self.brightness >= self.brightnesses.len() - 1 {
+            self.brightness = 0;
+        } else {
+            self.brightness += 1;
+        }
+    }
+
+    fn get_brightness(&self) -> &Brightness {
+        &self.brightnesses[self.brightness]
     }
 }
 
@@ -85,11 +107,11 @@ impl Effect for ForwardWave<'_> {
         reset_data(self.data);
 
         let wave = [
-            self.settings.brightness.value / 10.0,
-            self.settings.brightness.value / 6.0,
-            self.settings.brightness.value / 4.0,
-            self.settings.brightness.value,
-            self.settings.brightness.value / 10.0,
+            self.settings.get_brightness().value / 10.0,
+            self.settings.get_brightness().value / 6.0,
+            self.settings.get_brightness().value / 4.0,
+            self.settings.get_brightness().value,
+            self.settings.get_brightness().value / 10.0,
         ];
         for (i, item) in wave.iter().enumerate() {
             self.data.borrow_mut()[self.position + i] =
@@ -130,18 +152,22 @@ impl Effect for UniColorSparkle<'_> {
     ) {
         reset_data(self.data);
 
+        // The amount of sparkles, up to 10% of the total number of LEDs
         let sparkle_amount = self.prng.gen_range(0..(NUM_LEDS / 10));
         for _ in 0..sparkle_amount {
             let index = self.prng.gen_range(0..NUM_LEDS);
+            // Random brightness between 1% and the set brightness
             let brightness = self
                 .prng
-                .gen_range(Brightness::ONE.value..self.settings.brightness.value);
+                .gen_range(Brightness::ONE.value..self.settings.get_brightness().value);
             self.data.borrow_mut()[index] =
                 create_color_with_brightness(&self.settings.color, &brightness);
         }
 
+        let random_delay = self.prng.gen_range(Speed::FASTEST.value..self.settings.delay.integer());
+
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        delay.delay_ms(self.settings.delay.integer() as u16);
+        delay.delay_ms(random_delay as u16);
     }
 }
 

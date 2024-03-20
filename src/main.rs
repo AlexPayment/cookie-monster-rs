@@ -3,7 +3,7 @@
 
 use core::cell::RefCell;
 use cortex_m_rt::entry;
-use effects::{Brightness, Effect, ForwardWave, Settings, Speed, UniColorSparkle, NUM_LEDS};
+use effects::{Effect, ForwardWave, Settings, Speed, UniColorSparkle, NUM_LEDS};
 use microbit::hal::gpio::p0::Parts;
 use microbit::hal::gpio::Level;
 use microbit::hal::{spi, Timer};
@@ -46,8 +46,7 @@ fn main() -> ! {
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
     let settings = Settings::new(
         RGB8::new(0x00, 0x00, 0xff),
-        Brightness::HUNDRED,
-        Speed::FAST,
+        Speed::SLOW,
     );
 
     let mut uni_color_sparkle = UniColorSparkle::new(&data, &settings, rng.random_u64());
