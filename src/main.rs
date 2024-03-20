@@ -8,7 +8,9 @@ use effects::{Effect, ForwardWave, Settings, Speed, UniColorSparkle, NUM_LEDS, S
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
-use microbit::hal::{spi, Timer};
+use microbit::hal::prelude::_embedded_hal_adc_OneShot;
+use microbit::hal::saadc::SaadcConfig;
+use microbit::hal::{spi, Saadc, Timer};
 use microbit::pac::{interrupt, GPIOTE};
 use microbit::{hal, pac, Peripherals};
 use panic_rtt_target as _;
@@ -27,6 +29,7 @@ fn main() -> ! {
 
     // Setup all peripherals and the WS2812 device
     let peripherals = Peripherals::take().unwrap();
+
     let port0 = Parts::new(peripherals.P0);
     let sck = port0.p0_17.into_push_pull_output(Level::Low).degrade();
     // The SPI MOSI pin is pin 15 on the micro:bit.
@@ -40,6 +43,10 @@ fn main() -> ! {
     let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spi::MODE_0);
     let mut ws2812 = Ws2812::new(spi);
     let mut delay = Timer::new(peripherals.TIMER0);
+
+    let mut adc = Saadc::new(peripherals.SAADC, SaadcConfig::default());
+    // This analog pin is the big 0 connector on the micro:bit.
+    let mut brightness_pin = port0.p0_02.into_floating_input();
 
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
@@ -61,8 +68,19 @@ fn main() -> ! {
 
     let effect: [&mut dyn Effect; 2] = [&mut uni_color_sparkle, &mut forward_wave];
 
+    // Saadc config defaults to a 14 bit resolution, so the max value is 2^14 - 1
+    let max_value = 2u32.pow(14) - 1;
+
     loop {
-        effect[0].render(&mut ws2812, &mut delay);
+        let brightness = adc
+            .read(&mut brightness_pin)
+            .unwrap_or((max_value / 2) as i16);
+
+        effect[1].render(
+            &mut ws2812,
+            &mut delay,
+            brightness as f32 / max_value as f32,
+        );
     }
 }
 
@@ -105,15 +123,9 @@ fn GPIOTE() {
 
             // TODO: Implement button press handling
             if a_pressed {
-                // Cycle brightness
-                SETTINGS
-                    .borrow(cs)
-                    .borrow_mut()
-                    .as_mut()
-                    .unwrap()
-                    .cycle_brightness();
-            } else if b_pressed {
                 // Cycle effect
+            } else if b_pressed {
+                // Cycle color
             }
 
             gpiote.channel0().reset_events();

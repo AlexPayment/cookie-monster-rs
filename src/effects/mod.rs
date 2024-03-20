@@ -3,10 +3,11 @@ use cortex_m::interrupt::{free, Mutex};
 use embedded_time::duration::Milliseconds;
 use embedded_time::fixed_point::FixedPoint;
 use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
-use microbit::hal::{spi, Timer};
+use microbit::hal::spi::Spi;
+use microbit::hal::Timer;
+use microbit::pac::{SPI0, TIMER0};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
-use rtt_target::rprintln;
 use smart_leds::{SmartLedsWrite, RGB8};
 use ws2812_spi::Ws2812;
 
@@ -16,24 +17,9 @@ pub static SETTINGS: Mutex<RefCell<Option<Settings>>> = Mutex::new(RefCell::new(
 
 pub(crate) trait Effect {
     fn render(
-        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
-        delay: &mut Timer<microbit::pac::TIMER0>,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<microbit::pac::TIMER0>,
+        brightness: f32,
     );
-}
-
-#[derive(Clone, Copy)]
-pub(crate) struct Brightness {
-    value: f32,
-}
-
-impl Brightness {
-    pub(crate) const ONE: Brightness = Brightness { value: 0.01 };
-    pub(crate) const FIVE: Brightness = Brightness { value: 0.05 };
-    pub(crate) const TEN: Brightness = Brightness { value: 0.1 };
-    pub(crate) const TWENTY_FIVE: Brightness = Brightness { value: 0.25 };
-    pub(crate) const FIFTY: Brightness = Brightness { value: 0.5 };
-    pub(crate) const SEVENTY_FIVE: Brightness = Brightness { value: 0.75 };
-    pub(crate) const HUNDRED: Brightness = Brightness { value: 1.0 };
 }
 
 pub(crate) struct Speed {
@@ -52,8 +38,6 @@ impl Speed {
 
 #[derive(Clone, Copy)]
 pub(crate) struct Settings {
-    brightness: usize,
-    brightnesses: [Brightness; 7],
     color: RGB8,
     delay: Milliseconds<u32>,
 }
@@ -61,33 +45,9 @@ pub(crate) struct Settings {
 impl Settings {
     pub(crate) fn new(color: RGB8, speed: Speed) -> Self {
         Settings {
-            brightness: 4,
-            brightnesses: [
-                Brightness::ONE,
-                Brightness::FIVE,
-                Brightness::TEN,
-                Brightness::TWENTY_FIVE,
-                Brightness::FIFTY,
-                Brightness::SEVENTY_FIVE,
-                Brightness::HUNDRED,
-            ],
             color,
             delay: Milliseconds::<u32>(speed.value),
         }
-    }
-
-    pub(crate) fn cycle_brightness(&mut self) {
-        if self.brightness >= self.brightnesses.len() - 1 {
-            rprintln!("Resetting brightness to 0");
-            self.brightness = 0;
-        } else {
-            rprintln!("Increasing brightness by 1 to {}", self.brightness + 1);
-            self.brightness += 1;
-        }
-    }
-
-    fn get_brightness(&self) -> &Brightness {
-        &self.brightnesses[self.brightness]
     }
 }
 
@@ -104,18 +64,15 @@ impl<'a> ForwardWave<'a> {
 
 impl Effect for ForwardWave<'_> {
     fn render(
-        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
-        delay: &mut Timer<microbit::pac::TIMER0>,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, brightness: f32,
     ) {
         reset_data(self.data);
 
-        let mut brightness = Brightness::FIFTY.value;
         let mut color = RGB8::new(0x00, 0x00, 0xff);
         let mut delay_settings = Speed::MEDIUM.value;
 
         free(|cs| {
             if let Some(settings) = SETTINGS.borrow(cs).borrow().as_ref() {
-                brightness = settings.get_brightness().value;
                 color = settings.color;
                 delay_settings = settings.delay.integer();
             }
@@ -157,18 +114,15 @@ impl<'a> UniColorSparkle<'a> {
 
 impl Effect for UniColorSparkle<'_> {
     fn render(
-        &mut self, ws2812: &mut Ws2812<spi::Spi<microbit::pac::SPI0>>,
-        delay: &mut Timer<microbit::pac::TIMER0>,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, brightness: f32,
     ) {
         reset_data(self.data);
 
-        let mut brightness = Brightness::FIFTY.value;
         let mut color = RGB8::new(0x00, 0x00, 0xff);
         let mut delay_settings = Speed::MEDIUM.value;
 
         free(|cs| {
             if let Some(settings) = SETTINGS.borrow(cs).borrow().as_ref() {
-                brightness = settings.get_brightness().value;
                 color = settings.color;
                 delay_settings = settings.delay.integer();
             }
