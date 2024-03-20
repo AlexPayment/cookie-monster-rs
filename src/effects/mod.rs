@@ -1,4 +1,3 @@
-use crate::NUM_LEDS;
 use core::cell::RefCell;
 use embedded_time::duration::Milliseconds;
 use embedded_time::fixed_point::FixedPoint;
@@ -6,8 +5,10 @@ use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use microbit::hal::{spi, Timer};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::{SmartLedsWrite, RGB8};
+use smart_leds::{RGB8, SmartLedsWrite};
 use ws2812_spi::Ws2812;
+
+pub(crate) const NUM_LEDS: usize = 256;
 
 pub(crate) trait Effect {
     fn render(

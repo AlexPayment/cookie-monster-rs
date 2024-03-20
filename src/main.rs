@@ -11,13 +11,11 @@ use panic_rtt_target as _;
 use rtt_target::rtt_init_print;
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
-use effects::{Brightness, Effect, ForwardWave, Settings, Speed, UniColorSparkle};
+use effects::{Brightness, Effect, ForwardWave, NUM_LEDS, Settings, Speed, UniColorSparkle};
 
 mod controls;
 mod cookie_monster;
 mod effects;
-
-const NUM_LEDS: usize = 256;
 
 #[entry]
 fn main() -> ! {
