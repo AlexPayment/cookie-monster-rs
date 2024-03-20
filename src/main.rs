@@ -4,24 +4,27 @@
 use core::cell::RefCell;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
-use effects::{Effect, ForwardWave, Settings, Speed, UniColorSparkle, NUM_LEDS, SETTINGS};
+use effects::{Effect, ForwardWave, Settings, UniColorSparkle, NUM_LEDS, SETTINGS};
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
 use microbit::hal::prelude::_embedded_hal_adc_OneShot;
-use microbit::hal::saadc::SaadcConfig;
+use microbit::hal::saadc::{Resolution, SaadcConfig};
 use microbit::hal::{spi, Saadc, Timer};
 use microbit::pac::{interrupt, GPIOTE};
 use microbit::{hal, pac, Peripherals};
 use panic_rtt_target as _;
-use rtt_target::rtt_init_print;
+use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
 mod cookie_monster;
 mod effects;
 
+static EFFECT: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
+
+const NUM_EFFECTS: usize = 2;
 
 #[entry]
 fn main() -> ! {
@@ -44,9 +47,16 @@ fn main() -> ! {
     let mut ws2812 = Ws2812::new(spi);
     let mut delay = Timer::new(peripherals.TIMER0);
 
-    let mut adc = Saadc::new(peripherals.SAADC, SaadcConfig::default());
+    let saadc_config = SaadcConfig {
+        resolution: Resolution::_12BIT,
+        ..Default::default()
+    };
+    let mut adc = Saadc::new(peripherals.SAADC, saadc_config);
     // This analog pin is the big 0 connector on the micro:bit.
     let mut brightness_pin = port0.p0_02.into_floating_input();
+    let mut speed_pin = port0.p0_03.into_floating_input();
+    // This analog pin is the big 2 connector on the micro:bit.
+    let mut color_pin = port0.p0_04.into_floating_input();
 
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
@@ -57,31 +67,63 @@ fn main() -> ! {
         port0.p0_23.into_floating_input(),
     );
 
+    // Get the maximum value of the potentiometer. Must match the resolution of the ADC which is set to 12 bits above.
+    let max_value = 2u32.pow(12) - 1;
+
+    rprintln!("Max potentiometer value: {}", max_value);
+
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
-    let settings = Settings::new(RGB8::new(0x00, 0x00, 0xff), Speed::SLOW);
+    let settings = Settings::new(RGB8::new(0x00, 0x00, 0xff), 0.5, 500);
     free(|cs| {
         SETTINGS.borrow(cs).replace(Some(settings));
     });
 
+    rprintln!("Creating effects...");
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
 
-    let effect: [&mut dyn Effect; 2] = [&mut uni_color_sparkle, &mut forward_wave];
+    let effect: [&mut dyn Effect; NUM_EFFECTS] = [&mut uni_color_sparkle, &mut forward_wave];
 
-    // Saadc config defaults to a 14 bit resolution, so the max value is 2^14 - 1
-    let max_value = 2u32.pow(14) - 1;
-
+    rprintln!("Starting main loop...");
     loop {
         let brightness = adc
             .read(&mut brightness_pin)
             .unwrap_or((max_value / 2) as i16);
+        let speed = adc.read(&mut speed_pin).unwrap_or((max_value / 2) as i16);
+        let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
+
+        rprintln!("Brightness: {}, Speed: {}, Color: {}", brightness, speed, color);
+
+        // let converted_color = convert_color(color);
+        // rprintln!("Converted color: {:?}", converted_color);
+
+        let mut settings = free(|cs| *SETTINGS.borrow(cs).borrow()).unwrap();
+        settings = Settings::new(
+            settings.color,
+            // Value between 0 and 1
+            brightness as f32 / max_value as f32,
+            // The 12-bit value is too high for a good delay, so we divide it by 2.
+            (speed / 2) as u32,
+        );
+
+        let current_effect = free(|cs| *EFFECT.borrow(cs).borrow());
+
+        rprintln!("Current effect: {}", current_effect);
 
         effect[1].render(
             &mut ws2812,
             &mut delay,
-            brightness as f32 / max_value as f32,
+            &settings,
         );
     }
+}
+
+/// Converts a 12-bit color value to three 8-bit color values.
+fn convert_color(value: i16) -> RGB8 {
+    let b: u8 = (value & 0x00f) as u8;
+    let g: u8 = ((value >> 4) & 0x00f) as u8;
+    let r: u8 = ((value >> 8) & 0x00f) as u8;
+    RGB8::new(r << 4 | r, g << 4 | g, b << 4 | b)
 }
 
 fn init_buttons(
@@ -124,6 +166,12 @@ fn GPIOTE() {
             // TODO: Implement button press handling
             if a_pressed {
                 // Cycle effect
+                let mut effect = EFFECT.borrow(cs).borrow_mut();
+                if *effect + 1 >= NUM_EFFECTS {
+                    *effect = 0;
+                } else {
+                    *effect += 1;
+                }
             } else if b_pressed {
                 // Cycle color
             }
