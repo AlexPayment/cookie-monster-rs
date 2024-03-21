@@ -2,6 +2,7 @@
 #![no_main]
 
 use core::cell::RefCell;
+use core::cmp;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
 use effects::{Effect, ForwardWave, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS};
@@ -82,8 +83,8 @@ fn main() -> ! {
 
     rprintln!("Starting main loop...");
     loop {
-        let brightness = adc.read(&mut brightness_pin).unwrap_or((max_value / 2) as i16);
-        let speed = adc.read(&mut speed_pin).unwrap_or((max_value / 2) as i16);
+        let brightness = cmp::max(1, adc.read(&mut brightness_pin).unwrap_or((max_value / 2) as i16));
+        let speed = cmp::max(2, adc.read(&mut speed_pin).unwrap_or((max_value / 2) as i16));
         let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
 
         rprintln!("Brightness: {}, Speed: {}, Color: {}", brightness, speed, color);
@@ -91,21 +92,26 @@ fn main() -> ! {
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
 
-        // let mut settings = free(|cs| *SETTINGS.borrow(cs).borrow()).unwrap();
+        let mut color_index = 0;
+        let mut effect_index = 0;
+
+        free(|cs| {
+            color_index = *COLOR.borrow(cs).borrow();
+            effect_index = *EFFECT.borrow(cs).borrow();
+        });
+
         let settings = Settings::new(
-            // settings.color_index,
-            free(|cs| *COLOR.borrow(cs).borrow()),
+            color_index,
             // Value between 0 and 1
             brightness as f32 / max_value as f32,
             // The 12-bit value is too high for a good delay, so we divide it by 2.
             (speed / 2) as u32,
         );
 
-        let current_effect = free(|cs| *EFFECT.borrow(cs).borrow());
+        rprintln!("{:?}", settings);
+        rprintln!("Current effect: {}", effect_index);
 
-        rprintln!("Current effect: {}", current_effect);
-
-        effect[0].render(
+        effect[effect_index].render(
             &mut ws2812,
             &mut delay,
             &settings,
@@ -162,23 +168,11 @@ fn GPIOTE() {
             let a_pressed = gpiote.channel0().is_event_triggered();
             let b_pressed = gpiote.channel1().is_event_triggered();
 
-            // TODO: Implement button press handling
             if a_pressed {
-                // Cycle effect
-                let mut effect = EFFECT.borrow(cs).borrow_mut();
-                if *effect + 1 >= NUM_EFFECTS {
-                    *effect = 0;
-                } else {
-                    *effect += 1;
-                }
+                EFFECT.borrow(cs).replace_with(|e| (*e + 1) % NUM_EFFECTS);
             } else if b_pressed {
                 // Cycle color
-                let mut color = COLOR.borrow(cs).borrow_mut();
-                if *color + 1 >= NUM_COLORS {
-                    *color = 0;
-                } else {
-                    *color += 1;
-                }
+                COLOR.borrow(cs).replace_with(|c| (*c + 1) % NUM_COLORS);
             }
 
             gpiote.channel0().reset_events();

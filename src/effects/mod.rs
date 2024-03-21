@@ -13,7 +13,7 @@ use ws2812_spi::Ws2812;
 
 pub(crate) const NUM_COLORS: usize = 13;
 pub(crate) const NUM_LEDS: usize = 256;
-const SHORTEST_DELAY: u32 = 10;
+const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Effect {
     fn render(
@@ -107,7 +107,7 @@ impl Color {
     };
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct Settings {
     pub(crate) brightness: f32,
     pub(crate) color_index: usize,
