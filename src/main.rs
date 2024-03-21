@@ -46,7 +46,7 @@ fn main() -> ! {
     };
     let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spi::MODE_0);
     let mut ws2812 = Ws2812::new(spi);
-    let mut delay = Timer::new(peripherals.TIMER0);
+    let mut timer = Timer::new(peripherals.TIMER0);
 
     let saadc_config = SaadcConfig {
         resolution: Resolution::_12BIT,
@@ -55,7 +55,7 @@ fn main() -> ! {
     let mut adc = Saadc::new(peripherals.SAADC, saadc_config);
     // This analog pin is the big 0 connector on the micro:bit.
     let mut brightness_pin = port0.p0_02.into_floating_input();
-    let mut speed_pin = port0.p0_03.into_floating_input();
+    let mut delay_pin = port0.p0_03.into_floating_input();
     // This analog pin is the big 2 connector on the micro:bit.
     let mut color_pin = port0.p0_04.into_floating_input();
 
@@ -84,10 +84,10 @@ fn main() -> ! {
     rprintln!("Starting main loop...");
     loop {
         let brightness = cmp::max(1, adc.read(&mut brightness_pin).unwrap_or((max_value / 2) as i16));
-        let speed = cmp::max(2, adc.read(&mut speed_pin).unwrap_or((max_value / 2) as i16));
+        let delay = cmp::max(2, adc.read(&mut delay_pin).unwrap_or((max_value / 2) as i16));
         let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
 
-        rprintln!("Brightness: {}, Speed: {}, Color: {}", brightness, speed, color);
+        rprintln!("Brightness: {}, Delay: {}, Color: {}", brightness, delay, color);
 
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
@@ -105,7 +105,7 @@ fn main() -> ! {
             // Value between 0 and 1
             brightness as f32 / max_value as f32,
             // The 12-bit value is too high for a good delay, so we divide it by 2.
-            (speed / 2) as u32,
+            (delay / 2) as u32,
         );
 
         rprintln!("{:?}", settings);
@@ -113,7 +113,7 @@ fn main() -> ! {
 
         effect[effect_index].render(
             &mut ws2812,
-            &mut delay,
+            &mut timer,
             &settings,
         );
     }

@@ -1,7 +1,5 @@
 use core::cell::RefCell;
 use core::cmp;
-use embedded_time::duration::Milliseconds;
-use embedded_time::fixed_point::FixedPoint;
 use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
@@ -17,7 +15,7 @@ const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Effect {
     fn render(
-        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<microbit::pac::TIMER0>,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
         settings: &Settings,
     );
 }
@@ -111,15 +109,15 @@ impl Color {
 pub(crate) struct Settings {
     pub(crate) brightness: f32,
     pub(crate) color_index: usize,
-    pub(crate) delay: Milliseconds<u32>,
+    pub(crate) delay: u32,
 }
 
 impl Settings {
-    pub(crate) fn new(color_index: usize, brightness: f32, speed: u32) -> Self {
+    pub(crate) fn new(color_index: usize, brightness: f32, delay: u32) -> Self {
         Settings {
             brightness,
             color_index,
-            delay: Milliseconds::<u32>(speed),
+            delay,
         }
     }
 }
@@ -137,7 +135,7 @@ impl<'a> ForwardWave<'a> {
 
 impl Effect for ForwardWave<'_> {
     fn render(
-        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, settings: &Settings,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         reset_data(self.data);
 
@@ -157,7 +155,7 @@ impl Effect for ForwardWave<'_> {
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        delay.delay_ms(settings.delay.integer() as u16);
+        timer.delay_ms(settings.delay as u16);
     }
 }
 
@@ -177,7 +175,7 @@ impl<'a> MultiColorSparkle<'a> {
 
 impl Effect for MultiColorSparkle<'_> {
     fn render(
-        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, settings: &Settings,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         reset_data(self.data);
 
@@ -191,10 +189,10 @@ impl Effect for MultiColorSparkle<'_> {
             self.data.borrow_mut()[index] = create_color_with_brightness(&random_color, &brightness);
         }
 
-        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay.integer(), SHORTEST_DELAY + 1));
+        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        delay.delay_ms(random_delay as u16);
+        timer.delay_ms(random_delay as u16);
     }
 }
 
@@ -214,7 +212,7 @@ impl<'a> UniColorSparkle<'a> {
 
 impl Effect for UniColorSparkle<'_> {
     fn render(
-        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, settings: &Settings,
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         reset_data(self.data);
 
@@ -227,10 +225,10 @@ impl Effect for UniColorSparkle<'_> {
             self.data.borrow_mut()[index] = create_color_with_brightness(&Color::COLORS[settings.color_index], &brightness);
         }
 
-        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay.integer(), SHORTEST_DELAY + 1));
+        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        delay.delay_ms(random_delay as u16);
+        timer.delay_ms(random_delay as u16);
     }
 }
 
