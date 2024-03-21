@@ -161,6 +161,43 @@ impl Effect for ForwardWave<'_> {
     }
 }
 
+pub(crate) struct MultiColorSparkle<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
+}
+
+impl<'a> MultiColorSparkle<'a> {
+    pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
+        MultiColorSparkle {
+            data,
+            prng: SmallRng::seed_from_u64(random_seed),
+        }
+    }
+}
+
+impl Effect for MultiColorSparkle<'_> {
+    fn render(
+        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, delay: &mut Timer<TIMER0>, settings: &Settings,
+    ) {
+        reset_data(self.data);
+
+        // The amount of sparkles, up to 10% of the total number of LEDs
+        let sparkle_amount = self.prng.gen_range(0..(NUM_LEDS / 10));
+        for _ in 0..sparkle_amount {
+            let index = self.prng.gen_range(0..NUM_LEDS);
+            // Random brightness between 0% and the set brightness
+            let brightness = self.prng.gen_range(0.0..settings.brightness);
+            let random_color = RGB8::new(self.prng.gen_range(0..255), self.prng.gen_range(0..255), self.prng.gen_range(0..255));
+            self.data.borrow_mut()[index] = create_color_with_brightness(&random_color, &brightness);
+        }
+
+        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay.integer(), SHORTEST_DELAY + 1));
+
+        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        delay.delay_ms(random_delay as u16);
+    }
+}
+
 pub(crate) struct UniColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
@@ -185,7 +222,7 @@ impl Effect for UniColorSparkle<'_> {
         let sparkle_amount = self.prng.gen_range(0..(NUM_LEDS / 10));
         for _ in 0..sparkle_amount {
             let index = self.prng.gen_range(0..NUM_LEDS);
-            // Random brightness between 1% and the set brightness
+            // Random brightness between 0% and the set brightness
             let brightness = self.prng.gen_range(0.0..settings.brightness);
             self.data.borrow_mut()[index] = create_color_with_brightness(&Color::COLORS[settings.color_index], &brightness);
         }

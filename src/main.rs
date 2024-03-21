@@ -5,7 +5,7 @@ use core::cell::RefCell;
 use core::cmp;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
-use effects::{Effect, ForwardWave, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS};
+use effects::{Effect, ForwardWave, MultiColorSparkle, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS};
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
@@ -19,14 +19,13 @@ use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
-mod cookie_monster;
 mod effects;
 
 static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
 static EFFECT: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
-const NUM_EFFECTS: usize = 2;
+const NUM_EFFECTS: usize = 3;
 
 #[entry]
 fn main() -> ! {
@@ -77,9 +76,10 @@ fn main() -> ! {
 
     rprintln!("Creating effects...");
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
+    let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
 
-    let effect: [&mut dyn Effect; NUM_EFFECTS] = [&mut uni_color_sparkle, &mut forward_wave];
+    let effect: [&mut dyn Effect; NUM_EFFECTS] = [&mut uni_color_sparkle, &mut multi_color_sparkle, &mut forward_wave];
 
     rprintln!("Starting main loop...");
     loop {
