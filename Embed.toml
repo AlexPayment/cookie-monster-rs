@@ -3,3 +3,4 @@ chip = "nrf52833_xxAA"
 
 [default.rtt]
 enabled = true
+log_enabled = false

@@ -5,7 +5,9 @@ use core::cell::RefCell;
 use core::cmp;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
-use effects::{Effect, ForwardWave, MultiColorSparkle, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS};
+use effects::{
+    Animation, ForwardWave, MultiColorSparkle, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+};
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
@@ -22,10 +24,10 @@ use ws2812_spi::Ws2812;
 mod effects;
 
 static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
-static EFFECT: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
+static ANIMATION: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
-const NUM_EFFECTS: usize = 3;
+const NUM_ANIMATIONS: usize = 3;
 
 #[entry]
 fn main() -> ! {
@@ -74,20 +76,36 @@ fn main() -> ! {
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
 
-    rprintln!("Creating effects...");
+    rprintln!("Creating animations...");
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
 
-    let effect: [&mut dyn Effect; NUM_EFFECTS] = [&mut uni_color_sparkle, &mut multi_color_sparkle, &mut forward_wave];
+    let animations: [&mut dyn Animation; NUM_ANIMATIONS] = [
+        &mut uni_color_sparkle,
+        &mut multi_color_sparkle,
+        &mut forward_wave,
+    ];
 
     rprintln!("Starting main loop...");
     loop {
-        let brightness = cmp::max(1, adc.read(&mut brightness_pin).unwrap_or((max_value / 2) as i16));
-        let delay = cmp::max(2, adc.read(&mut delay_pin).unwrap_or((max_value / 2) as i16));
+        let brightness = cmp::max(
+            1,
+            adc.read(&mut brightness_pin)
+                .unwrap_or((max_value / 2) as i16),
+        );
+        let delay = cmp::max(
+            2,
+            adc.read(&mut delay_pin).unwrap_or((max_value / 2) as i16),
+        );
         let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
 
-        rprintln!("Brightness: {}, Delay: {}, Color: {}", brightness, delay, color);
+        rprintln!(
+            "Brightness: {}, Delay: {}, Color: {}",
+            brightness,
+            delay,
+            color
+        );
 
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
@@ -97,7 +115,7 @@ fn main() -> ! {
 
         free(|cs| {
             color_index = *COLOR.borrow(cs).borrow();
-            effect_index = *EFFECT.borrow(cs).borrow();
+            effect_index = *ANIMATION.borrow(cs).borrow();
         });
 
         let settings = Settings::new(
@@ -111,11 +129,7 @@ fn main() -> ! {
         rprintln!("{:?}", settings);
         rprintln!("Current effect: {}", effect_index);
 
-        effect[effect_index].render(
-            &mut ws2812,
-            &mut timer,
-            &settings,
-        );
+        animations[effect_index].render(&mut ws2812, &mut timer, &settings);
     }
 }
 
@@ -169,7 +183,9 @@ fn GPIOTE() {
             let b_pressed = gpiote.channel1().is_event_triggered();
 
             if a_pressed {
-                EFFECT.borrow(cs).replace_with(|e| (*e + 1) % NUM_EFFECTS);
+                ANIMATION
+                    .borrow(cs)
+                    .replace_with(|e| (*e + 1) % NUM_ANIMATIONS);
             } else if b_pressed {
                 // Cycle color
                 COLOR.borrow(cs).replace_with(|c| (*c + 1) % NUM_COLORS);

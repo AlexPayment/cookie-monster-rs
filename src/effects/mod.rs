@@ -6,6 +6,9 @@ use microbit::hal::Timer;
 use microbit::pac::{SPI0, TIMER0};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
+use smart_leds::colors::{
+    AQUA, BLUE, FUCHSIA, GREEN, LIME, MAROON, NAVY, OLIVE, PURPLE, RED, TEAL, WHITE, YELLOW,
+};
 use smart_leds::{SmartLedsWrite, RGB8};
 use ws2812_spi::Ws2812;
 
@@ -13,97 +16,16 @@ pub(crate) const NUM_COLORS: usize = 13;
 pub(crate) const NUM_LEDS: usize = 256;
 const SHORTEST_DELAY: u32 = 5;
 
-pub(crate) trait Effect {
+pub(crate) trait Animation {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
         settings: &Settings,
     );
 }
 
-pub(crate) struct Color { }
-
-impl Color {
-    pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
-        Color::WHITE,
-        Color::RED,
-        Color::ORANGE,
-        Color::YELLOW,
-        Color::CHARTREUSE,
-        Color::GREEN,
-        Color::SPRING_GREEN,
-        Color::CYAN,
-        Color::AZURE,
-        Color::BLUE,
-        Color::VIOLET,
-        Color::MAGENTA,
-        Color::ROSE,
-    ];
-    pub(crate) const AZURE: RGB8 = RGB8 {
-        r: 0,
-        g: 128,
-        b: 255,
-    };
-    pub(crate) const BLUE: RGB8 = RGB8 {
-        r: 0,
-        g: 0,
-        b: 255,
-    };
-    pub(crate) const CHARTREUSE: RGB8 = RGB8 {
-        r: 128,
-        g: 255,
-        b: 0,
-    };
-    pub(crate) const CYAN: RGB8 = RGB8 {
-        r: 0,
-        g: 255,
-        b: 255,
-    };
-    pub(crate) const GREEN: RGB8 = RGB8 {
-        r: 0,
-        g: 255,
-        b: 0,
-    };
-    pub(crate) const MAGENTA: RGB8 = RGB8 {
-        r: 255,
-        g: 0,
-        b: 255,
-    };
-    pub(crate) const ORANGE: RGB8 = RGB8 {
-        r: 255,
-        g: 128,
-        b: 0,
-    };
-    pub(crate) const RED: RGB8 = RGB8 {
-        r: 255,
-        g: 0,
-        b: 0,
-    };
-    pub(crate) const ROSE: RGB8 = RGB8 {
-        r: 255,
-        g: 0,
-        b: 128,
-    };
-    pub(crate) const SPRING_GREEN: RGB8 = RGB8 {
-        r: 0,
-        g: 255,
-        b: 128,
-    };
-    pub(crate) const VIOLET: RGB8 = RGB8 {
-        r: 128,
-        g: 0,
-        b: 255,
-    };
-    pub(crate) const WHITE: RGB8 = RGB8 {
-        r: 255,
-        g: 255,
-        b: 255,
-    };
-    pub(crate) const YELLOW: RGB8 = RGB8 {
-        r: 255,
-        g: 255,
-        b: 0,
-    };
-}
+pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
+    WHITE, RED, MAROON, YELLOW, OLIVE, LIME, GREEN, AQUA, TEAL, BLUE, NAVY, FUCHSIA, PURPLE,
+];
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Settings {
@@ -133,7 +55,7 @@ impl<'a> ForwardWave<'a> {
     }
 }
 
-impl Effect for ForwardWave<'_> {
+impl Animation for ForwardWave<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -147,7 +69,8 @@ impl Effect for ForwardWave<'_> {
             settings.brightness / 10.0,
         ];
         for (i, item) in wave.iter().enumerate() {
-            self.data.borrow_mut()[self.position + i] = create_color_with_brightness(&Color::COLORS[settings.color_index], item);
+            self.data.borrow_mut()[self.position + i] =
+                create_color_with_brightness(&COLORS[settings.color_index], item);
         }
         self.position += 1;
         if self.position >= NUM_LEDS - wave.len() {
@@ -173,7 +96,7 @@ impl<'a> MultiColorSparkle<'a> {
     }
 }
 
-impl Effect for MultiColorSparkle<'_> {
+impl Animation for MultiColorSparkle<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -185,11 +108,18 @@ impl Effect for MultiColorSparkle<'_> {
             let index = self.prng.gen_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
             let brightness = self.prng.gen_range(0.0..settings.brightness);
-            let random_color = RGB8::new(self.prng.gen_range(0..255), self.prng.gen_range(0..255), self.prng.gen_range(0..255));
-            self.data.borrow_mut()[index] = create_color_with_brightness(&random_color, &brightness);
+            let random_color = RGB8::new(
+                self.prng.gen_range(0..255),
+                self.prng.gen_range(0..255),
+                self.prng.gen_range(0..255),
+            );
+            self.data.borrow_mut()[index] =
+                create_color_with_brightness(&random_color, &brightness);
         }
 
-        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
+        let random_delay = self
+            .prng
+            .gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(random_delay as u16);
@@ -210,7 +140,7 @@ impl<'a> UniColorSparkle<'a> {
     }
 }
 
-impl Effect for UniColorSparkle<'_> {
+impl Animation for UniColorSparkle<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -222,10 +152,13 @@ impl Effect for UniColorSparkle<'_> {
             let index = self.prng.gen_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
             let brightness = self.prng.gen_range(0.0..settings.brightness);
-            self.data.borrow_mut()[index] = create_color_with_brightness(&Color::COLORS[settings.color_index], &brightness);
+            self.data.borrow_mut()[index] =
+                create_color_with_brightness(&COLORS[settings.color_index], &brightness);
         }
 
-        let random_delay = self.prng.gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
+        let random_delay = self
+            .prng
+            .gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(random_delay as u16);
