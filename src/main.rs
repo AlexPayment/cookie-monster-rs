@@ -57,9 +57,8 @@ fn main() -> ! {
     let mut adc = Saadc::new(peripherals.SAADC, saadc_config);
     // This analog pin is the big 0 connector on the micro:bit.
     let mut brightness_pin = port0.p0_02.into_floating_input();
+    // This analog pin is the big 1 connector on the micro:bit.
     let mut delay_pin = port0.p0_03.into_floating_input();
-    // This analog pin is the big 2 connector on the micro:bit.
-    let mut color_pin = port0.p0_04.into_floating_input();
 
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
@@ -98,24 +97,18 @@ fn main() -> ! {
             2,
             adc.read(&mut delay_pin).unwrap_or((max_value / 2) as i16),
         );
-        let color = adc.read(&mut color_pin).unwrap_or((max_value / 2) as i16);
 
-        rprintln!(
-            "Brightness: {}, Delay: {}, Color: {}",
-            brightness,
-            delay,
-            color
-        );
+        rprintln!("Brightness: {}, Delay: {}", brightness, delay);
 
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
 
         let mut color_index = 0;
-        let mut effect_index = 0;
+        let mut animation_index = 0;
 
         free(|cs| {
             color_index = *COLOR.borrow(cs).borrow();
-            effect_index = *ANIMATION.borrow(cs).borrow();
+            animation_index = *ANIMATION.borrow(cs).borrow();
         });
 
         let settings = Settings::new(
@@ -127,9 +120,9 @@ fn main() -> ! {
         );
 
         rprintln!("{:?}", settings);
-        rprintln!("Current effect: {}", effect_index);
+        rprintln!("Current animation: {}", animation_index);
 
-        animations[effect_index].render(&mut ws2812, &mut timer, &settings);
+        animations[animation_index].render(&mut ws2812, &mut timer, &settings);
     }
 }
 
