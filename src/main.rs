@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
 
+use animations::{
+    Animation, ForwardWave, MultiColorSparkle, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+};
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
-use effects::{
-    Animation, ForwardWave, MultiColorSparkle, Settings, UniColorSparkle, NUM_COLORS, NUM_LEDS,
-};
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
@@ -21,7 +21,7 @@ use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
-mod effects;
+mod animations;
 
 static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
 static ANIMATION: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
