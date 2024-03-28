@@ -50,10 +50,47 @@ pub(crate) struct ForwardWave<'a> {
     position: usize,
 }
 
+pub(crate) struct MultiColorFadeIn<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
+}
+
+// TODO: Implement the `Animation` trait for the `MultiColorFadeIn` struct.
+
+pub(crate) struct MultiColorHeartbeat<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
+}
+
+// TODO: Implement the `Animation` trait for the `MultiColorHeartbeat` struct.
+
 pub(crate) struct MultiColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
 }
+
+pub(crate) struct SolidColor<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+// TODO: Implement the `Animation` trait for the `SolidColor` struct.
+
+pub(crate) struct UniColorFadeIn<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+// TODO: Implement the `Animation` trait for the `UniColorSparkle` struct.
+
+pub(crate) struct UniColorHeartbeat<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+pub(crate) struct UniColorSparkle<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
+}
+
+// TODO: Implement the `Animation` trait for the `UniColorHeartbeat` struct.
 
 fn create_color_with_brightness(color: &RGB8, brightness: &f32) -> RGB8 {
     RGB8::new(
@@ -68,9 +105,4 @@ fn reset_data(data: &RefCell<[RGB8; NUM_LEDS]>) {
     for i in 0..NUM_LEDS {
         data[i] = RGB8::default();
     }
-}
-
-pub(crate) struct UniColorSparkle<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
-    prng: SmallRng,
 }
