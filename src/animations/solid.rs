@@ -1,0 +1,1 @@
+// TODO: Implement the `Animation` trait for the `Solid` struct.

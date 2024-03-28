@@ -10,8 +10,13 @@ use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
 pub(crate) mod forward_wave;
+pub(crate) mod multi_color_fade_in;
+pub(crate) mod multi_color_hearthbeat;
 pub(crate) mod multi_color_sparkle;
+pub(crate) mod solid;
+pub(crate) mod uni_color_fade_in;
 pub(crate) mod uni_color_sparkle;
+pub(crate) mod uni_color_hearthbeat;
 
 pub(crate) const NUM_COLORS: usize = 13;
 pub(crate) const NUM_LEDS: usize = 256;
@@ -55,31 +60,23 @@ pub(crate) struct MultiColorFadeIn<'a> {
     prng: SmallRng,
 }
 
-// TODO: Implement the `Animation` trait for the `MultiColorFadeIn` struct.
-
 pub(crate) struct MultiColorHeartbeat<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
 }
-
-// TODO: Implement the `Animation` trait for the `MultiColorHeartbeat` struct.
 
 pub(crate) struct MultiColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
 }
 
-pub(crate) struct SolidColor<'a> {
+pub(crate) struct Solid<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
 }
-
-// TODO: Implement the `Animation` trait for the `SolidColor` struct.
 
 pub(crate) struct UniColorFadeIn<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
 }
-
-// TODO: Implement the `Animation` trait for the `UniColorSparkle` struct.
 
 pub(crate) struct UniColorHeartbeat<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
@@ -89,8 +86,6 @@ pub(crate) struct UniColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
 }
-
-// TODO: Implement the `Animation` trait for the `UniColorHeartbeat` struct.
 
 fn create_color_with_brightness(color: &RGB8, brightness: &f32) -> RGB8 {
     RGB8::new(
