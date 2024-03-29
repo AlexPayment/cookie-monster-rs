@@ -2,8 +2,8 @@
 #![no_main]
 
 use animations::{
-    Animation, ForwardWave, MultiColorSparkle, Settings, UniColorSolid, UniColorSparkle, NUM_COLORS,
-    NUM_LEDS,
+    Animation, ForwardWave, MultiColorSolid, MultiColorSparkle, Settings, UniColorSolid,
+    UniColorSparkle, NUM_COLORS, NUM_LEDS,
 };
 use core::cell::RefCell;
 use core::cmp;
@@ -28,7 +28,7 @@ static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
 static ANIMATION: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
-const NUM_ANIMATIONS: usize = 4;
+const NUM_ANIMATIONS: usize = 5;
 
 #[entry]
 fn main() -> ! {
@@ -78,15 +78,17 @@ fn main() -> ! {
 
     rprintln!("Creating animations...");
     let mut forward_wave = ForwardWave::new(&data);
+    let mut multi_color_solid = MultiColorSolid::new(&data);
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
     let mut uni_color_solid = UniColorSolid::new(&data);
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
 
     let animations: [&mut dyn Animation; NUM_ANIMATIONS] = [
-        &mut uni_color_solid,
         &mut uni_color_sparkle,
         &mut multi_color_sparkle,
         &mut forward_wave,
+        &mut multi_color_solid,
+        &mut uni_color_solid,
     ];
 
     rprintln!("Starting main loop...");
