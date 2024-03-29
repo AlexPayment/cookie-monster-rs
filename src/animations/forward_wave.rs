@@ -37,6 +37,6 @@ impl Animation for ForwardWave<'_> {
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay as u16);
+        timer.delay_ms(settings.delay);
     }
 }

@@ -15,8 +15,8 @@ pub(crate) mod multi_color_hearthbeat;
 pub(crate) mod multi_color_sparkle;
 pub(crate) mod solid;
 pub(crate) mod uni_color_fade_in;
-pub(crate) mod uni_color_sparkle;
 pub(crate) mod uni_color_hearthbeat;
+pub(crate) mod uni_color_sparkle;
 
 pub(crate) const NUM_COLORS: usize = 13;
 pub(crate) const NUM_LEDS: usize = 256;
