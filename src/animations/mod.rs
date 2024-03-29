@@ -12,6 +12,8 @@ use ws2812_spi::Ws2812;
 pub(crate) mod forward_wave;
 pub(crate) mod multi_color_fade_in;
 pub(crate) mod multi_color_hearthbeat;
+pub(crate) mod multi_color_solid;
+pub(crate) mod multi_color_solid_random;
 pub(crate) mod multi_color_sparkle;
 pub(crate) mod uni_color_fade_in;
 pub(crate) mod uni_color_hearthbeat;
@@ -65,13 +67,18 @@ pub(crate) struct MultiColorHeartbeat<'a> {
     prng: SmallRng,
 }
 
-pub(crate) struct MultiColorSparkle<'a> {
+pub(crate) struct MultiColorSolid<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+pub(crate) struct MultiColorSolidRandom<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
 }
 
-pub(crate) struct UniColorSolid<'a> {
+pub(crate) struct MultiColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
 }
 
 pub(crate) struct UniColorFadeIn<'a> {
@@ -79,6 +86,10 @@ pub(crate) struct UniColorFadeIn<'a> {
 }
 
 pub(crate) struct UniColorHeartbeat<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+pub(crate) struct UniColorSolid<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
 }
 
