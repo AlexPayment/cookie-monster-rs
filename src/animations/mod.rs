@@ -13,9 +13,9 @@ pub(crate) mod forward_wave;
 pub(crate) mod multi_color_fade_in;
 pub(crate) mod multi_color_hearthbeat;
 pub(crate) mod multi_color_sparkle;
-pub(crate) mod solid;
 pub(crate) mod uni_color_fade_in;
 pub(crate) mod uni_color_hearthbeat;
+pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
 pub(crate) const NUM_COLORS: usize = 13;
@@ -70,7 +70,7 @@ pub(crate) struct MultiColorSparkle<'a> {
     prng: SmallRng,
 }
 
-pub(crate) struct Solid<'a> {
+pub(crate) struct UniColorSolid<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
 }
 

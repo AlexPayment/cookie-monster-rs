@@ -2,7 +2,7 @@
 #![no_main]
 
 use animations::{
-    Animation, ForwardWave, MultiColorSparkle, Settings, Solid, UniColorSparkle, NUM_COLORS,
+    Animation, ForwardWave, MultiColorSparkle, Settings, UniColorSolid, UniColorSparkle, NUM_COLORS,
     NUM_LEDS,
 };
 use core::cell::RefCell;
@@ -71,7 +71,7 @@ fn main() -> ! {
     );
 
     // Get the maximum value of the potentiometer. Must match the resolution of the ADC which is set to 12 bits above.
-    let max_value = 2u32.pow(12) - 1;
+    let max_value = 2u16.pow(12) - 1;
     rprintln!("Max potentiometer value: {}", max_value);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
@@ -79,11 +79,11 @@ fn main() -> ! {
     rprintln!("Creating animations...");
     let mut forward_wave = ForwardWave::new(&data);
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
-    let mut solid = Solid::new(&data);
+    let mut uni_color_solid = UniColorSolid::new(&data);
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
 
     let animations: [&mut dyn Animation; NUM_ANIMATIONS] = [
-        &mut solid,
+        &mut uni_color_solid,
         &mut uni_color_sparkle,
         &mut multi_color_sparkle,
         &mut forward_wave,
@@ -181,7 +181,7 @@ fn GPIOTE() {
             if a_pressed {
                 ANIMATION
                     .borrow(cs)
-                    .replace_with(|e| (*e + 1) % NUM_ANIMATIONS);
+                    .replace_with(|a| (*a + 1) % NUM_ANIMATIONS);
             } else if b_pressed {
                 // Cycle color
                 COLOR.borrow(cs).replace_with(|c| (*c + 1) % NUM_COLORS);
