@@ -119,7 +119,7 @@ fn main() -> ! {
             // Value between 0 and 1
             brightness as f32 / max_value as f32,
             // The 12-bit value is too high for a good delay, so we divide it by 2.
-            (delay / 2) as u32,
+            (delay / 2) as u16,
         );
 
         rprintln!("{:?}", settings);

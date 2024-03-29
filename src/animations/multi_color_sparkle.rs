@@ -46,6 +46,6 @@ impl Animation for MultiColorSparkle<'_> {
             .gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(random_delay as u16);
+        timer.delay_ms(random_delay);
     }
 }

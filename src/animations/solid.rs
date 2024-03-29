@@ -30,6 +30,6 @@ impl Animation for Solid<'_> {
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         // Delay from the settings doesn't really matter for the solid animation. So just using a
         // 1-second delay.
-        timer.delay_ms(1_000u32);
+        timer.delay_ms(1_000u16);
     }
 }
