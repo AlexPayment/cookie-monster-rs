@@ -74,6 +74,8 @@ pub(crate) struct MultiColorSolid<'a> {
 pub(crate) struct MultiColorSolidRandom<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
+    rendered: bool,
+    rendered_data: [RGB8; NUM_LEDS],
 }
 
 pub(crate) struct MultiColorSparkle<'a> {

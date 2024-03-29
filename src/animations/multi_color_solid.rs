@@ -34,6 +34,8 @@ impl Animation for MultiColorSolid<'_> {
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        // Delay from the settings doesn't really matter for the solid animations. So just using a
+        // 1-second delay.
+        timer.delay_ms(1_000u16);
     }
 }
