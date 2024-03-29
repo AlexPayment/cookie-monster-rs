@@ -85,6 +85,9 @@ pub(crate) struct MultiColorSparkle<'a> {
 
 pub(crate) struct UniColorFadeIn<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    ascending: bool,
+    current_step: u8,
+    step: u8,
 }
 
 pub(crate) struct UniColorHeartbeat<'a> {

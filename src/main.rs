@@ -3,7 +3,7 @@
 
 use animations::{
     Animation, ForwardWave, MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, Settings,
-    UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+    UniColorFadeIn, UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
 };
 use core::cell::RefCell;
 use core::cmp;
@@ -28,7 +28,7 @@ static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
 static ANIMATION: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
-const NUM_ANIMATIONS: usize = 6;
+const NUM_ANIMATIONS: usize = 7;
 
 #[entry]
 fn main() -> ! {
@@ -81,6 +81,7 @@ fn main() -> ! {
     let mut multi_color_solid = MultiColorSolid::new(&data);
     let mut multi_color_solid_random = MultiColorSolidRandom::new(&data, rng.random_u64());
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
+    let mut uni_color_fade_in = UniColorFadeIn::new(&data);
     let mut uni_color_solid = UniColorSolid::new(&data);
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
 
@@ -88,6 +89,7 @@ fn main() -> ! {
         &mut uni_color_sparkle,
         &mut multi_color_sparkle,
         &mut forward_wave,
+        &mut uni_color_fade_in,
         &mut multi_color_solid,
         &mut multi_color_solid_random,
         &mut uni_color_solid,
