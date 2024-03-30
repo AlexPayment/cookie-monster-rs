@@ -20,6 +20,8 @@ impl Animation for ForwardWave<'_> {
     ) {
         animations::reset_data(self.data);
 
+
+        // TODO: Make the wave size dynamic based on the number of LEDs
         let wave = [
             settings.brightness / 10.0,
             settings.brightness / 6.0,
@@ -27,10 +29,13 @@ impl Animation for ForwardWave<'_> {
             settings.brightness,
             settings.brightness / 10.0,
         ];
+
+        // TODO: The wave shouldn't jump when it reaches the end
         for (i, item) in wave.iter().enumerate() {
             self.data.borrow_mut()[self.position + i] =
                 animations::create_color_with_brightness(&COLORS[settings.color_index], item);
         }
+
         self.position += 1;
         if self.position >= NUM_LEDS - wave.len() {
             self.position = 0;

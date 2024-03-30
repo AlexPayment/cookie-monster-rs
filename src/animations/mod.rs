@@ -52,6 +52,14 @@ impl Settings {
     }
 }
 
+pub(crate) struct Carrousel<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
+pub(crate) struct DoubleCarrousel<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+}
+
 pub(crate) struct ForwardWave<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     position: usize,
