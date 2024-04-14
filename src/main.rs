@@ -7,7 +7,6 @@ use animations::{
 };
 use core::cell::RefCell;
 use core::cmp;
-use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
@@ -15,7 +14,7 @@ use microbit::hal::gpiote::Gpiote;
 use microbit::hal::prelude::_embedded_hal_adc_OneShot;
 use microbit::hal::saadc::{Resolution, SaadcConfig};
 use microbit::hal::{spi, Saadc, Timer};
-use microbit::pac::{interrupt, GPIOTE};
+use microbit::pac::GPIOTE;
 use microbit::{hal, pac, Peripherals};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -23,10 +22,6 @@ use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
 mod animations;
-
-static COLOR: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(9));
-static ANIMATION: Mutex<RefCell<usize>> = Mutex::new(RefCell::new(0));
-static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 
 const NUM_ANIMATIONS: usize = 7;
 
@@ -64,7 +59,7 @@ fn main() -> ! {
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
 
-    init_buttons(
+    let gpiote = init_buttons(
         peripherals.GPIOTE,
         port0.p0_14.into_floating_input(),
         port0.p0_23.into_floating_input(),
@@ -95,6 +90,9 @@ fn main() -> ! {
         &mut uni_color_solid,
     ];
 
+    let mut color_index = 9;
+    let mut animation_index = 0;
+
     rprintln!("Starting main loop...");
     loop {
         let brightness = cmp::max(
@@ -112,13 +110,7 @@ fn main() -> ! {
         // let converted_color = convert_color(color);
         // rprintln!("Converted color: {:?}", converted_color);
 
-        let mut color_index = 0;
-        let mut animation_index = 0;
-
-        free(|cs| {
-            color_index = *COLOR.borrow(cs).borrow();
-            animation_index = *ANIMATION.borrow(cs).borrow();
-        });
+        handle_buttons(&gpiote, &mut animation_index, &mut color_index);
 
         let settings = Settings::new(
             color_index,
@@ -147,10 +139,25 @@ fn convert_color(value: i16) -> RGB8 {
     }
 }
 
+fn handle_buttons(gpiote: &Gpiote, animation_index: &mut usize, color_index: &mut usize) {
+    let a_pressed = gpiote.channel0().is_event_triggered();
+    let b_pressed = gpiote.channel1().is_event_triggered();
+
+    if a_pressed {
+        // Cycle animation
+        *animation_index = (*animation_index + 1) % NUM_ANIMATIONS;
+        gpiote.channel0().reset_events();
+    } else if b_pressed {
+        // Cycle color
+        *color_index = (*color_index + 1) % NUM_COLORS;
+        gpiote.channel1().reset_events();
+    }
+}
+
 fn init_buttons(
     board_gpiote: GPIOTE, button_a_pin: P0_14<Input<Floating>>,
     button_b_pin: P0_23<Input<Floating>>,
-) {
+) -> Gpiote {
     let gpiote = Gpiote::new(board_gpiote);
 
     let channel0 = gpiote.channel0();
@@ -167,34 +174,5 @@ fn init_buttons(
         .enable_interrupt();
     channel1.reset_events();
 
-    free(move |cs| {
-        *GPIO.borrow(cs).borrow_mut() = Some(gpiote);
-
-        unsafe {
-            pac::NVIC::unmask(pac::Interrupt::GPIOTE);
-        }
-        pac::NVIC::unpend(pac::Interrupt::GPIOTE);
-    });
-}
-
-#[interrupt]
-fn GPIOTE() {
-    free(|cs| {
-        if let Some(gpiote) = GPIO.borrow(cs).borrow().as_ref() {
-            let a_pressed = gpiote.channel0().is_event_triggered();
-            let b_pressed = gpiote.channel1().is_event_triggered();
-
-            if a_pressed {
-                ANIMATION
-                    .borrow(cs)
-                    .replace_with(|a| (*a + 1) % NUM_ANIMATIONS);
-            } else if b_pressed {
-                // Cycle color
-                COLOR.borrow(cs).replace_with(|c| (*c + 1) % NUM_COLORS);
-            }
-
-            gpiote.channel0().reset_events();
-            gpiote.channel1().reset_events();
-        }
-    });
+    gpiote
 }
