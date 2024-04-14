@@ -1,7 +1,6 @@
 use crate::animations;
 use crate::animations::{Animation, Settings, UniColorFadeIn, COLORS, NUM_LEDS};
 use core::cell::RefCell;
-use core::cmp;
 use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 use microbit::hal::spi::Spi;
 use microbit::hal::Timer;

@@ -15,7 +15,7 @@ use microbit::hal::prelude::_embedded_hal_adc_OneShot;
 use microbit::hal::saadc::{Resolution, SaadcConfig};
 use microbit::hal::{spi, Saadc, Timer};
 use microbit::pac::GPIOTE;
-use microbit::{hal, pac, Peripherals};
+use microbit::{hal, Peripherals};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;

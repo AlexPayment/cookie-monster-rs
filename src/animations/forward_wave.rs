@@ -20,7 +20,6 @@ impl Animation for ForwardWave<'_> {
     ) {
         animations::reset_data(self.data);
 
-
         // TODO: Make the wave size dynamic based on the number of LEDs
         let wave = [
             settings.brightness / 10.0,
