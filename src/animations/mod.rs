@@ -36,19 +36,31 @@ pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
 ];
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct Settings {
-    pub(crate) brightness: f32,
-    pub(crate) color_index: usize,
-    pub(crate) delay: u16,
+pub struct Settings {
+    pub brightness: f32,
+    pub color_index: usize,
+    pub delay: u16,
 }
 
 impl Settings {
-    pub(crate) fn new(color_index: usize, brightness: f32, delay: u16) -> Self {
+    pub fn new(color_index: usize, brightness: f32, delay: u16) -> Self {
         Settings {
             brightness,
             color_index,
             delay,
         }
+    }
+
+    pub fn set_brightness(&mut self, brightness: f32) {
+        self.brightness = brightness;
+    }
+
+    pub fn set_color_index(&mut self, color_index: usize) {
+        self.color_index = color_index;
+    }
+
+    pub fn set_delay(&mut self, delay: u16) {
+        self.delay = delay;
     }
 }
 

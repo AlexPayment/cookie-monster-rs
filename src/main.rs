@@ -67,6 +67,7 @@ fn main() -> ! {
 
     // Get the maximum value of the potentiometer. Must match the resolution of the ADC which is set to 12 bits above.
     let max_value = 2u16.pow(12) - 1;
+    let default_value = max_value / 2;
     rprintln!("Max potentiometer value: {}", max_value);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
@@ -90,20 +91,23 @@ fn main() -> ! {
         &mut uni_color_solid,
     ];
 
+    let mut brightness = default_value as i16;
     let mut color_index = 9;
+    let mut delay = default_value as i16;
     let mut animation_index = 0;
+
+    let mut settings = Settings::new(
+        color_index,
+        // Value between 0 and 1
+        brightness as f32 / max_value as f32,
+        // The 12-bit value is too high for a good delay, so we divide it by 2.
+        (delay / 2) as u16,
+    );
 
     rprintln!("Starting main loop...");
     loop {
-        let brightness = cmp::max(
-            1,
-            adc.read(&mut brightness_pin)
-                .unwrap_or((max_value / 2) as i16),
-        );
-        let delay = cmp::max(
-            2,
-            adc.read(&mut delay_pin).unwrap_or((max_value / 2) as i16),
-        );
+        brightness = cmp::max(1, adc.read(&mut brightness_pin).unwrap_or(brightness));
+        delay = cmp::max(2, adc.read(&mut delay_pin).unwrap_or(delay));
 
         rprintln!("Brightness: {}, Delay: {}", brightness, delay);
 
@@ -112,13 +116,11 @@ fn main() -> ! {
 
         handle_buttons(&gpiote, &mut animation_index, &mut color_index);
 
-        let settings = Settings::new(
-            color_index,
-            // Value between 0 and 1
-            brightness as f32 / max_value as f32,
-            // The 12-bit value is too high for a good delay, so we divide it by 2.
-            (delay / 2) as u16,
-        );
+        // Value between 0 and 1
+        settings.set_brightness(brightness as f32 / max_value as f32);
+        settings.set_color_index(color_index);
+        // The 12-bit value is too high for a good delay, so we divide it by 2.
+        settings.set_delay((delay / 2) as u16);
 
         rprintln!("{:?}", settings);
         rprintln!("Current animation: {}", animation_index);
