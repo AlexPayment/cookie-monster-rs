@@ -20,8 +20,8 @@ pub(crate) mod uni_color_hearthbeat;
 pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
-pub(crate) const NUM_COLORS: usize = 13;
-pub(crate) const NUM_LEDS: usize = 96 * 4;
+pub const NUM_COLORS: usize = 13;
+pub const NUM_LEDS: usize = 96 * 6;
 const SHORTEST_DELAY: u16 = 5;
 
 pub(crate) trait Animation {
