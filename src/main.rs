@@ -163,17 +163,11 @@ fn init_buttons(
     let gpiote = Gpiote::new(board_gpiote);
 
     let channel0 = gpiote.channel0();
-    channel0
-        .input_pin(&button_a_pin.degrade())
-        .hi_to_lo()
-        .enable_interrupt();
+    channel0.input_pin(&button_a_pin.degrade()).hi_to_lo();
     channel0.reset_events();
 
     let channel1 = gpiote.channel1();
-    channel1
-        .input_pin(&button_b_pin.degrade())
-        .hi_to_lo()
-        .enable_interrupt();
+    channel1.input_pin(&button_b_pin.degrade()).hi_to_lo();
     channel1.reset_events();
 
     gpiote
