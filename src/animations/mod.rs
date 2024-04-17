@@ -1,7 +1,9 @@
 use core::cell::RefCell;
+use microbit::hal::gpio::{Output, Pin, PushPull};
 use microbit::hal::spi::Spi;
+use microbit::hal::timer::Periodic;
 use microbit::hal::Timer;
-use microbit::pac::SPI0;
+use microbit::pac::{SPI0, TIMER1, TIMER2, TIMER3};
 use rand::prelude::SmallRng;
 use smart_leds::colors::{
     AQUA, BLUE, FUCHSIA, GREEN, LIME, MAROON, NAVY, OLIVE, PURPLE, RED, TEAL, WHITE, YELLOW,
@@ -25,9 +27,26 @@ pub const NUM_LEDS: usize = 96 * 6;
 const SHORTEST_DELAY: u16 = 5;
 
 pub(crate) trait Animation {
-    fn render(
+    fn render_spi(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
         settings: &Settings,
+    );
+
+    fn render_timer(
+        &mut self,
+        ws2812_strip1: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER1, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        ws2812_strip2: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER2, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        ws2812_strip3: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER3, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        timer: &mut Timer<microbit::pac::TIMER0>, settings: &Settings,
     );
 }
 

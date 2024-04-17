@@ -11,19 +11,20 @@ use cortex_m_rt::entry;
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
-use microbit::hal::prelude::_embedded_hal_adc_OneShot;
+use microbit::hal::prelude::{_embedded_hal_adc_OneShot, _embedded_hal_timer_CountDown};
 use microbit::hal::saadc::{Resolution, SaadcConfig};
-use microbit::hal::{spi, Saadc, Timer};
+use microbit::hal::{Saadc, Timer};
 use microbit::pac::GPIOTE;
 use microbit::{hal, Peripherals};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;
-use ws2812_spi::Ws2812;
 
 mod animations;
+mod hardware;
 
 const NUM_ANIMATIONS: usize = 7;
+const TIMER_FREQUENCY: u32 = 3_000_000;
 
 #[entry]
 fn main() -> ! {
@@ -31,20 +32,26 @@ fn main() -> ! {
 
     // Setup all peripherals and the WS2812 device
     let peripherals = Peripherals::take().unwrap();
-
     let port0 = Parts::new(peripherals.P0);
-    let sck = port0.p0_17.into_push_pull_output(Level::Low).degrade();
-    // The SPI MOSI pin is pin 15 on the micro:bit.
-    let mosi = port0.p0_13.into_push_pull_output(Level::Low).degrade();
-    let miso = port0.p0_01.into_floating_input().degrade();
-    let pins = spi::Pins {
-        sck,
-        miso: Some(miso),
-        mosi: Some(mosi),
-    };
-    let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spi::MODE_0);
-    let mut ws2812 = Ws2812::new(spi);
-    let mut timer = Timer::new(peripherals.TIMER0);
+    let mut animation_timer = Timer::new(peripherals.TIMER0);
+
+    let mut timer_strip1 = Timer::periodic(peripherals.TIMER1);
+    timer_strip1.start(TIMER_FREQUENCY);
+    let ws2812_timer_pin_strip1 = port0.p0_09.into_push_pull_output(Level::Low).degrade();
+    let mut ws2812_timer_strip1 =
+        ws2812_timer_delay::Ws2812::new(timer_strip1, ws2812_timer_pin_strip1);
+
+    let mut timer_strip2 = Timer::periodic(peripherals.TIMER2);
+    timer_strip2.start(TIMER_FREQUENCY);
+    let ws2812_timer_pin_strip2 = port0.p0_10.into_push_pull_output(Level::Low).degrade();
+    let mut ws2812_timer_strip2 =
+        ws2812_timer_delay::Ws2812::new(timer_strip2, ws2812_timer_pin_strip2);
+
+    let mut timer_strip3 = Timer::periodic(peripherals.TIMER3);
+    timer_strip3.start(TIMER_FREQUENCY);
+    let ws2812_timer_pin_strip3 = port0.p0_12.into_push_pull_output(Level::Low).degrade();
+    let mut ws2812_timer_strip3 =
+        ws2812_timer_delay::Ws2812::new(timer_strip3, ws2812_timer_pin_strip3);
 
     let saadc_config = SaadcConfig {
         resolution: Resolution::_12BIT,
@@ -125,7 +132,13 @@ fn main() -> ! {
         rprintln!("{:?}", settings);
         rprintln!("Current animation: {}", animation_index);
 
-        animations[animation_index].render(&mut ws2812, &mut timer, &settings);
+        animations[animation_index].render_timer(
+            &mut ws2812_timer_strip1,
+            &mut ws2812_timer_strip2,
+            &mut ws2812_timer_strip3,
+            &mut animation_timer,
+            &settings,
+        );
     }
 }
 

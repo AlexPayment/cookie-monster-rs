@@ -2,9 +2,11 @@ use crate::animations;
 use crate::animations::{Animation, MultiColorSolidRandom, Settings, NUM_LEDS};
 use core::cell::RefCell;
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use microbit::hal::gpio::{Output, Pin, PushPull};
 use microbit::hal::spi::Spi;
+use microbit::hal::timer::Periodic;
 use microbit::hal::Timer;
-use microbit::pac::{SPI0, TIMER0};
+use microbit::pac::{SPI0, TIMER0, TIMER1, TIMER2, TIMER3};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
 use smart_leds::{SmartLedsWrite, RGB8};
@@ -22,7 +24,7 @@ impl<'a> MultiColorSolidRandom<'a> {
 }
 
 impl Animation for MultiColorSolidRandom<'_> {
-    fn render(
+    fn render_spi(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         animations::reset_data(self.data);
@@ -50,5 +52,24 @@ impl Animation for MultiColorSolidRandom<'_> {
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
         timer.delay_ms(1_000u16);
+    }
+
+    fn render_timer(
+        &mut self,
+        ws2812_strip1: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER1, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        ws2812_strip2: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER2, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        ws2812_strip3: &mut ws2812_timer_delay::Ws2812<
+            Timer<TIMER3, Periodic>,
+            Pin<Output<PushPull>>,
+        >,
+        timer: &mut Timer<TIMER0>, settings: &Settings,
+    ) {
+        todo!()
     }
 }
