@@ -2,13 +2,14 @@ use crate::animations;
 use crate::animations::{Animation, Settings, UniColorSparkle, COLORS, NUM_LEDS, SHORTEST_DELAY};
 use core::cell::RefCell;
 use core::cmp;
-use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayNs;
 use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
 use microbit::pac::{SPI0, TIMER0};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::{SmartLedsWrite, RGB8};
+use smart_leds::RGB8;
+use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
 impl<'a> UniColorSparkle<'a> {
