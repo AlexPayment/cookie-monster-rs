@@ -11,9 +11,8 @@ use cortex_m_rt::entry;
 use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
 use microbit::hal::gpio::{Floating, Input, Level};
 use microbit::hal::gpiote::Gpiote;
-use microbit::hal::prelude::_embedded_hal_adc_OneShot;
 use microbit::hal::saadc::{Resolution, SaadcConfig};
-use microbit::hal::{spi, Saadc, Timer};
+use microbit::hal::{spi, Saadc, spim, Timer};
 use microbit::pac::GPIOTE;
 use microbit::{hal, Peripherals};
 use panic_rtt_target as _;
@@ -38,11 +37,11 @@ fn main() -> ! {
     let mosi = port0.p0_13.into_push_pull_output(Level::Low).degrade();
     let miso = port0.p0_01.into_floating_input().degrade();
     let pins = spi::Pins {
-        sck,
+        sck: Some(sck),
         miso: Some(miso),
         mosi: Some(mosi),
     };
-    let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spi::MODE_0);
+    let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spim::MODE_0);
     let mut ws2812 = Ws2812::new(spi);
     let mut timer = Timer::new(peripherals.TIMER0);
 
@@ -101,13 +100,13 @@ fn main() -> ! {
         // Value between 0 and 1
         brightness as f32 / max_value as f32,
         // The 12-bit value is too high for a good delay, so we divide it by 2.
-        (delay / 2) as u16,
+        (delay / 2) as u32,
     );
 
     rprintln!("Starting main loop...");
     loop {
-        brightness = cmp::max(1, adc.read(&mut brightness_pin).unwrap_or(brightness));
-        delay = cmp::max(2, adc.read(&mut delay_pin).unwrap_or(delay));
+        brightness = cmp::max(1, adc.read_channel(&mut brightness_pin).unwrap_or(brightness));
+        delay = cmp::max(2, adc.read_channel(&mut delay_pin).unwrap_or(delay));
 
         rprintln!("Brightness: {}, Delay: {}", brightness, delay);
 
@@ -120,7 +119,7 @@ fn main() -> ! {
         settings.set_brightness(brightness as f32 / max_value as f32);
         settings.set_color_index(color_index);
         // The 12-bit value is too high for a good delay, so we divide it by 2.
-        settings.set_delay((delay / 2) as u16);
+        settings.set_delay((delay / 2) as u32);
 
         rprintln!("{:?}", settings);
         rprintln!("Current animation: {}", animation_index);

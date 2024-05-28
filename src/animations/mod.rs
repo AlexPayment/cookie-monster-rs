@@ -22,7 +22,7 @@ pub(crate) mod uni_color_sparkle;
 
 pub const NUM_COLORS: usize = 13;
 pub const NUM_LEDS: usize = 96 * 6;
-const SHORTEST_DELAY: u16 = 5;
+const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Animation {
     fn render(
@@ -39,11 +39,11 @@ pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
 pub struct Settings {
     pub brightness: f32,
     pub color_index: usize,
-    pub delay: u16,
+    pub delay: u32,
 }
 
 impl Settings {
-    pub fn new(color_index: usize, brightness: f32, delay: u16) -> Self {
+    pub fn new(color_index: usize, brightness: f32, delay: u32) -> Self {
         Settings {
             brightness,
             color_index,
@@ -59,7 +59,7 @@ impl Settings {
         self.color_index = color_index;
     }
 
-    pub fn set_delay(&mut self, delay: u16) {
+    pub fn set_delay(&mut self, delay: u32) {
         self.delay = delay;
     }
 }

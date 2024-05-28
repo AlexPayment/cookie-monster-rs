@@ -1,11 +1,12 @@
 use crate::animations;
 use crate::animations::{Animation, MultiColorSolid, Settings, NUM_COLORS, NUM_LEDS};
 use core::cell::RefCell;
-use microbit::hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayNs;
 use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
 use microbit::pac::{SPI0, TIMER0};
-use smart_leds::{SmartLedsWrite, RGB8};
+use smart_leds::RGB8;
+use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
 impl<'a> MultiColorSolid<'a> {
@@ -36,6 +37,6 @@ impl Animation for MultiColorSolid<'_> {
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
-        timer.delay_ms(1_000u16);
+        timer.delay_ms(1_000u32);
     }
 }
