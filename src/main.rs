@@ -8,13 +8,13 @@ use animations::{
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m_rt::entry;
-use microbit::hal::gpio::p0::{Parts, P0_14, P0_23};
-use microbit::hal::gpio::{Floating, Input, Level};
-use microbit::hal::gpiote::Gpiote;
-use microbit::hal::saadc::{Resolution, SaadcConfig};
-use microbit::hal::{spi, Saadc, spim, Timer};
-use microbit::pac::GPIOTE;
+use microbit::adc::{Adc, AdcConfig};
+use microbit::hal::gpio::p0::Parts;
+use microbit::hal::gpio::Level;
+use microbit::hal::{spi, spim, Timer};
 use microbit::{hal, Peripherals};
+use nrf_hal_common::saadc::Channel;
+use nrf_hal_common::Saadc;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use smart_leds::RGB8;
@@ -45,33 +45,27 @@ fn main() -> ! {
     let mut ws2812 = Ws2812::new(spi);
     let mut timer = Timer::new(peripherals.TIMER0);
 
-    let saadc_config = SaadcConfig {
-        resolution: Resolution::_12BIT,
-        ..Default::default()
-    };
-    let mut adc = Saadc::new(peripherals.SAADC, saadc_config);
-    // This analog pin is the big 0 connector on the micro:bit.
-    let mut brightness_pin = port0.p0_02.into_floating_input();
-    // This analog pin is the big 1 connector on the micro:bit.
-    let mut delay_pin = port0.p0_03.into_floating_input();
+    let mut adc = Adc::new(peripherals.SAADC, AdcConfig::default());
+    // This analog pin is the big 0 connector or the pin 0 on the micro:bit.
+    let mut animation_pin = port0.p0_02.into_floating_input();
+    // This analog pin is the big 1 connector or the pin 1 on the micro:bit.
+    let mut brightness_pin = port0.p0_03.into_floating_input();
+    // This analog pin is the big 2 connector or the pin 2 on the micro:bit.
+    let mut color_pin = port0.p0_04.into_floating_input();
+    // This analog pin is the pin 3 on the micro:bit.
+    let mut delay_pin = port0.p0_31.into_floating_input();
 
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
 
-    let gpiote = init_buttons(
-        peripherals.GPIOTE,
-        port0.p0_14.into_floating_input(),
-        port0.p0_23.into_floating_input(),
-    );
-
-    // Get the maximum value of the potentiometer. Must match the resolution of the ADC which is set to 12 bits above.
-    let max_value = 2u16.pow(12) - 1;
+    // Get the maximum value of the potentiometer. Must match the default resolution of the ADC which is 14 bits.
+    let max_value = 2u16.pow(14) - 1;
     let default_value = max_value / 2;
     rprintln!("Max potentiometer value: {}", max_value);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
 
-    rprintln!("Creating animations...");
+    rprintln!("Initialize animations...");
     let mut forward_wave = ForwardWave::new(&data);
     let mut multi_color_solid = MultiColorSolid::new(&data);
     let mut multi_color_solid_random = MultiColorSolidRandom::new(&data, rng.random_u64());
@@ -90,36 +84,48 @@ fn main() -> ! {
         &mut uni_color_solid,
     ];
 
+    let mut animation = default_value as i16;
     let mut brightness = default_value as i16;
+    let mut color = default_value as i16;
     let mut color_index = 9;
     let mut delay = default_value as i16;
-    let mut animation_index = 0;
 
     let mut settings = Settings::new(
         color_index,
         // Value between 0 and 1
         brightness as f32 / max_value as f32,
-        // The 12-bit value is too high for a good delay, so we divide it by 2.
-        (delay / 2) as u32,
+        calculate_delay(delay, max_value),
     );
 
     rprintln!("Starting main loop...");
     loop {
-        brightness = cmp::max(1, adc.read_channel(&mut brightness_pin).unwrap_or(brightness));
-        delay = cmp::max(2, adc.read_channel(&mut delay_pin).unwrap_or(delay));
+        animation =
+            read_potentiometer(&mut adc, &mut animation_pin, animation, 0, max_value as i16);
+        brightness = read_potentiometer(
+            &mut adc,
+            &mut brightness_pin,
+            brightness,
+            1,
+            max_value as i16,
+        );
+        color = read_potentiometer(&mut adc, &mut color_pin, color, 0, max_value as i16);
+        delay = read_potentiometer(&mut adc, &mut delay_pin, delay, 0, max_value as i16);
 
-        rprintln!("Brightness: {}, Delay: {}", brightness, delay);
+        rprintln!(
+            "Animation: {:>5}, Brightness: {:>5}, Color: {:>5}, Delay: {:>5}",
+            animation,
+            brightness,
+            color,
+            delay
+        );
 
-        // let converted_color = convert_color(color);
-        // rprintln!("Converted color: {:?}", converted_color);
-
-        handle_buttons(&gpiote, &mut animation_index, &mut color_index);
+        let animation_index = calculate_index(animation, max_value, NUM_ANIMATIONS);
+        color_index = calculate_index(color, max_value, NUM_COLORS);
 
         // Value between 0 and 1
-        settings.set_brightness(brightness as f32 / max_value as f32);
+        settings.set_brightness(calculate_brightness(brightness, max_value));
         settings.set_color_index(color_index);
-        // The 12-bit value is too high for a good delay, so we divide it by 2.
-        settings.set_delay((delay / 2) as u32);
+        settings.set_delay(calculate_delay(delay, max_value));
 
         rprintln!("{:?}", settings);
         rprintln!("Current animation: {}", animation_index);
@@ -128,46 +134,28 @@ fn main() -> ! {
     }
 }
 
-/// Converts a 12-bit color value to three 8-bit color values.
-fn convert_color(value: i16) -> RGB8 {
-    let b: u8 = (value & 0x00f) as u8;
-    let g: u8 = ((value >> 4) & 0x00f) as u8;
-    let r: u8 = ((value >> 8) & 0x00f) as u8;
-    RGB8 {
-        r: r << 4 | r,
-        g: g << 4 | g,
-        b: b << 4 | b,
-    }
+/// Calculate the brightness based on the value of the potentiometer.
+/// The value is between 0 and 1.
+fn calculate_brightness(value: i16, max_value: u16) -> f32 {
+    value as f32 / max_value as f32
+    // TODO Add a max value for the brightness
 }
 
-fn handle_buttons(gpiote: &Gpiote, animation_index: &mut usize, color_index: &mut usize) {
-    let a_pressed = gpiote.channel0().is_event_triggered();
-    let b_pressed = gpiote.channel1().is_event_triggered();
-
-    if a_pressed {
-        // Cycle animation
-        *animation_index = (*animation_index + 1) % NUM_ANIMATIONS;
-        gpiote.channel0().reset_events();
-    } else if b_pressed {
-        // Cycle color
-        *color_index = (*color_index + 1) % NUM_COLORS;
-        gpiote.channel1().reset_events();
-    }
+/// Calculate the delay in milliseconds based on the value of the potentiometer.
+fn calculate_delay(value: i16, max_value: u16) -> u32 {
+    cmp::max((value as f32 / max_value as f32 * 1000.0) as u32, 1)
 }
 
-fn init_buttons(
-    board_gpiote: GPIOTE, button_a_pin: P0_14<Input<Floating>>,
-    button_b_pin: P0_23<Input<Floating>>,
-) -> Gpiote {
-    let gpiote = Gpiote::new(board_gpiote);
+fn calculate_index(value: i16, max_value: u16, num_values: usize) -> usize {
+    let index = (value as f32 / max_value as f32 * num_values as f32) as usize;
+    cmp::min(index, num_values - 1)
+}
 
-    let channel0 = gpiote.channel0();
-    channel0.input_pin(&button_a_pin.degrade()).hi_to_lo();
-    channel0.reset_events();
-
-    let channel1 = gpiote.channel1();
-    channel1.input_pin(&button_b_pin.degrade()).hi_to_lo();
-    channel1.reset_events();
-
-    gpiote
+fn read_potentiometer<PIN: Channel>(
+    adc: &mut Saadc, pin: &mut PIN, default_value: i16, min_value: i16, max_value: i16,
+) -> i16 {
+    cmp::max(
+        min_value,
+        cmp::min(adc.read_channel(pin).unwrap_or(default_value), max_value),
+    )
 }

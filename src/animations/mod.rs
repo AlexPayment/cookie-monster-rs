@@ -21,7 +21,7 @@ pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
 pub const NUM_COLORS: usize = 13;
-pub const NUM_LEDS: usize = 96 * 6;
+pub const NUM_LEDS: usize = 96 * 10;
 const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Animation {
