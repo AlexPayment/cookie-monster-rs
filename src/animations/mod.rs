@@ -3,9 +3,7 @@ use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
 use microbit::pac::SPI0;
 use rand::prelude::SmallRng;
-use smart_leds::colors::{
-    AQUA, BLUE, FUCHSIA, GREEN, LIME, MAROON, NAVY, OLIVE, PURPLE, RED, TEAL, WHITE, YELLOW,
-};
+use smart_leds::colors::{AQUA, BLUE, GREEN, PURPLE, RED, WHITE, YELLOW};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
@@ -20,7 +18,7 @@ pub(crate) mod uni_color_heartbeat;
 pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
-pub const NUM_COLORS: usize = 13;
+pub const NUM_COLORS: usize = 7;
 pub const NUM_LEDS: usize = 96 * 10;
 const SHORTEST_DELAY: u32 = 5;
 
@@ -32,7 +30,7 @@ pub(crate) trait Animation {
 }
 
 pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
-    WHITE, RED, MAROON, YELLOW, OLIVE, LIME, GREEN, AQUA, TEAL, BLUE, NAVY, FUCHSIA, PURPLE,
+    WHITE, RED, YELLOW, GREEN, AQUA, BLUE, PURPLE,
 ];
 
 #[derive(Clone, Copy, Debug)]
@@ -84,7 +82,10 @@ pub(crate) struct MultiColorFadeIn<'a> {
 
 pub(crate) struct MultiColorHeartbeat<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
-    prng: SmallRng,
+    color_index: usize,
+    current_step: u8,
+    sequence: u8,
+    step: u8,
 }
 
 pub(crate) struct MultiColorSolid<'a> {
