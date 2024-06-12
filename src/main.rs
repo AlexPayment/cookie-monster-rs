@@ -68,7 +68,7 @@ fn main() -> ! {
 
     rprintln!("Initialize animations...");
     let mut forward_wave = ForwardWave::new(&data);
-    let mut multi_color_heartbeat = MultiColorHeartbeat::new(&data);
+    let mut multi_color_heartbeat = MultiColorHeartbeat::new(&data, rng.random_u64());
     let mut multi_color_solid = MultiColorSolid::new(&data);
     let mut multi_color_solid_random = MultiColorSolidRandom::new(&data, rng.random_u64());
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());

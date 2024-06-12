@@ -29,9 +29,7 @@ pub(crate) trait Animation {
     );
 }
 
-pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
-    WHITE, RED, YELLOW, GREEN, AQUA, BLUE, PURPLE,
-];
+pub(crate) const COLORS: [RGB8; NUM_COLORS] = [WHITE, RED, YELLOW, GREEN, AQUA, BLUE, PURPLE];
 
 #[derive(Clone, Copy, Debug)]
 pub struct Settings {
@@ -83,6 +81,7 @@ pub(crate) struct MultiColorFadeIn<'a> {
 pub(crate) struct MultiColorHeartbeat<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     color_index: usize,
+    prng: SmallRng,
     current_step: u8,
     sequence: u8,
     step: u8,

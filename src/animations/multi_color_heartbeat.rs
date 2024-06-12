@@ -1,19 +1,22 @@
 use crate::animations;
-use crate::animations::{Animation, MultiColorHeartbeat, Settings, COLORS, NUM_LEDS};
+use crate::animations::{Animation, MultiColorHeartbeat, Settings, COLORS, NUM_COLORS, NUM_LEDS};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
 use nrf_hal_common::spi::Spi;
 use nrf_hal_common::Timer;
-use smart_leds::{RGB, RGB8};
+use rand::prelude::SmallRng;
+use rand::{Rng, SeedableRng};
+use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
 impl<'a> MultiColorHeartbeat<'a> {
-    pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
+    pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
         MultiColorHeartbeat {
             data,
             color_index: 0,
+            prng: SmallRng::seed_from_u64(random_seed),
             current_step: 0,
             sequence: 0,
             step: 10,
@@ -56,7 +59,7 @@ impl Animation for MultiColorHeartbeat<'_> {
             3 => {
                 self.current_step -= 1;
                 if self.current_step == 0 {
-                    self.color_index = (self.color_index + 1) % COLORS.len();
+                    self.color_index = self.prng.gen_range(0..NUM_COLORS);
                     self.sequence = 0;
                 }
             }
