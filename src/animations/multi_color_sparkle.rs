@@ -14,7 +14,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> MultiColorSparkle<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
-        MultiColorSparkle {
+        Self {
             data,
             prng: SmallRng::seed_from_u64(random_seed),
         }

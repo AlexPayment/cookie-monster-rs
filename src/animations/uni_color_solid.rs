@@ -11,7 +11,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> UniColorSolid<'a> {
     pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        UniColorSolid { data }
+        Self { data }
     }
 }
 

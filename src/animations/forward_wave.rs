@@ -11,7 +11,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> ForwardWave<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        ForwardWave { data, position: 0 }
+        Self { data, position: 0 }
     }
 }
 

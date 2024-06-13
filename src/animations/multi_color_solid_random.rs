@@ -13,7 +13,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> MultiColorSolidRandom<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
-        MultiColorSolidRandom {
+        Self {
             data,
             prng: SmallRng::seed_from_u64(random_seed),
             rendered: false,
