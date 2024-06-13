@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use crate::animations::{MultiColorHeartbeat, UniColorHeartbeat};
+use crate::animations::{MultiColorFadeIn, MultiColorHeartbeat, UniColorHeartbeat};
 use animations::{
     Animation, ForwardWave, MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, Settings,
     UniColorFadeIn, UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
@@ -23,7 +23,7 @@ use ws2812_spi::Ws2812;
 
 mod animations;
 
-const NUM_ANIMATIONS: usize = 9;
+const NUM_ANIMATIONS: usize = 10;
 
 #[entry]
 fn main() -> ! {
@@ -68,6 +68,7 @@ fn main() -> ! {
 
     rprintln!("Initialize animations...");
     let mut forward_wave = ForwardWave::new(&data);
+    let mut multi_color_fade_in = MultiColorFadeIn::new(&data, rng.random_u64());
     let mut multi_color_heartbeat = MultiColorHeartbeat::new(&data, rng.random_u64());
     let mut multi_color_solid = MultiColorSolid::new(&data);
     let mut multi_color_solid_random = MultiColorSolidRandom::new(&data, rng.random_u64());
@@ -82,6 +83,7 @@ fn main() -> ! {
         &mut multi_color_sparkle,
         &mut forward_wave,
         &mut uni_color_fade_in,
+        &mut multi_color_fade_in,
         &mut multi_color_solid,
         &mut multi_color_solid_random,
         &mut uni_color_solid,

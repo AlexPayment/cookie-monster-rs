@@ -11,7 +11,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> UniColorHeartbeat<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        UniColorHeartbeat {
+        Self {
             data,
             current_step: 0,
             sequence: 0,

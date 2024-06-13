@@ -75,7 +75,11 @@ pub(crate) struct ForwardWave<'a> {
 
 pub(crate) struct MultiColorFadeIn<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    ascending: bool,
+    color_index: usize,
     prng: SmallRng,
+    current_step: u8,
+    step: u8,
 }
 
 pub(crate) struct MultiColorHeartbeat<'a> {

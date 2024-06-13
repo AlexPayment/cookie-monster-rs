@@ -13,7 +13,7 @@ use ws2812_spi::Ws2812;
 
 impl<'a> MultiColorHeartbeat<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
-        MultiColorHeartbeat {
+        Self {
             data,
             color_index: 0,
             prng: SmallRng::seed_from_u64(random_seed),
@@ -69,7 +69,7 @@ impl Animation for MultiColorHeartbeat<'_> {
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         match self.sequence {
             0 | 1 | 2 => timer.delay_ms(settings.delay),
-            3 => timer.delay_ms(settings.delay * 30),
+            3 => timer.delay_ms(settings.delay * 25),
             _ => timer.delay_ms(settings.delay),
         }
     }
