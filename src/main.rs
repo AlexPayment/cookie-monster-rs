@@ -1,10 +1,10 @@
 #![no_std]
 #![no_main]
 
-use crate::animations::{MultiColorFadeIn, MultiColorHeartbeat, UniColorHeartbeat};
 use animations::{
-    Animation, ForwardWave, MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, Settings,
-    UniColorFadeIn, UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+    Animation, Carrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat, MultiColorSolid,
+    MultiColorSolidRandom, MultiColorSparkle, Settings, UniColorFadeIn, UniColorHeartbeat,
+    UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
 };
 use core::cell::RefCell;
 use core::cmp;
@@ -23,7 +23,7 @@ use ws2812_spi::Ws2812;
 
 mod animations;
 
-const NUM_ANIMATIONS: usize = 10;
+const NUM_ANIMATIONS: usize = 11;
 
 #[entry]
 fn main() -> ! {
@@ -67,6 +67,7 @@ fn main() -> ! {
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
 
     rprintln!("Initialize animations...");
+    let mut carrousel = Carrousel::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
     let mut multi_color_fade_in = MultiColorFadeIn::new(&data, rng.random_u64());
     let mut multi_color_heartbeat = MultiColorHeartbeat::new(&data, rng.random_u64());
@@ -79,6 +80,7 @@ fn main() -> ! {
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
 
     let animations: [&mut dyn Animation; NUM_ANIMATIONS] = [
+        &mut carrousel,
         &mut uni_color_sparkle,
         &mut multi_color_sparkle,
         &mut forward_wave,
@@ -91,48 +93,61 @@ fn main() -> ! {
         &mut multi_color_heartbeat,
     ];
 
-    let mut animation = default_value as i16;
-    let mut brightness = default_value as i16;
-    let mut color = default_value as i16;
+    let mut animation_value = default_value as i16;
+    let mut previous_animation_index = -1;
+    let mut brightness_value = default_value as i16;
+    let mut color_value = default_value as i16;
     let mut color_index = 9;
-    let mut delay = default_value as i16;
+    let mut delay_value = default_value as i16;
 
     let mut settings = Settings::new(
         color_index,
         // Value between 0 and 1
-        brightness as f32 / max_value as f32,
-        calculate_delay(delay, max_value),
+        brightness_value as f32 / max_value as f32,
+        calculate_delay(delay_value, max_value),
     );
 
     rprintln!("Starting main loop...");
     loop {
-        animation =
-            read_potentiometer(&mut adc, &mut animation_pin, animation, 0, max_value as i16);
-        brightness = read_potentiometer(
+        animation_value = read_potentiometer(
+            &mut adc,
+            &mut animation_pin,
+            animation_value,
+            0,
+            max_value as i16,
+        );
+        brightness_value = read_potentiometer(
             &mut adc,
             &mut brightness_pin,
-            brightness,
+            brightness_value,
             1,
             max_value as i16,
         );
-        color = read_potentiometer(&mut adc, &mut color_pin, color, 0, max_value as i16);
-        delay = read_potentiometer(&mut adc, &mut delay_pin, delay, 0, max_value as i16);
+        color_value =
+            read_potentiometer(&mut adc, &mut color_pin, color_value, 0, max_value as i16);
+        delay_value =
+            read_potentiometer(&mut adc, &mut delay_pin, delay_value, 0, max_value as i16);
 
         rprintln!(
             "Animation: {:>5}, Brightness: {:>5}, Color: {:>5}, Delay: {:>5}",
-            animation,
-            brightness,
-            color,
-            delay
+            animation_value,
+            brightness_value,
+            color_value,
+            delay_value
         );
 
-        let animation_index = calculate_index(animation, max_value, NUM_ANIMATIONS);
-        color_index = calculate_index(color, max_value, NUM_COLORS);
+        let animation_index = calculate_index(animation_value, max_value, NUM_ANIMATIONS);
+        color_index = calculate_index(color_value, max_value, NUM_COLORS);
+
+        if animation_index as isize != previous_animation_index {
+            animations[animation_index].reset();
+            previous_animation_index = animation_index as isize;
+        }
 
         // Value between 0 and 1
-        settings.set_brightness(calculate_brightness(brightness, max_value));
+        settings.set_brightness(calculate_brightness(brightness_value, max_value));
         settings.set_color_index(color_index);
-        settings.set_delay(calculate_delay(delay, max_value));
+        settings.set_delay(calculate_delay(delay_value, max_value));
 
         rprintln!("{:?}", settings);
         rprintln!("Current animation: {}", animation_index);

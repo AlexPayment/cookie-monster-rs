@@ -9,13 +9,14 @@ use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
+const STEP: u8 = 23;
+
 impl<'a> UniColorFadeIn<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
         Self {
             data,
             ascending: true,
             current_step: 0,
-            step: 23,
         }
     }
 }
@@ -26,7 +27,7 @@ impl<'a> Animation for UniColorFadeIn<'a> {
     ) {
         animations::reset_data(self.data);
 
-        let brightness = (settings.brightness / self.step as f32) * self.current_step as f32;
+        let brightness = (settings.brightness / STEP as f32) * self.current_step as f32;
         let color =
             animations::create_color_with_brightness(&COLORS[settings.color_index], &brightness);
         for i in 0..NUM_LEDS {
@@ -34,7 +35,7 @@ impl<'a> Animation for UniColorFadeIn<'a> {
         }
         if self.ascending {
             self.current_step += 1;
-            if self.current_step >= self.step {
+            if self.current_step >= STEP {
                 self.ascending = false;
             }
         } else {
@@ -46,5 +47,11 @@ impl<'a> Animation for UniColorFadeIn<'a> {
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(settings.delay);
+    }
+
+    fn reset(&mut self) {
+        animations::reset_data(self.data);
+        self.ascending = true;
+        self.current_step = 0;
     }
 }

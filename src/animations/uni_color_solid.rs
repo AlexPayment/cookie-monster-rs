@@ -33,4 +33,8 @@ impl Animation for UniColorSolid<'_> {
         // 1-second delay.
         timer.delay_ms(1_000u32);
     }
+
+    fn reset(&mut self) {
+        animations::reset_data(self.data);
+    }
 }

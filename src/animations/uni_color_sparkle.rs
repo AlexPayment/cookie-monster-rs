@@ -46,4 +46,8 @@ impl Animation for UniColorSparkle<'_> {
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(random_delay);
     }
+
+    fn reset(&mut self) {
+        animations::reset_data(self.data);
+    }
 }

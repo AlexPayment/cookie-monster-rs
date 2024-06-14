@@ -7,6 +7,7 @@ use smart_leds::colors::{AQUA, BLUE, GREEN, PURPLE, RED, WHITE, YELLOW};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
+pub(crate) mod carrousel;
 pub(crate) mod forward_wave;
 pub(crate) mod multi_color_fade_in;
 pub(crate) mod multi_color_heartbeat;
@@ -27,6 +28,8 @@ pub(crate) trait Animation {
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
         settings: &Settings,
     );
+
+    fn reset(&mut self);
 }
 
 pub(crate) const COLORS: [RGB8; NUM_COLORS] = [WHITE, RED, YELLOW, GREEN, AQUA, BLUE, PURPLE];
@@ -61,7 +64,10 @@ impl Settings {
 }
 
 pub(crate) struct Carrousel<'a> {
+    color_index: usize,
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    position: usize,
+    prng: SmallRng,
 }
 
 pub(crate) struct DoubleCarrousel<'a> {
@@ -79,7 +85,6 @@ pub(crate) struct MultiColorFadeIn<'a> {
     color_index: usize,
     prng: SmallRng,
     current_step: u8,
-    step: u8,
 }
 
 pub(crate) struct MultiColorHeartbeat<'a> {
@@ -88,7 +93,6 @@ pub(crate) struct MultiColorHeartbeat<'a> {
     prng: SmallRng,
     current_step: u8,
     sequence: u8,
-    step: u8,
 }
 
 pub(crate) struct MultiColorSolid<'a> {
@@ -98,7 +102,6 @@ pub(crate) struct MultiColorSolid<'a> {
 pub(crate) struct MultiColorSolidRandom<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
-    rendered: bool,
     rendered_data: [RGB8; NUM_LEDS],
 }
 
@@ -111,14 +114,12 @@ pub(crate) struct UniColorFadeIn<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     ascending: bool,
     current_step: u8,
-    step: u8,
 }
 
 pub(crate) struct UniColorHeartbeat<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     current_step: u8,
     sequence: u8,
-    step: u8,
 }
 
 pub(crate) struct UniColorSolid<'a> {

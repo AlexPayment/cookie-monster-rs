@@ -9,9 +9,11 @@ use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
+const LEDS_PER_COLOR: usize = NUM_LEDS / NUM_COLORS;
+
 impl<'a> MultiColorSolid<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        MultiColorSolid { data }
+        Self { data }
     }
 }
 
@@ -21,11 +23,10 @@ impl Animation for MultiColorSolid<'_> {
     ) {
         animations::reset_data(self.data);
 
-        let leds_per_color = NUM_LEDS / NUM_COLORS;
         let mut color_index = 0;
 
         for i in 0..NUM_LEDS {
-            if i % leds_per_color == 0 {
+            if i % LEDS_PER_COLOR == 0 {
                 color_index += 1;
             }
             self.data.borrow_mut()[i] = animations::create_color_with_brightness(
@@ -38,5 +39,9 @@ impl Animation for MultiColorSolid<'_> {
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
         timer.delay_ms(1_000u32);
+    }
+
+    fn reset(&mut self) {
+        animations::reset_data(self.data);
     }
 }

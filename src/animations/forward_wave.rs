@@ -44,4 +44,9 @@ impl Animation for ForwardWave<'_> {
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(settings.delay);
     }
+
+    fn reset(&mut self) {
+        animations::reset_data(self.data);
+        self.position = 0;
+    }
 }
