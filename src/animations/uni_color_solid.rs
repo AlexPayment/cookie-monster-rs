@@ -19,8 +19,6 @@ impl Animation for UniColorSolid<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        animations::reset_data(self.data);
-
         self.data.borrow_mut().iter_mut().for_each(|e| {
             *e = animations::create_color_with_brightness(
                 &COLORS[settings.color_index],

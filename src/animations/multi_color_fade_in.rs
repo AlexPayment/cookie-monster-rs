@@ -25,12 +25,10 @@ impl<'a> MultiColorFadeIn<'a> {
     }
 }
 
-impl<'a> Animation for MultiColorFadeIn<'a> {
+impl Animation for MultiColorFadeIn<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        animations::reset_data(self.data);
-
         let brightness = (settings.brightness / STEP as f32) * self.current_step as f32;
         let color =
             animations::create_color_with_brightness(&COLORS[self.color_index], &brightness);

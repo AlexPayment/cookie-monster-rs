@@ -3,7 +3,10 @@ use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
 use microbit::pac::SPI0;
 use rand::prelude::SmallRng;
-use smart_leds::colors::{AQUA, BLUE, GREEN, PURPLE, RED, WHITE, YELLOW};
+use smart_leds::colors::{
+    BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
+    WHITE,
+};
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
@@ -15,13 +18,15 @@ pub(crate) mod multi_color_heartbeat;
 pub(crate) mod multi_color_solid;
 pub(crate) mod multi_color_solid_random;
 pub(crate) mod multi_color_sparkle;
+pub(crate) mod multi_color_strand;
 pub(crate) mod uni_color_fade_in;
 pub(crate) mod uni_color_heartbeat;
 pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
-pub const NUM_COLORS: usize = 7;
+pub const NUM_COLORS: usize = 11;
 pub const NUM_LEDS: usize = 96 * 10;
+const NUM_STRANDS: usize = 250;
 const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Animation {
@@ -33,7 +38,19 @@ pub(crate) trait Animation {
     fn reset(&mut self);
 }
 
-pub(crate) const COLORS: [RGB8; NUM_COLORS] = [WHITE, RED, YELLOW, GREEN, AQUA, BLUE, PURPLE];
+pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
+    WHITE,
+    RED,
+    DARK_RED,
+    GOLD,
+    GREEN,
+    DARK_GREEN,
+    DARK_TURQUOISE,
+    BLUE,
+    MIDNIGHT_BLUE,
+    PURPLE,
+    INDIGO,
+];
 
 #[derive(Clone, Copy, Debug)]
 pub struct Settings {
@@ -114,6 +131,20 @@ pub(crate) struct MultiColorSolidRandom<'a> {
 pub(crate) struct MultiColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
+}
+
+pub(crate) struct MultiColorStrand<'a> {
+    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    prng: SmallRng,
+    strands: [Strand; NUM_STRANDS],
+}
+
+#[derive(Clone, Copy, Default)]
+struct Strand {
+    color_index: usize,
+    start: usize,
+    end: usize,
+    position: usize,
 }
 
 pub(crate) struct UniColorFadeIn<'a> {

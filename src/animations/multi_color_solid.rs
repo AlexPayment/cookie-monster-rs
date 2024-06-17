@@ -21,8 +21,6 @@ impl Animation for MultiColorSolid<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        animations::reset_data(self.data);
-
         let mut color_index = 0;
 
         for i in 0..NUM_LEDS {

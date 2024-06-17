@@ -13,16 +13,14 @@ use ws2812_spi::Ws2812;
 
 impl<'a> Carrousel<'a> {
     pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
-        let mut carrousel = Self {
-            color_index: 0,
+        let mut prng = SmallRng::seed_from_u64(random_seed);
+        let color_index = prng.gen_range(0..NUM_COLORS);
+        Self {
+            color_index,
             data,
             position: 0,
-            prng: SmallRng::seed_from_u64(random_seed),
-        };
-
-        carrousel.color_index = carrousel.prng.gen_range(0..NUM_COLORS);
-
-        carrousel
+            prng,
+        }
     }
 }
 

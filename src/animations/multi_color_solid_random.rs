@@ -36,8 +36,6 @@ impl Animation for MultiColorSolidRandom<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        animations::reset_data(self.data);
-
         for i in 0..NUM_LEDS {
             self.data.borrow_mut()[i] = animations::create_color_with_brightness(
                 &self.rendered_data[i],

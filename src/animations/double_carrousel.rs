@@ -15,19 +15,17 @@ const LEDS_PER_CARROUSEL: usize = NUM_LEDS / 2;
 
 impl<'a> DoubleCarrousel<'a> {
     pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
-        let mut carrousel = Self {
-            color_index_1: 0,
-            color_index_2: 0,
+        let mut prng = SmallRng::seed_from_u64(random_seed);
+        let color_index_1 = prng.gen_range(0..NUM_COLORS);
+        let color_index_2 = prng.gen_range(0..NUM_COLORS);
+        Self {
+            color_index_1,
+            color_index_2,
             data,
             position_1: 0,
             position_2: NUM_LEDS - 1,
-            prng: SmallRng::seed_from_u64(random_seed),
-        };
-
-        carrousel.color_index_1 = carrousel.prng.gen_range(0..NUM_COLORS);
-        carrousel.color_index_2 = carrousel.prng.gen_range(0..NUM_COLORS);
-
-        carrousel
+            prng,
+        }
     }
 }
 

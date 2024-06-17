@@ -21,7 +21,7 @@ impl<'a> UniColorFadeIn<'a> {
     }
 }
 
-impl<'a> Animation for UniColorFadeIn<'a> {
+impl Animation for UniColorFadeIn<'_> {
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
