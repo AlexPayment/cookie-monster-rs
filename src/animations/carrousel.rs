@@ -38,7 +38,12 @@ impl Animation for Carrousel<'_> {
         self.position += 1;
         if self.position >= NUM_LEDS {
             self.position = 0;
-            self.color_index = self.prng.gen_range(0..NUM_COLORS);
+            let mut new_color = self.prng.gen_range(0..NUM_COLORS);
+            while self.color_index == new_color {
+                // Make sure the new color is different from the current color
+                new_color = self.prng.gen_range(0..NUM_COLORS);
+            }
+            self.color_index = new_color;
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();

@@ -2,9 +2,9 @@
 #![no_main]
 
 use animations::{
-    Animation, Carrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat, MultiColorSolid,
-    MultiColorSolidRandom, MultiColorSparkle, Settings, UniColorFadeIn, UniColorHeartbeat,
-    UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+    Animation, Carrousel, DoubleCarrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat,
+    MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, Settings, UniColorFadeIn,
+    UniColorHeartbeat, UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
 };
 use core::cell::RefCell;
 use core::cmp;
@@ -23,7 +23,7 @@ use ws2812_spi::Ws2812;
 
 mod animations;
 
-const NUM_ANIMATIONS: usize = 11;
+const NUM_ANIMATIONS: usize = 12;
 
 #[entry]
 fn main() -> ! {
@@ -68,6 +68,7 @@ fn main() -> ! {
 
     rprintln!("Initialize animations...");
     let mut carrousel = Carrousel::new(&data, rng.random_u64());
+    let mut double_carrousel = DoubleCarrousel::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
     let mut multi_color_fade_in = MultiColorFadeIn::new(&data, rng.random_u64());
     let mut multi_color_heartbeat = MultiColorHeartbeat::new(&data, rng.random_u64());
@@ -81,6 +82,7 @@ fn main() -> ! {
 
     let animations: [&mut dyn Animation; NUM_ANIMATIONS] = [
         &mut carrousel,
+        &mut double_carrousel,
         &mut uni_color_sparkle,
         &mut multi_color_sparkle,
         &mut forward_wave,

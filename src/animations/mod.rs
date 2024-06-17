@@ -8,6 +8,7 @@ use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
 pub(crate) mod carrousel;
+pub(crate) mod double_carrousel;
 pub(crate) mod forward_wave;
 pub(crate) mod multi_color_fade_in;
 pub(crate) mod multi_color_heartbeat;
@@ -71,7 +72,12 @@ pub(crate) struct Carrousel<'a> {
 }
 
 pub(crate) struct DoubleCarrousel<'a> {
+    color_index_1: usize,
+    color_index_2: usize,
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    position_1: usize,
+    position_2: usize,
+    prng: SmallRng,
 }
 
 pub(crate) struct ForwardWave<'a> {
