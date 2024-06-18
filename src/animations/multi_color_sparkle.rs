@@ -22,6 +22,10 @@ impl<'a> MultiColorSparkle<'a> {
 }
 
 impl Animation for MultiColorSparkle<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -32,14 +36,14 @@ impl Animation for MultiColorSparkle<'_> {
         for _ in 0..sparkle_amount {
             let index = self.prng.gen_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.gen_range(0.0..settings.brightness);
+            let brightness = self.prng.gen_range(0.0..=self.brightness(settings));
             let random_color = RGB8::new(
                 self.prng.gen_range(0..255),
                 self.prng.gen_range(0..255),
                 self.prng.gen_range(0..255),
             );
             self.data.borrow_mut()[index] =
-                animations::create_color_with_brightness(&random_color, &brightness);
+                animations::create_color_with_brightness(&random_color, brightness);
         }
 
         let random_delay = self

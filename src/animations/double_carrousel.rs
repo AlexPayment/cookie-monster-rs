@@ -30,16 +30,20 @@ impl<'a> DoubleCarrousel<'a> {
 }
 
 impl Animation for DoubleCarrousel<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness * 0.1
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         self.data.borrow_mut()[self.position_1] = animations::create_color_with_brightness(
             &animations::COLORS[self.color_index_1],
-            &settings.brightness,
+            self.brightness(settings),
         );
         self.data.borrow_mut()[self.position_2] = animations::create_color_with_brightness(
             &animations::COLORS[self.color_index_2],
-            &settings.brightness,
+            self.brightness(settings),
         );
 
         self.position_1 += 1;

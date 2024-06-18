@@ -18,6 +18,10 @@ impl<'a> MultiColorSolid<'a> {
 }
 
 impl Animation for MultiColorSolid<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness * 0.1
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -29,7 +33,7 @@ impl Animation for MultiColorSolid<'_> {
             }
             self.data.borrow_mut()[i] = animations::create_color_with_brightness(
                 &animations::COLORS[color_index % NUM_COLORS],
-                &settings.brightness,
+                self.brightness(settings),
             );
         }
 

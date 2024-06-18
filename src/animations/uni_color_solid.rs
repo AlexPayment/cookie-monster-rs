@@ -16,13 +16,17 @@ impl<'a> UniColorSolid<'a> {
 }
 
 impl Animation for UniColorSolid<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness * 0.1
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         self.data.borrow_mut().iter_mut().for_each(|e| {
             *e = animations::create_color_with_brightness(
                 &COLORS[settings.color_index],
-                &settings.brightness,
+                self.brightness(settings),
             )
         });
 

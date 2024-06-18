@@ -30,6 +30,8 @@ const NUM_STRANDS: usize = 250;
 const SHORTEST_DELAY: u32 = 5;
 
 pub(crate) trait Animation {
+    fn brightness(&self, settings: &Settings) -> f32;
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
         settings: &Settings,
@@ -169,7 +171,7 @@ pub(crate) struct UniColorSparkle<'a> {
     prng: SmallRng,
 }
 
-fn create_color_with_brightness(color: &RGB8, brightness: &f32) -> RGB8 {
+fn create_color_with_brightness(color: &RGB8, brightness: f32) -> RGB8 {
     RGB8::new(
         (color.r as f32 * brightness) as u8,
         (color.g as f32 * brightness) as u8,

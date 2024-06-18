@@ -25,12 +25,16 @@ impl<'a> Carrousel<'a> {
 }
 
 impl Animation for Carrousel<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness * 0.1
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         self.data.borrow_mut()[self.position] = animations::create_color_with_brightness(
             &animations::COLORS[self.color_index],
-            &settings.brightness,
+            self.brightness(settings),
         );
 
         self.position += 1;

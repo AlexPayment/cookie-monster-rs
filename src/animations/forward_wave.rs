@@ -14,33 +14,49 @@ const WAVE_SECTION_LENGTH: usize = WAVE_LENGTH / 5;
 
 impl<'a> ForwardWave<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        Self { data, position: 0, wrapped: false }
+        Self {
+            data,
+            position: 0,
+            wrapped: false,
+        }
     }
 
     fn get_wave(&self, settings: &Settings) -> [f32; WAVE_LENGTH] {
         let mut wave = [0.0; WAVE_LENGTH];
 
         wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
-            *item = settings.brightness / 10.0;
+            *item = self.brightness(settings) / 10.0;
         });
-        wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
-            *item = settings.brightness;
-        });
-        wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
-            *item = settings.brightness / 4.0;
-        });
-        wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
-            *item = settings.brightness / 6.0;
-        });
-        wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH].iter_mut().for_each(|item| {
-            *item = settings.brightness / 10.0;
-        });
+        wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)]
+            .iter_mut()
+            .for_each(|item| {
+                *item = self.brightness(settings);
+            });
+        wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)]
+            .iter_mut()
+            .for_each(|item| {
+                *item = self.brightness(settings) / 4.0;
+            });
+        wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)]
+            .iter_mut()
+            .for_each(|item| {
+                *item = self.brightness(settings) / 6.0;
+            });
+        wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH]
+            .iter_mut()
+            .for_each(|item| {
+                *item = self.brightness(settings) / 10.0;
+            });
 
         wave
     }
 }
 
 impl Animation for ForwardWave<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
@@ -53,15 +69,24 @@ impl Animation for ForwardWave<'_> {
             if self.wrapped {
                 if led_index < 0 {
                     self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
-                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                        animations::create_color_with_brightness(
+                            &COLORS[settings.color_index],
+                            *item,
+                        );
                 } else {
                     self.data.borrow_mut()[led_index as usize] =
-                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                        animations::create_color_with_brightness(
+                            &COLORS[settings.color_index],
+                            *item,
+                        );
                 }
             } else {
                 if led_index >= 0 {
                     self.data.borrow_mut()[led_index as usize] =
-                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                        animations::create_color_with_brightness(
+                            &COLORS[settings.color_index],
+                            *item,
+                        );
                 }
             }
         }

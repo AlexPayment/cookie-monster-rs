@@ -47,17 +47,21 @@ impl<'a> MultiColorStrand<'a> {
 }
 
 impl Animation for MultiColorStrand<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         animations::reset_data(self.data);
 
+        let brightness = self.brightness(settings);
+
         for strand in self.strands.iter_mut() {
             update_strand(strand);
-            self.data.borrow_mut()[strand.position] = animations::create_color_with_brightness(
-                &COLORS[strand.color_index],
-                &settings.brightness,
-            );
+            self.data.borrow_mut()[strand.position] =
+                animations::create_color_with_brightness(&COLORS[strand.color_index], brightness);
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();

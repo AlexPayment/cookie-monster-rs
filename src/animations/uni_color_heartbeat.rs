@@ -22,12 +22,16 @@ impl<'a> UniColorHeartbeat<'a> {
 }
 
 impl Animation for UniColorHeartbeat<'_> {
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness * 0.1
+    }
+
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        let brightness = (settings.brightness / STEP as f32) * self.current_step as f32;
+        let brightness = (self.brightness(settings) / STEP as f32) * self.current_step as f32;
         let color =
-            animations::create_color_with_brightness(&COLORS[settings.color_index], &brightness);
+            animations::create_color_with_brightness(&COLORS[settings.color_index], brightness);
         for i in 0..NUM_LEDS {
             self.data.borrow_mut()[i] = color;
         }
