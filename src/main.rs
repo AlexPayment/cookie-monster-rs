@@ -162,9 +162,9 @@ fn main() -> ! {
 
 /// Calculate the brightness based on the value of the potentiometer.
 ///
-/// The value is between 0 and 0.3 to avoid the LEDs being too bright for the power supply.
+/// The value is between 0 and 1.
 fn calculate_brightness(value: i16, max_value: u16) -> f32 {
-    value as f32 / max_value as f32 * 0.3
+    value as f32 / max_value as f32
 }
 
 /// Calculate the delay in milliseconds based on the value of the potentiometer.
