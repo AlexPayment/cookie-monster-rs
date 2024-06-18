@@ -9,9 +9,34 @@ use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
+const WAVE_LENGTH: usize = 15;
+const WAVE_SECTION_LENGTH: usize = WAVE_LENGTH / 5;
+
 impl<'a> ForwardWave<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
-        Self { data, position: 0 }
+        Self { data, position: 0, wrapped: false }
+    }
+
+    fn get_wave(&self, settings: &Settings) -> [f32; WAVE_LENGTH] {
+        let mut wave = [0.0; WAVE_LENGTH];
+
+        wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
+            *item = settings.brightness / 10.0;
+        });
+        wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
+            *item = settings.brightness;
+        });
+        wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
+            *item = settings.brightness / 4.0;
+        });
+        wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)].iter_mut().for_each(|item| {
+            *item = settings.brightness / 6.0;
+        });
+        wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH].iter_mut().for_each(|item| {
+            *item = settings.brightness / 10.0;
+        });
+
+        wave
     }
 }
 
@@ -21,24 +46,30 @@ impl Animation for ForwardWave<'_> {
     ) {
         animations::reset_data(self.data);
 
-        // TODO: Make the wave size dynamic based on the number of LEDs
-        let wave = [
-            settings.brightness / 10.0,
-            settings.brightness / 6.0,
-            settings.brightness / 4.0,
-            settings.brightness,
-            settings.brightness / 10.0,
-        ];
+        let wave = self.get_wave(settings);
 
-        // TODO: The wave shouldn't jump when it reaches the end
         for (i, item) in wave.iter().enumerate() {
-            self.data.borrow_mut()[self.position + i] =
-                animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+            let led_index = (self.position - i) as isize;
+            if self.wrapped {
+                if led_index < 0 {
+                    self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
+                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                } else {
+                    self.data.borrow_mut()[led_index as usize] =
+                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                }
+            } else {
+                if led_index >= 0 {
+                    self.data.borrow_mut()[led_index as usize] =
+                        animations::create_color_with_brightness(&COLORS[settings.color_index], item);
+                }
+            }
         }
 
         self.position += 1;
-        if self.position >= NUM_LEDS - wave.len() {
+        if self.position >= NUM_LEDS {
             self.position = 0;
+            self.wrapped = true;
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
@@ -48,5 +79,6 @@ impl Animation for ForwardWave<'_> {
     fn reset(&mut self) {
         animations::reset_data(self.data);
         self.position = 0;
+        self.wrapped = false;
     }
 }

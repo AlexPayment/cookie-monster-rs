@@ -100,6 +100,7 @@ pub(crate) struct DoubleCarrousel<'a> {
 pub(crate) struct ForwardWave<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     position: usize,
+    wrapped: bool,
 }
 
 pub(crate) struct MultiColorFadeIn<'a> {
