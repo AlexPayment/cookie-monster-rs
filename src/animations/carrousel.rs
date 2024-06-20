@@ -26,7 +26,7 @@ impl<'a> Carrousel<'a> {
 
 impl Animation for Carrousel<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.05
     }
 
     fn render(

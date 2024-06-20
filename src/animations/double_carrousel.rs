@@ -31,7 +31,7 @@ impl<'a> DoubleCarrousel<'a> {
 
 impl Animation for DoubleCarrousel<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.05
     }
 
     fn render(

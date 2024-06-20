@@ -80,14 +80,9 @@ impl Animation for ForwardWave<'_> {
                             *item,
                         );
                 }
-            } else {
-                if led_index >= 0 {
-                    self.data.borrow_mut()[led_index as usize] =
-                        animations::create_color_with_brightness(
-                            &COLORS[settings.color_index],
-                            *item,
-                        );
-                }
+            } else if led_index >= 0 {
+                self.data.borrow_mut()[led_index as usize] =
+                    animations::create_color_with_brightness(&COLORS[settings.color_index], *item);
             }
         }
 

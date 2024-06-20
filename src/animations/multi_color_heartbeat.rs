@@ -15,10 +15,11 @@ const STEP: u8 = 10;
 
 impl<'a> MultiColorHeartbeat<'a> {
     pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
+        let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
             data,
-            color_index: 0,
-            prng: SmallRng::seed_from_u64(random_seed),
+            color_index: prng.gen_range(0..NUM_COLORS),
+            prng,
             current_step: 0,
             sequence: 0,
         }
@@ -27,7 +28,7 @@ impl<'a> MultiColorHeartbeat<'a> {
 
 impl Animation for MultiColorHeartbeat<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.05
     }
 
     fn render(
@@ -78,7 +79,6 @@ impl Animation for MultiColorHeartbeat<'_> {
 
     fn reset(&mut self) {
         animations::reset_data(self.data);
-        self.color_index = 0;
         self.current_step = 0;
         self.sequence = 0;
     }

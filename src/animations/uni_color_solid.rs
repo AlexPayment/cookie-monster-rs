@@ -17,7 +17,7 @@ impl<'a> UniColorSolid<'a> {
 
 impl Animation for UniColorSolid<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.05
     }
 
     fn render(

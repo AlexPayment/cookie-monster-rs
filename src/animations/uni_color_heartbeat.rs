@@ -23,7 +23,7 @@ impl<'a> UniColorHeartbeat<'a> {
 
 impl Animation for UniColorHeartbeat<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.05
     }
 
     fn render(

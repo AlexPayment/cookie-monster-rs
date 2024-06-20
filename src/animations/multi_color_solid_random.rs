@@ -34,7 +34,7 @@ impl<'a> MultiColorSolidRandom<'a> {
 
 impl Animation for MultiColorSolidRandom<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.1
+        settings.brightness * 0.2
     }
 
     fn render(
