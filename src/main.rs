@@ -23,7 +23,7 @@ use ws2812_spi::Ws2812;
 
 mod animations;
 
-const NUM_ANIMATIONS: usize = 13;
+const NUM_ANIMATIONS: usize = 14;
 
 #[entry]
 fn main() -> ! {
@@ -77,6 +77,7 @@ fn main() -> ! {
     let mut multi_color_sparkle = MultiColorSparkle::new(&data, rng.random_u64());
     let mut multi_color_strand = MultiColorStrand::new(&data, rng.random_u64());
     let mut uni_color_fade_in = UniColorFadeIn::new(&data);
+    let mut uni_color_front_to_back_wave = animations::UniColorFrontToBackWave::new(&data);
     let mut uni_color_heartbeat = UniColorHeartbeat::new(&data);
     let mut uni_color_solid = UniColorSolid::new(&data);
     let mut uni_color_sparkle = UniColorSparkle::new(&data, rng.random_u64());
@@ -90,6 +91,7 @@ fn main() -> ! {
         &mut forward_wave,
         &mut uni_color_fade_in,
         &mut multi_color_fade_in,
+        &mut uni_color_front_to_back_wave,
         &mut multi_color_solid,
         &mut multi_color_solid_random,
         &mut uni_color_solid,
