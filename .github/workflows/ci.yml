@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rs/toolchain@v1.0.6
+      with:
+        target: thumbv7em-none-eabihf
+    - name: Build
+      run: cargo build --verbose --target thumbv7em-none-eabihf
