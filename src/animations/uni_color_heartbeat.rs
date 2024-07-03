@@ -3,8 +3,8 @@ use crate::animations::{Animation, Settings, UniColorHeartbeat, COLORS, NUM_LEDS
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
-use nrf_hal_common::spi::Spi;
-use nrf_hal_common::Timer;
+use microbit::hal::spi::Spi;
+use microbit::hal::Timer;
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
