@@ -1,4 +1,5 @@
 use core::cell::RefCell;
+use defmt::Format;
 use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
 use microbit::pac::SPI0;
@@ -398,7 +399,7 @@ const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [
     ],
 ];
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Format)]
 pub struct Settings {
     pub brightness: f32,
     pub color_index: usize,

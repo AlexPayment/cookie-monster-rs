@@ -9,15 +9,16 @@ use animations::{
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m_rt::entry;
+use defmt::{debug, info};
+use defmt_rtt as _;
 use microbit::adc::{Adc, AdcConfig};
 use microbit::hal::gpio::p0::Parts;
 use microbit::hal::gpio::Level;
 use microbit::hal::{spi, spim, Timer};
 use microbit::{hal, Peripherals};
-use nrf52833_hal::Saadc;
 use nrf52833_hal::saadc::Channel;
-use panic_rtt_target as _;
-use rtt_target::{rprintln, rtt_init_print};
+use nrf52833_hal::Saadc;
+use panic_probe as _;
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;
 
@@ -27,8 +28,6 @@ const NUM_ANIMATIONS: usize = 14;
 
 #[entry]
 fn main() -> ! {
-    rtt_init_print!();
-
     // Setup all peripherals and the WS2812 device
     let peripherals = Peripherals::take().unwrap();
 
@@ -62,11 +61,11 @@ fn main() -> ! {
     // Get the maximum value of the potentiometer. Must match the default resolution of the ADC which is 14 bits.
     let max_value = 2u16.pow(14) - 1;
     let default_value = max_value / 2;
-    rprintln!("Max potentiometer value: {}", max_value);
+    debug!("Max potentiometer value: {}", max_value);
 
     let data = RefCell::new([RGB8::default(); NUM_LEDS]);
 
-    rprintln!("Initialize animations...");
+    info!("Initialize animations...");
     let mut carrousel = Carrousel::new(&data, rng.random_u64());
     let mut double_carrousel = DoubleCarrousel::new(&data, rng.random_u64());
     let mut forward_wave = ForwardWave::new(&data);
@@ -113,7 +112,7 @@ fn main() -> ! {
         calculate_delay(delay_value, max_value),
     );
 
-    rprintln!("Starting main loop...");
+    info!("Starting main loop...");
     loop {
         animation_value = read_potentiometer(
             &mut adc,
@@ -134,18 +133,17 @@ fn main() -> ! {
         delay_value =
             read_potentiometer(&mut adc, &mut delay_pin, delay_value, 0, max_value as i16);
 
-        rprintln!(
-            "Animation: {:>5}, Brightness: {:>5}, Color: {:>5}, Delay: {:>5}",
-            animation_value,
-            brightness_value,
-            color_value,
-            delay_value
+        debug!(
+            "Animation: {}, Brightness: {}, Color: {}, Delay: {}",
+            animation_value, brightness_value, color_value, delay_value
         );
 
         let animation_index = calculate_index(animation_value, max_value, NUM_ANIMATIONS);
         color_index = calculate_index(color_value, max_value, NUM_COLORS);
 
-        if previous_animation_index.is_none() || animation_index != previous_animation_index.unwrap() {
+        if previous_animation_index.is_none()
+            || animation_index != previous_animation_index.unwrap()
+        {
             animations[animation_index].reset();
             previous_animation_index = Some(animation_index);
         }
@@ -155,8 +153,8 @@ fn main() -> ! {
         settings.set_color_index(color_index);
         settings.set_delay(calculate_delay(delay_value, max_value));
 
-        rprintln!("{:?}", settings);
-        rprintln!("Current animation: {}", animation_index);
+        debug!("{:?}", settings);
+        debug!("Current animation: {}", animation_index);
 
         animations[animation_index].render(&mut ws2812, &mut timer, &settings);
     }
