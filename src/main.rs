@@ -100,7 +100,7 @@ fn main() -> ! {
     ];
 
     let mut animation_value = default_value as i16;
-    let mut previous_animation_index = -1;
+    let mut previous_animation_index = None;
     let mut brightness_value = default_value as i16;
     let mut color_value = default_value as i16;
     let mut color_index = 9;
@@ -145,9 +145,9 @@ fn main() -> ! {
         let animation_index = calculate_index(animation_value, max_value, NUM_ANIMATIONS);
         color_index = calculate_index(color_value, max_value, NUM_COLORS);
 
-        if animation_index as isize != previous_animation_index {
+        if previous_animation_index.is_none() || animation_index != previous_animation_index.unwrap() {
             animations[animation_index].reset();
-            previous_animation_index = animation_index as isize;
+            previous_animation_index = Some(animation_index);
         }
 
         // Value between 0 and 1
