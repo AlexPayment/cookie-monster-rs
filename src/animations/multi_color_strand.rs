@@ -29,11 +29,11 @@ impl<'a> MultiColorStrand<'a> {
         let mut strands = [Strand::default(); NUM_STRANDS];
 
         for strand in strands.iter_mut() {
-            strand.color_index = prng.gen_range(0..COLORS.len());
-            strand.start = prng.gen_range(0..NUM_LEDS);
-            strand.end = prng.gen_range(0..NUM_LEDS);
-            while strand.start.abs_diff(strand.end) < 5 {
-                strand.end = prng.gen_range(0..NUM_LEDS);
+            strand.color_index = prng.gen_range(0..COLORS.len()) as u8;
+            strand.start = prng.gen_range(0..NUM_LEDS) as u16;
+            strand.end = prng.gen_range(0..NUM_LEDS) as u16;
+            while strand.start.abs_diff(strand.end) < (NUM_LEDS / 100) as u16 {
+                strand.end = prng.gen_range(0..NUM_LEDS) as u16;
             }
             strand.position = strand.start;
         }
@@ -60,8 +60,11 @@ impl Animation for MultiColorStrand<'_> {
 
         for strand in self.strands.iter_mut() {
             update_strand(strand);
-            self.data.borrow_mut()[strand.position] =
-                animations::create_color_with_brightness(&COLORS[strand.color_index], brightness);
+            self.data.borrow_mut()[strand.position as usize] =
+                animations::create_color_with_brightness(
+                    &COLORS[strand.color_index as usize],
+                    brightness,
+                );
         }
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
@@ -72,11 +75,11 @@ impl Animation for MultiColorStrand<'_> {
         animations::reset_data(self.data);
 
         for strand in self.strands.iter_mut() {
-            strand.color_index = self.prng.gen_range(0..COLORS.len());
-            strand.start = self.prng.gen_range(0..NUM_LEDS);
-            strand.end = self.prng.gen_range(0..NUM_LEDS);
+            strand.color_index = self.prng.gen_range(0..COLORS.len()) as u8;
+            strand.start = self.prng.gen_range(0..NUM_LEDS) as u16;
+            strand.end = self.prng.gen_range(0..NUM_LEDS) as u16;
             while strand.start.abs_diff(strand.end) < 5 {
-                strand.end = self.prng.gen_range(0..NUM_LEDS);
+                strand.end = self.prng.gen_range(0..NUM_LEDS) as u16;
             }
             strand.position = strand.start;
         }
@@ -87,14 +90,14 @@ fn update_strand(strand: &mut Strand) {
     if strand.start > strand.end {
         strand.position -= 1;
         if strand.position == 0 {
-            strand.position = NUM_LEDS - 1;
+            strand.position = (NUM_LEDS - 1) as u16;
         }
         if strand.position == strand.end {
             strand.position = strand.start;
         }
     } else {
         strand.position += 1;
-        if strand.position >= NUM_LEDS {
+        if strand.position as usize >= NUM_LEDS {
             strand.position = 0;
         }
         if strand.position == strand.end {
