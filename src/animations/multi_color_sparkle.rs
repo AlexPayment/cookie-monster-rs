@@ -1,10 +1,10 @@
 use crate::animations;
-use crate::animations::{Animation, MultiColorSparkle, Settings, NUM_LEDS, SHORTEST_DELAY};
+use crate::animations::{Animation, MultiColorSparkle, NUM_LEDS, SHORTEST_DELAY, Settings};
 use core::cell::RefCell;
 use core::cmp;
 use embedded_hal::delay::DelayNs;
-use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
+use microbit::hal::spi::Spi;
 use microbit::pac::{SPI0, TIMER0};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};

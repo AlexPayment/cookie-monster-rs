@@ -1,9 +1,9 @@
 use crate::animations;
-use crate::animations::{Animation, Settings, UniColorSolid, COLORS, NUM_LEDS};
+use crate::animations::{Animation, COLORS, NUM_LEDS, Settings, UniColorSolid};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
-use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
+use microbit::hal::spi::Spi;
 use microbit::pac::{SPI0, TIMER0};
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;

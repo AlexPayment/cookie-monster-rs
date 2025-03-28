@@ -1,14 +1,14 @@
 use crate::animations;
-use crate::animations::{Animation, MultiColorStrand, Settings, Strand, NUM_LEDS, NUM_STRANDS};
+use crate::animations::{Animation, MultiColorStrand, NUM_LEDS, NUM_STRANDS, Settings, Strand};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
-use microbit::hal::spi::Spi;
 use microbit::hal::Timer;
+use microbit::hal::spi::Spi;
 use microbit::pac::{SPI0, TIMER0};
 use rand::prelude::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
 use smart_leds::RGB8;
+use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 

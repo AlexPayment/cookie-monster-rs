@@ -3,8 +3,8 @@
 
 use animations::{
     Animation, Carrousel, DoubleCarrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat,
-    MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, Settings,
-    UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle, NUM_COLORS, NUM_LEDS,
+    MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
+    NUM_LEDS, Settings, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
 use core::cell::RefCell;
 use core::cmp;
@@ -12,12 +12,12 @@ use cortex_m_rt::entry;
 use defmt::{debug, info};
 use defmt_rtt as _;
 use microbit::adc::{Adc, AdcConfig};
-use microbit::hal::gpio::p0::Parts;
 use microbit::hal::gpio::Level;
-use microbit::hal::{spi, spim, Timer};
-use microbit::{hal, Peripherals};
-use nrf52833_hal::saadc::Channel;
+use microbit::hal::gpio::p0::Parts;
+use microbit::hal::{Timer, spi, spim};
+use microbit::{Peripherals, hal};
 use nrf52833_hal::Saadc;
+use nrf52833_hal::saadc::Channel;
 use panic_probe as _;
 use smart_leds::RGB8;
 use ws2812_spi::Ws2812;

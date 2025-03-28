@@ -1,12 +1,12 @@
 use crate::animations;
 use crate::animations::{
-    Animation, Settings, UniColorFrontToBackWave, COLORS, NUM_LEDS, VERTICAL_SLICES,
+    Animation, COLORS, NUM_LEDS, Settings, UniColorFrontToBackWave, VERTICAL_SLICES,
 };
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
-use nrf52833_hal::spi::Spi;
 use nrf52833_hal::Timer;
+use nrf52833_hal::spi::Spi;
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
