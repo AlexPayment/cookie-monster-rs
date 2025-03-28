@@ -1,9 +1,11 @@
 # cookie-monster-rs
-Embedded Rust project to drive a LED strip with a micro:bit v2
+Embedded Rust project to drive a LED strip with a microcontroller.
 
-## Prerequisites
+## [Micro:bit v2](https://tech.microbit.org/hardware/)
 
-### `cargo-binutils`
+### Prerequisites
+
+#### `cargo-binutils`
 
 ```console
 $ rustup component add llvm-tools-preview
@@ -14,7 +16,7 @@ $ cargo size --version
 cargo-size 0.3.6
 ```
 
-### `cargo-embed`
+#### `probe-rs` & `cargo-embed`
 
 On Debian and derived distros, the following packages need to be installed:
 
@@ -22,23 +24,22 @@ On Debian and derived distros, the following packages need to be installed:
 $ sudo apt install -y pkg-config libudev-dev
 ```
 
-Then install it with cargo:
+Then install `probe-rs` with the following command or with the latest instructions available at https://probe.rs/:
 
 ```console
-$ cargo install cargo-embed
+$ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh | sh
 
 $ cargo embed --version
-cargo-embed 0.18.0
-git commit: crates.io
+cargo-embed 0.27.0
 ```
 
-### Rust Toolchain Target
+#### Rust Toolchain Target
 
 ```console
 $ rustup target add thumbv7em-none-eabihf
 ```
 
-### `gdb`
+#### `gdb`
 
 On Debian and derived distros, the following package need to be installed:
 
@@ -48,7 +49,7 @@ $ sudo apt-get install gdb-multiarch
 
 > **NOTE** `gdb-multiarch` is the GDB command you'll use to debug
 
-### `minicom`
+#### `minicom`
 
 On Debian and derived distros, the following package need to be installed:
 
@@ -56,7 +57,7 @@ On Debian and derived distros, the following package need to be installed:
 $ sudo apt-get install minicom
 ```
 
-### udev Rules
+#### udev Rules
 
 Create the file `/etc/udev/rules.d/99-microbit.rules` and add the following content to it:
 
@@ -92,7 +93,7 @@ crw-rw-rw- 1 root root 189, 259 Mar  7 10:04 /dev/bus/usb/003/004
 
 The permissions should be `crw-rw-rw`. If they are not, make sure to repeat the udev rules steps correctly.
 
-## Install
+### Install
 
 The following command compiles and then flashes the application on the micro:bit. It first must be connected with a USB
 cable.
