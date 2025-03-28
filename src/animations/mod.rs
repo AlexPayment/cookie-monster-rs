@@ -3,7 +3,7 @@ use defmt::Format;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
 use microbit::pac::SPI0;
-use rand::prelude::SmallRng;
+use rand::rngs::SmallRng;
 use smart_leds::RGB8;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
