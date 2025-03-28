@@ -18,7 +18,7 @@ impl<'a> MultiColorHeartbeat<'a> {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
             data,
-            color_index: prng.gen_range(0..NUM_COLORS),
+            color_index: prng.random_range(0..NUM_COLORS),
             prng,
             current_step: 0,
             sequence: 0,
@@ -62,7 +62,7 @@ impl Animation for MultiColorHeartbeat<'_> {
             3 => {
                 self.current_step -= 1;
                 if self.current_step == 0 {
-                    self.color_index = self.prng.gen_range(0..NUM_COLORS);
+                    self.color_index = self.prng.random_range(0..NUM_COLORS);
                     self.sequence = 0;
                 }
             }

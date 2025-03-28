@@ -32,18 +32,18 @@ impl Animation for UniColorSparkle<'_> {
         animations::reset_data(self.data);
 
         // The amount of sparkles, up to 10% of the total number of LEDs
-        let sparkle_amount = self.prng.gen_range(0..(NUM_LEDS / 10));
+        let sparkle_amount = self.prng.random_range(0..(NUM_LEDS / 10));
         for _ in 0..sparkle_amount {
-            let index = self.prng.gen_range(0..NUM_LEDS);
+            let index = self.prng.random_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.gen_range(0.0..=self.brightness(settings));
+            let brightness = self.prng.random_range(0.0..=self.brightness(settings));
             self.data.borrow_mut()[index] =
                 animations::create_color_with_brightness(&COLORS[settings.color_index], brightness);
         }
 
         let random_delay = self
             .prng
-            .gen_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
+            .random_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().cloned()).unwrap();
         timer.delay_ms(random_delay);
