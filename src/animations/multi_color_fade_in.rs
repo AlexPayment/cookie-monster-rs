@@ -19,7 +19,7 @@ impl<'a> MultiColorFadeIn<'a> {
         Self {
             data,
             ascending: true,
-            color_index: prng.gen_range(0..NUM_COLORS),
+            color_index: prng.random_range(0..NUM_COLORS),
             prng,
             current_step: 0,
         }
@@ -47,7 +47,7 @@ impl Animation for MultiColorFadeIn<'_> {
         } else {
             self.current_step -= 1;
             if self.current_step == 1 {
-                self.color_index = self.prng.gen_range(0..NUM_COLORS);
+                self.color_index = self.prng.random_range(0..NUM_COLORS);
                 self.ascending = true;
             }
         }

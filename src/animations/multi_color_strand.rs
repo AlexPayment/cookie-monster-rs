@@ -29,11 +29,11 @@ impl<'a> MultiColorStrand<'a> {
         let mut strands = [Strand::default(); NUM_STRANDS];
 
         for strand in strands.iter_mut() {
-            strand.color_index = prng.gen_range(0..COLORS.len()) as u8;
-            strand.start = prng.gen_range(0..NUM_LEDS) as u16;
-            strand.end = prng.gen_range(0..NUM_LEDS) as u16;
+            strand.color_index = prng.random_range(0..COLORS.len()) as u8;
+            strand.start = prng.random_range(0..NUM_LEDS) as u16;
+            strand.end = prng.random_range(0..NUM_LEDS) as u16;
             while strand.start.abs_diff(strand.end) < (NUM_LEDS / 100) as u16 {
-                strand.end = prng.gen_range(0..NUM_LEDS) as u16;
+                strand.end = prng.random_range(0..NUM_LEDS) as u16;
             }
             strand.position = strand.start;
         }
@@ -75,11 +75,11 @@ impl Animation for MultiColorStrand<'_> {
         animations::reset_data(self.data);
 
         for strand in self.strands.iter_mut() {
-            strand.color_index = self.prng.gen_range(0..COLORS.len()) as u8;
-            strand.start = self.prng.gen_range(0..NUM_LEDS) as u16;
-            strand.end = self.prng.gen_range(0..NUM_LEDS) as u16;
+            strand.color_index = self.prng.random_range(0..COLORS.len()) as u8;
+            strand.start = self.prng.random_range(0..NUM_LEDS) as u16;
+            strand.end = self.prng.random_range(0..NUM_LEDS) as u16;
             while strand.start.abs_diff(strand.end) < 5 {
-                strand.end = self.prng.gen_range(0..NUM_LEDS) as u16;
+                strand.end = self.prng.random_range(0..NUM_LEDS) as u16;
             }
             strand.position = strand.start;
         }

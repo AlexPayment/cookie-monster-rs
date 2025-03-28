@@ -21,9 +21,9 @@ impl<'a> MultiColorSolidRandom<'a> {
 
         for i in 0..NUM_LEDS {
             let random_color = RGB8::new(
-                animation.prng.gen_range(0..255),
-                animation.prng.gen_range(0..255),
-                animation.prng.gen_range(0..255),
+                animation.prng.random_range(0..255),
+                animation.prng.random_range(0..255),
+                animation.prng.random_range(0..255),
             );
             animation.rendered_data[i] = random_color;
         }

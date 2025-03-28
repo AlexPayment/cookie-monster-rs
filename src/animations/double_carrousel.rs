@@ -16,8 +16,8 @@ const LEDS_PER_CARROUSEL: usize = NUM_LEDS / 2;
 impl<'a> DoubleCarrousel<'a> {
     pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
-        let color_index_1 = prng.gen_range(0..NUM_COLORS);
-        let color_index_2 = prng.gen_range(0..NUM_COLORS);
+        let color_index_1 = prng.random_range(0..NUM_COLORS);
+        let color_index_2 = prng.random_range(0..NUM_COLORS);
         Self {
             color_index_1,
             color_index_2,
@@ -49,10 +49,10 @@ impl Animation for DoubleCarrousel<'_> {
         self.position_1 += 1;
         if self.position_1 >= LEDS_PER_CARROUSEL {
             self.position_1 = 0;
-            let mut new_color = self.prng.gen_range(0..NUM_COLORS);
+            let mut new_color = self.prng.random_range(0..NUM_COLORS);
             while self.color_index_1 == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.gen_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..NUM_COLORS);
             }
             self.color_index_1 = new_color;
         }
@@ -60,10 +60,10 @@ impl Animation for DoubleCarrousel<'_> {
         self.position_2 -= 1;
         if self.position_2 <= LEDS_PER_CARROUSEL {
             self.position_2 = NUM_LEDS - 1;
-            let mut new_color = self.prng.gen_range(0..NUM_COLORS);
+            let mut new_color = self.prng.random_range(0..NUM_COLORS);
             while self.color_index_2 == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.gen_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..NUM_COLORS);
             }
             self.color_index_2 = new_color;
         }
@@ -74,8 +74,8 @@ impl Animation for DoubleCarrousel<'_> {
 
     fn reset(&mut self) {
         animations::reset_data(self.data);
-        self.color_index_1 = self.prng.gen_range(0..NUM_COLORS);
-        self.color_index_2 = self.prng.gen_range(0..NUM_COLORS);
+        self.color_index_1 = self.prng.random_range(0..NUM_COLORS);
+        self.color_index_2 = self.prng.random_range(0..NUM_COLORS);
         self.position_1 = 0;
         self.position_2 = NUM_LEDS - 1;
     }

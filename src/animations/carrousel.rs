@@ -14,7 +14,7 @@ use ws2812_spi::Ws2812;
 impl<'a> Carrousel<'a> {
     pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
-        let color_index = prng.gen_range(0..NUM_COLORS);
+        let color_index = prng.random_range(0..NUM_COLORS);
         Self {
             color_index,
             data,
@@ -40,10 +40,10 @@ impl Animation for Carrousel<'_> {
         self.position += 1;
         if self.position >= NUM_LEDS {
             self.position = 0;
-            let mut new_color = self.prng.gen_range(0..NUM_COLORS);
+            let mut new_color = self.prng.random_range(0..NUM_COLORS);
             while self.color_index == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.gen_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..NUM_COLORS);
             }
             self.color_index = new_color;
         }
