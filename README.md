@@ -101,3 +101,43 @@ cable.
 ```console
 $ cargo embed --release
 ```
+
+## ESP32
+
+### Prerequisites
+
+#### Install `espup`
+
+```console
+$ cargo install espup
+```
+
+#### Install Necessary Toolchains
+
+```console
+$ espup install
+```
+
+#### Set Up Environment Variables
+
+`espup` creates an export file (On Unix-based systems: $HOME/export-esp.sh) that contains some environment variables
+required to build projects.
+
+To add the environment variables to your shell profile directly:
+
+```console
+$ cat $HOME/export-esp.sh >> [path to profile]
+$ source [path to profile]
+```
+
+#### Install `cargo-espflash`
+
+```console
+$ cargo install cargo-espflash
+```
+
+#### Install `espflash`
+
+```console
+$ cargo install espflash
+```

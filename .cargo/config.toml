@@ -1,11 +1,24 @@
-[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+# For micro:bit v2
+[target.thumbv7em-none-eabihf]
+runner = "cargo embed"
 rustflags = [
     "-C", "link-arg=-Tlink.x",
     "-C", "link-arg=-Tdefmt.x",
 ]
 
+# For ESP32
+[target.xtensa-esp32-none-elf]
+runner = "espflash flash --monitor --chip esp32 --log-format defmt"
+rustflags = [
+    "-C", "link-arg=-nostartfiles",
+]
+
 [build]
 target = "thumbv7em-none-eabihf"
+#target = "xtensa-esp32-none-elf"
 
 [env]
 DEFMT_LOG = "info"
+
+[unstable]
+build-std = ["core"]
