@@ -141,3 +141,9 @@ $ cargo install cargo-espflash
 ```console
 $ cargo install espflash
 ```
+
+### Build
+
+```console
+$ cargo +esp build --target xtensa-esp32-none-elf
+```

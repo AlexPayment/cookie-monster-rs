@@ -1,9 +1,9 @@
 comment_width = 100
-edition = "2024"
+edition = "2021"
 fn_params_layout = "Compressed"
 group_imports = "StdExternalCrate"
 imports_granularity = "Module"
 indent_style = "Visual"
 reorder_impl_items = true
-style_edition = "2024"
+style_edition = "2021"
 wrap_comments = true

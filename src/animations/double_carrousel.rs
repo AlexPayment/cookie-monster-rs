@@ -1,9 +1,9 @@
 use crate::animations;
-use crate::animations::{Animation, DoubleCarrousel, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{Animation, DoubleCarrousel, Settings, NUM_COLORS, NUM_LEDS};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
-use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
+use microbit::hal::Timer;
 use microbit::pac::{SPI0, TIMER0};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
