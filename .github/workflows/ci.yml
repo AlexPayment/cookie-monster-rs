@@ -32,16 +32,14 @@ jobs:
     - uses: actions/cache@v4
       with:
         path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - uses: actions-rs/toolchain@v1.0.6
-      with:
-        toolchain: stable
-        target: ${{ matrix.target.name }}
+
+    - name: Install ${{ matrix.target.name }} target
+      run: rustup target add ${{ matrix.target.name }}
+
     - name: Build for ${{ matrix.target.description }}
       working-directory: ${{ matrix.target.working-directory }}
       run: cargo build
@@ -61,16 +59,13 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1.0.6
-        with:
-          toolchain: stable
-          target: ${{ matrix.target.name }}
+
+      - name: Install ${{ matrix.target.name }} target
+        run: rustup target add ${{ matrix.target.name }}
 
       - name: Run cargo clippy for ${{ matrix.target.description }}
         working-directory: ${{ matrix.target.working-directory }}
@@ -83,11 +78,9 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo fmt
