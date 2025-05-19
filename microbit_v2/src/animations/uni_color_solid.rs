@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, COLORS, NUM_LEDS, Settings, UniColorSolid};
+use crate::animations::{Animation, COLORS, NUM_LEDS, UniColorSolid};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -17,7 +18,7 @@ impl<'a> UniColorSolid<'a> {
 
 impl Animation for UniColorSolid<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.05
+        settings.brightness() * 0.05
     }
 
     fn render(
@@ -25,12 +26,12 @@ impl Animation for UniColorSolid<'_> {
     ) {
         self.data.borrow_mut().iter_mut().for_each(|e| {
             *e = animations::create_color_with_brightness(
-                &COLORS[settings.color_index],
+                COLORS[settings.color_index()],
                 self.brightness(settings),
-            )
+            );
         });
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
         timer.delay_ms(1_000u32);

@@ -7,3 +7,6 @@ description = "Common code for Cookie Monster"
 repository = "https://github.com/AlexPayment/cookie-monster-rs/"
 license = "MIT"
 publish = false
+
+[dependencies]
+defmt = { workspace = true }

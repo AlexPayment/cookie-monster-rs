@@ -11,3 +11,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Convert the project from a single crate to a workspace with multiple crates.
 - Update the CI workflow to cache cargo dependencies and run fmt and clippy checks.
+- Move `Settings` to the common crate.
+- Address some clippy lints.
+- Update `defmt` to version 1.0.1.

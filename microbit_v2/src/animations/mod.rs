@@ -1,5 +1,5 @@
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
-use defmt::Format;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
 use microbit::pac::SPI0;
@@ -399,35 +399,6 @@ const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [
     ],
 ];
 
-#[derive(Clone, Copy, Debug, Format)]
-pub struct Settings {
-    pub brightness: f32,
-    pub color_index: usize,
-    pub delay: u32,
-}
-
-impl Settings {
-    pub fn new(color_index: usize, brightness: f32, delay: u32) -> Self {
-        Settings {
-            brightness,
-            color_index,
-            delay,
-        }
-    }
-
-    pub fn set_brightness(&mut self, brightness: f32) {
-        self.brightness = brightness;
-    }
-
-    pub fn set_color_index(&mut self, color_index: usize) {
-        self.color_index = color_index;
-    }
-
-    pub fn set_delay(&mut self, delay: u32) {
-        self.delay = delay;
-    }
-}
-
 pub(crate) struct Carrousel<'a> {
     color_index: usize,
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
@@ -521,11 +492,11 @@ pub(crate) struct UniColorSparkle<'a> {
     prng: SmallRng,
 }
 
-fn create_color_with_brightness(color: &RGB8, brightness: f32) -> RGB8 {
+fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
     RGB8::new(
-        (color.r as f32 * brightness) as u8,
-        (color.g as f32 * brightness) as u8,
-        (color.b as f32 * brightness) as u8,
+        (f32::from(color.r) * brightness) as u8,
+        (f32::from(color.g) * brightness) as u8,
+        (f32::from(color.b) * brightness) as u8,
     )
 }
 

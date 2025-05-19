@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, MultiColorStrand, NUM_LEDS, NUM_STRANDS, Settings, Strand};
+use crate::animations::{Animation, MultiColorStrand, NUM_LEDS, NUM_STRANDS, Strand};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -28,7 +29,7 @@ impl<'a> MultiColorStrand<'a> {
 
         let mut strands = [Strand::default(); NUM_STRANDS];
 
-        for strand in strands.iter_mut() {
+        for strand in &mut strands {
             strand.color_index = prng.random_range(0..COLORS.len()) as u8;
             strand.start = prng.random_range(0..NUM_LEDS) as u16;
             strand.end = prng.random_range(0..NUM_LEDS) as u16;
@@ -48,7 +49,7 @@ impl<'a> MultiColorStrand<'a> {
 
 impl Animation for MultiColorStrand<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness
+        settings.brightness()
     }
 
     fn render(
@@ -58,23 +59,23 @@ impl Animation for MultiColorStrand<'_> {
 
         let brightness = self.brightness(settings);
 
-        for strand in self.strands.iter_mut() {
+        for strand in &mut self.strands {
             update_strand(strand);
             self.data.borrow_mut()[strand.position as usize] =
                 animations::create_color_with_brightness(
-                    &COLORS[strand.color_index as usize],
+                    COLORS[strand.color_index as usize],
                     brightness,
                 );
         }
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {
         animations::reset_data(self.data);
 
-        for strand in self.strands.iter_mut() {
+        for strand in &mut self.strands {
             strand.color_index = self.prng.random_range(0..COLORS.len()) as u8;
             strand.start = self.prng.random_range(0..NUM_LEDS) as u16;
             strand.end = self.prng.random_range(0..NUM_LEDS) as u16;

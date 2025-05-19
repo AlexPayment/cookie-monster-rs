@@ -6,7 +6,8 @@ members = [
 ]
 
 [workspace.dependencies]
-common = { path = "./common" }
+cookie-monster-common = { path = "./common" }
+defmt = "1.0.1"
 
 [profile.dev]
 debug = true

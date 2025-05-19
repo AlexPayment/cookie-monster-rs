@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, COLORS, ForwardWave, NUM_LEDS, Settings};
+use crate::animations::{Animation, COLORS, ForwardWave, NUM_LEDS};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -54,7 +55,7 @@ impl<'a> ForwardWave<'a> {
 
 impl Animation for ForwardWave<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness
+        settings.brightness()
     }
 
     fn render(
@@ -70,19 +71,19 @@ impl Animation for ForwardWave<'_> {
                 if led_index < 0 {
                     self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
                         animations::create_color_with_brightness(
-                            &COLORS[settings.color_index],
+                            COLORS[settings.color_index()],
                             *item,
                         );
                 } else {
                     self.data.borrow_mut()[led_index as usize] =
                         animations::create_color_with_brightness(
-                            &COLORS[settings.color_index],
+                            COLORS[settings.color_index()],
                             *item,
                         );
                 }
             } else if led_index >= 0 {
                 self.data.borrow_mut()[led_index as usize] =
-                    animations::create_color_with_brightness(&COLORS[settings.color_index], *item);
+                    animations::create_color_with_brightness(COLORS[settings.color_index()], *item);
             }
         }
 
@@ -92,8 +93,8 @@ impl Animation for ForwardWave<'_> {
             self.wrapped = true;
         }
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {

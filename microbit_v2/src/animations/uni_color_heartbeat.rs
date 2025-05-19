@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, COLORS, NUM_LEDS, Settings, UniColorHeartbeat};
+use crate::animations::{Animation, COLORS, NUM_LEDS, UniColorHeartbeat};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -23,15 +24,16 @@ impl<'a> UniColorHeartbeat<'a> {
 
 impl Animation for UniColorHeartbeat<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.05
+        settings.brightness() * 0.05
     }
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        let brightness = (self.brightness(settings) / STEP as f32) * self.current_step as f32;
+        let brightness =
+            (self.brightness(settings) / f32::from(STEP)) * f32::from(self.current_step);
         let color =
-            animations::create_color_with_brightness(&COLORS[settings.color_index], brightness);
+            animations::create_color_with_brightness(COLORS[settings.color_index()], brightness);
         for i in 0..NUM_LEDS {
             self.data.borrow_mut()[i] = color;
         }
@@ -64,11 +66,10 @@ impl Animation for UniColorHeartbeat<'_> {
             _ => {}
         }
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
         match self.sequence {
-            0..=2 => timer.delay_ms(settings.delay),
-            3 => timer.delay_ms(settings.delay * 30),
-            _ => timer.delay_ms(settings.delay),
+            3 => timer.delay_ms(settings.delay() * 30),
+            _ => timer.delay_ms(settings.delay()),
         }
     }
 
