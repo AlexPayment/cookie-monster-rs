@@ -12,11 +12,19 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        target:
+          - name: thumbv7em-none-eabihf
+            description: "Micro:bit V2"
+            working-directory: ./microbit_v2
+
     steps:
     - uses: actions/checkout@v4
     - uses: actions-rs/toolchain@v1.0.6
       with:
         toolchain: stable
-        target: thumbv7em-none-eabihf
-    - name: Build
-      run: cargo build --verbose --target thumbv7em-none-eabihf
+        target: ${{ matrix.target.name }}
+    - name: Build for ${{ matrix.target.description }}
+      working-directory: ${{ matrix.target.working-directory }}
+      run: cargo build --target ${{ matrix.target.name }}

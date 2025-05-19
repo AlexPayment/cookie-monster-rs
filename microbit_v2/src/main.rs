@@ -46,19 +46,20 @@ fn main() -> ! {
     let mut timer = Timer::new(peripherals.TIMER0);
 
     let mut adc = Adc::new(peripherals.SAADC, AdcConfig::default());
-    // This analog pin is the big 0 connector or the pin 0 on the micro:bit.
+    // This analog pin is the big "0" connector or pin 0 on the micro:bit.
     let mut animation_pin = port0.p0_02.into_floating_input();
-    // This analog pin is the big 1 connector or the pin 1 on the micro:bit.
+    // This analog pin is the big "1" connector or pin 1 on the micro:bit.
     let mut brightness_pin = port0.p0_03.into_floating_input();
-    // This analog pin is the big 2 connector or the pin 2 on the micro:bit.
+    // This analog pin is the big "2" connector or pin 2 on the micro:bit.
     let mut color_pin = port0.p0_04.into_floating_input();
-    // This analog pin is the pin 3 on the micro:bit.
+    // This analog pin is pin 3 on the micro:bit.
     let mut delay_pin = port0.p0_31.into_floating_input();
 
     // Setup Pseudo Random Number Generator
     let mut rng = hal::Rng::new(peripherals.RNG);
 
-    // Get the maximum value of the potentiometer. Must match the default resolution of the ADC which is 14 bits.
+    // Get the maximum value of the potentiometer. Must match the default resolution of the ADC,
+    // which is 14 bits.
     let max_value = 2u16.pow(14) - 1;
     let default_value = max_value / 2;
     debug!("Max potentiometer value: {}", max_value);
