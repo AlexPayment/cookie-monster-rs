@@ -52,7 +52,8 @@ jobs:
     strategy:
       matrix:
         target:
-          - name: "Micro:bit V2"
+          - name: thumbv7em-none-eabihf
+            description: "Micro:bit V2"
             working-directory: ./microbit_v2
 
     steps:
@@ -66,6 +67,10 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions-rs/toolchain@v1.0.6
+        with:
+          toolchain: stable
+          target: ${{ matrix.target.name }}
 
       - name: Run cargo clippy for ${{ matrix.target.description }}
         working-directory: ${{ matrix.target.working-directory }}
