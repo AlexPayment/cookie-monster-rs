@@ -1,0 +1,16 @@
+[package]
+name = "cookie-monster-quinled-dig-quad"
+version = "0.1.0"
+authors = ["Alex Payment <3332420+AlexPayment@users.noreply.github.com>"]
+edition = "2024"
+description = "Binary for Cookie Monster running on the QuinLED-Dig-Quad (ESP32-WROOM-32E)"
+repository = "https://github.com/AlexPayment/cookie-monster-rs/"
+license = "MIT"
+publish = false
+
+[dependencies]
+embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }
+esp-backtrace = { version = "0.15.1", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
+esp-hal = { version = "1.0.0-beta.0", features = ["defmt", "esp32", "unstable"] }
+esp-hal-embassy = { version = "0.7.0", features = ["esp32"] }
+esp-println = { version = "0.13.1", features = ["defmt-espflash", "esp32"] }
