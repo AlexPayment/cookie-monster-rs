@@ -3,15 +3,23 @@ name: CI
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'LICENSE'
+      - '**/README.md'
   pull_request:
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'LICENSE'
+      - '**/README.md'
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ci:
+  build:
+    needs: fmt
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         target:
@@ -21,10 +29,59 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions-rs/toolchain@v1.0.6
+    - uses: actions/cache@v4
       with:
-        toolchain: stable
-        target: ${{ matrix.target.name }}
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install ${{ matrix.target.name }} target
+      run: rustup target add ${{ matrix.target.name }}
+
     - name: Build for ${{ matrix.target.description }}
       working-directory: ${{ matrix.target.working-directory }}
-      run: cargo build --target ${{ matrix.target.name }}
+      run: cargo build
+
+  clippy:
+    needs: fmt
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - name: thumbv7em-none-eabihf
+            description: "Micro:bit V2"
+            working-directory: ./microbit_v2
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install ${{ matrix.target.name }} target
+        run: rustup target add ${{ matrix.target.name }}
+
+      - name: Run cargo clippy for ${{ matrix.target.description }}
+        working-directory: ${{ matrix.target.working-directory }}
+        run: cargo clippy --all-features -- -D warnings
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
