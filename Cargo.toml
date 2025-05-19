@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "common",
     "microbit_v2",
+    "quinled-dig-quad",
 ]
 
 [workspace.dependencies]
@@ -10,12 +11,11 @@ cookie-monster-common = { path = "./common" }
 defmt = "1.0.1"
 
 [profile.dev]
-debug = true
 lto = true
 opt-level = 3
 
 [profile.release]
-codegen-units = 1
+codegen-units = 1      # LLVM can perform better optimizations using a single thread
 debug = true
 lto = true
 opt-level = 3

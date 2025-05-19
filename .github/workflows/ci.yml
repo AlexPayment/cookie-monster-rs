@@ -23,9 +23,12 @@ jobs:
     strategy:
       matrix:
         target:
-          - name: thumbv7em-none-eabihf
+          - name: "xtensa-esp32-none-elf"
+            description: "QuinLED Dig Quad"
+            working-directory: "./quinled-dig-quad"
+          - name: "thumbv7em-none-eabihf"
             description: "Micro:bit V2"
-            working-directory: ./microbit_v2
+            working-directory: "./microbit_v2"
 
     steps:
     - uses: actions/checkout@v4
@@ -37,8 +40,17 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Install ${{ matrix.target.name }} target
+    - if: matrix.target.name == 'thumbv7em-none-eabihf'
+      name: Install ${{ matrix.target.name }} target
       run: rustup target add ${{ matrix.target.name }}
+
+    - if: matrix.target.name == 'xtensa-esp32-none-elf'
+      name: Install ${{ matrix.target.name }} toolchain and target
+      uses: esp-rs/xtensa-toolchain@v1.5
+      with:
+        default: true
+        buildtargets: esp32
+        ldproxy: false
 
     - name: Build for ${{ matrix.target.description }}
       working-directory: ${{ matrix.target.working-directory }}
@@ -50,9 +62,12 @@ jobs:
     strategy:
       matrix:
         target:
-          - name: thumbv7em-none-eabihf
+          - name: "xtensa-esp32-none-elf"
+            description: "QuinLED Dig Quad"
+            working-directory: "./quinled-dig-quad"
+          - name: "thumbv7em-none-eabihf"
             description: "Micro:bit V2"
-            working-directory: ./microbit_v2
+            working-directory: "./microbit_v2"
 
     steps:
       - uses: actions/checkout@v4
@@ -64,8 +79,17 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install ${{ matrix.target.name }} target
+      - if: matrix.target.name == 'thumbv7em-none-eabihf'
+        name: Install ${{ matrix.target.name }} target
         run: rustup target add ${{ matrix.target.name }}
+
+      - if: matrix.target.name == 'xtensa-esp32-none-elf'
+        name: Install ${{ matrix.target.name }} toolchain and target
+        uses: esp-rs/xtensa-toolchain@v1.5
+        with:
+          default: true
+          buildtargets: esp32
+          ldproxy: false
 
       - name: Run cargo clippy for ${{ matrix.target.description }}
         working-directory: ${{ matrix.target.working-directory }}

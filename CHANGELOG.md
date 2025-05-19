@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- `cookie-monster-qinled-dig-quad` crate for the QinLED Dig Quad board.
+
 ### Changed
 
 - Convert the project from a single crate to a workspace with multiple crates.
