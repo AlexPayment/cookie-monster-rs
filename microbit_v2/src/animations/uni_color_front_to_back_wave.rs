@@ -1,7 +1,6 @@
 use crate::animations;
-use crate::animations::{
-    Animation, COLORS, NUM_LEDS, Settings, UniColorFrontToBackWave, VERTICAL_SLICES,
-};
+use crate::animations::{Animation, COLORS, NUM_LEDS, UniColorFrontToBackWave, VERTICAL_SLICES};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
@@ -19,7 +18,7 @@ impl<'a> UniColorFrontToBackWave<'a> {
 
 impl Animation for UniColorFrontToBackWave<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness
+        settings.brightness()
     }
 
     fn render(
@@ -29,19 +28,19 @@ impl Animation for UniColorFrontToBackWave<'_> {
 
         let slice = VERTICAL_SLICES[self.position];
 
-        slice.iter().for_each(|led| {
+        for led in &slice {
             led.map(|l| {
                 self.data.borrow_mut()[l as usize] = animations::create_color_with_brightness(
-                    &COLORS[settings.color_index],
+                    COLORS[settings.color_index()],
                     self.brightness(settings),
                 );
             });
-        });
+        }
 
         self.position = (self.position + 1) % VERTICAL_SLICES.len();
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {

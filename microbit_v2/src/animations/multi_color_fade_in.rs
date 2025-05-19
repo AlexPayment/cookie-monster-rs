@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, COLORS, MultiColorFadeIn, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{Animation, COLORS, MultiColorFadeIn, NUM_COLORS, NUM_LEDS};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -28,14 +29,15 @@ impl<'a> MultiColorFadeIn<'a> {
 
 impl Animation for MultiColorFadeIn<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.05
+        settings.brightness() * 0.05
     }
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
-        let brightness = (self.brightness(settings) / STEP as f32) * self.current_step as f32;
-        let color = animations::create_color_with_brightness(&COLORS[self.color_index], brightness);
+        let brightness =
+            (self.brightness(settings) / f32::from(STEP)) * f32::from(self.current_step);
+        let color = animations::create_color_with_brightness(COLORS[self.color_index], brightness);
         for i in 0..NUM_LEDS {
             self.data.borrow_mut()[i] = color;
         }
@@ -52,8 +54,8 @@ impl Animation for MultiColorFadeIn<'_> {
             }
         }
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {

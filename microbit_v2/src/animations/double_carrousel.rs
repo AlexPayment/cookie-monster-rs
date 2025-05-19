@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, DoubleCarrousel, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{Animation, DoubleCarrousel, NUM_COLORS, NUM_LEDS};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -31,18 +32,18 @@ impl<'a> DoubleCarrousel<'a> {
 
 impl Animation for DoubleCarrousel<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness * 0.05
+        settings.brightness() * 0.05
     }
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         self.data.borrow_mut()[self.position_1] = animations::create_color_with_brightness(
-            &animations::COLORS[self.color_index_1],
+            animations::COLORS[self.color_index_1],
             self.brightness(settings),
         );
         self.data.borrow_mut()[self.position_2] = animations::create_color_with_brightness(
-            &animations::COLORS[self.color_index_2],
+            animations::COLORS[self.color_index_2],
             self.brightness(settings),
         );
 
@@ -68,8 +69,8 @@ impl Animation for DoubleCarrousel<'_> {
             self.color_index_2 = new_color;
         }
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
-        timer.delay_ms(settings.delay);
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {

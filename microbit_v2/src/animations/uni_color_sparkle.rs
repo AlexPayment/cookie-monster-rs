@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, COLORS, NUM_LEDS, SHORTEST_DELAY, Settings, UniColorSparkle};
+use crate::animations::{Animation, COLORS, NUM_LEDS, SHORTEST_DELAY, UniColorSparkle};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use core::cmp;
 use embedded_hal::delay::DelayNs;
@@ -23,7 +24,7 @@ impl<'a> UniColorSparkle<'a> {
 
 impl Animation for UniColorSparkle<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness
+        settings.brightness()
     }
 
     fn render(
@@ -37,15 +38,17 @@ impl Animation for UniColorSparkle<'_> {
             let index = self.prng.random_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
             let brightness = self.prng.random_range(0.0..=self.brightness(settings));
-            self.data.borrow_mut()[index] =
-                animations::create_color_with_brightness(&COLORS[settings.color_index], brightness);
+            self.data.borrow_mut()[index] = animations::create_color_with_brightness(
+                COLORS[settings.color_index()],
+                brightness,
+            );
         }
 
         let random_delay = self
             .prng
-            .random_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
+            .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
         timer.delay_ms(random_delay);
     }
 

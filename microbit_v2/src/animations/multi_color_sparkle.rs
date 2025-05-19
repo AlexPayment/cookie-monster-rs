@@ -1,5 +1,6 @@
 use crate::animations;
-use crate::animations::{Animation, MultiColorSparkle, NUM_LEDS, SHORTEST_DELAY, Settings};
+use crate::animations::{Animation, MultiColorSparkle, NUM_LEDS, SHORTEST_DELAY};
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use core::cmp;
 use embedded_hal::delay::DelayNs;
@@ -23,7 +24,7 @@ impl<'a> MultiColorSparkle<'a> {
 
 impl Animation for MultiColorSparkle<'_> {
     fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness
+        settings.brightness()
     }
 
     fn render(
@@ -43,14 +44,14 @@ impl Animation for MultiColorSparkle<'_> {
                 self.prng.random_range(0..255),
             );
             self.data.borrow_mut()[index] =
-                animations::create_color_with_brightness(&random_color, brightness);
+                animations::create_color_with_brightness(random_color, brightness);
         }
 
         let random_delay = self
             .prng
-            .random_range(SHORTEST_DELAY..cmp::max(settings.delay, SHORTEST_DELAY + 1));
+            .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
 
-        ws2812.write(self.data.borrow().iter().cloned()).unwrap();
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
         timer.delay_ms(random_delay);
     }
 

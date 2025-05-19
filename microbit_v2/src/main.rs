@@ -4,8 +4,9 @@
 use animations::{
     Animation, Carrousel, DoubleCarrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat,
     MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
-    NUM_LEDS, Settings, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
+    NUM_LEDS, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
+use cookie_monster_common::animations::Settings;
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m_rt::entry;
@@ -109,7 +110,7 @@ fn main() -> ! {
     let mut settings = Settings::new(
         color_index,
         // Value between 0 and 1
-        brightness_value as f32 / max_value as f32,
+        f32::from(brightness_value) / f32::from(max_value),
         calculate_delay(delay_value, max_value),
     );
 
@@ -165,16 +166,16 @@ fn main() -> ! {
 ///
 /// The value is between 0 and 1.
 fn calculate_brightness(value: i16, max_value: u16) -> f32 {
-    value as f32 / max_value as f32
+    f32::from(value) / f32::from(max_value)
 }
 
 /// Calculate the delay in milliseconds based on the value of the potentiometer.
 fn calculate_delay(value: i16, max_value: u16) -> u32 {
-    cmp::max((value as f32 / max_value as f32 * 1000.0) as u32, 1)
+    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
 }
 
 fn calculate_index(value: i16, max_value: u16, num_values: usize) -> usize {
-    let index = (value as f32 / max_value as f32 * num_values as f32) as usize;
+    let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
     cmp::min(index, num_values - 1)
 }
 
