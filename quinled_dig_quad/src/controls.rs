@@ -10,9 +10,24 @@ pub async fn animation_button_task(button: AnyPin, mut animation: usize, num_ani
 
     loop {
         perform_when_button_pressed(&mut button, || {
-            // Increment the animation index or wrap around if it exceeds the number of animations
+            // Increment the animation index or wrap around if it exceeds the number of animations.
             animation = (animation + 1) % num_animations;
             info!("Animation changed to: {}", animation);
+        })
+        .await;
+    }
+}
+
+/// Task that waits for a button to be pressed to change the color.
+#[embassy_executor::task]
+pub async fn color_button_task(button: AnyPin, mut color: usize, num_colors: usize) {
+    let mut button = Input::new(button, InputConfig::default().with_pull(Down));
+
+    loop {
+        perform_when_button_pressed(&mut button, || {
+            // Increment the color index or wrap around if it exceeds the number of colors.
+            color = (color + 1) % num_colors;
+            info!("Color changed to: {}", color);
         })
         .await;
     }
@@ -25,7 +40,7 @@ async fn perform_when_button_pressed(button: &mut Input<'_>, action: impl FnOnce
     button.wait_for_falling_edge().await;
 
     // Wait for a short debounce period. This allows the physical bouncing to settle. Adjust the
-    // duration (e.g., 20 ms, 50 ms, 100 ms) based on the  button's characteristics.
+    // duration (e.g., 20 ms, 50 ms, 100 ms) based on the button's characteristics.
     Timer::after(Duration::from_millis(50)).await;
 
     // After the debounce time, check the *actual* state of the pin. If it's still low, it's a
