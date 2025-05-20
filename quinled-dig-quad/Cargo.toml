@@ -9,7 +9,9 @@ license = "MIT"
 publish = false
 
 [dependencies]
+defmt = { workspace = true }
 embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }
+embassy-time = { version = "0.4.0", features = ["generic-queue-8"] }
 esp-backtrace = { version = "0.15.1", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
 esp-hal = { version = "1.0.0-beta.0", features = ["defmt", "esp32", "unstable"] }
 esp-hal-embassy = { version = "0.7.0", features = ["esp32"] }
