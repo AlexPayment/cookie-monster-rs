@@ -3,7 +3,7 @@ resolver = "3"
 members = [
     "common",
     "microbit_v2",
-    "quinled-dig-quad",
+    "quinled_dig_quad",
 ]
 
 [workspace.dependencies]

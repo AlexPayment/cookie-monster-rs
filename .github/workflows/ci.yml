@@ -25,7 +25,7 @@ jobs:
         target:
           - name: "xtensa-esp32-none-elf"
             description: "QuinLED Dig Quad"
-            working-directory: "./quinled-dig-quad"
+            working-directory: "./quinled_dig_quad"
           - name: "thumbv7em-none-eabihf"
             description: "Micro:bit V2"
             working-directory: "./microbit_v2"
@@ -64,7 +64,7 @@ jobs:
         target:
           - name: "xtensa-esp32-none-elf"
             description: "QuinLED Dig Quad"
-            working-directory: "./quinled-dig-quad"
+            working-directory: "./quinled_dig_quad"
           - name: "thumbv7em-none-eabihf"
             description: "Micro:bit V2"
             working-directory: "./microbit_v2"
