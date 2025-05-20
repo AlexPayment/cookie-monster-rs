@@ -18,7 +18,7 @@ embedded-hal = "1.0.0"
 microbit-v2 = "0.15.1"
 nrf52833-hal = "0.18.0"
 panic-probe = { version = "0.3.2", features = ["print-defmt"] }
-rand = { version = "0.9.0", default-features = false, features = ["small_rng"] }
+rand = { version = "0.9.1", default-features = false, features = ["small_rng"] }
 smart-leds = "0.4.0"
 smart-leds-trait = "0.3.1"
 ws2812-spi = "0.5.0"

@@ -43,7 +43,7 @@ rustup target add thumbv7em-none-eabihf
 
 #### `gdb`
 
-On Debian and derived distros, the following package need to be installed:
+On Debian and derived distros, the following package needs to be installed:
 
 ```sh
 sudo apt-get install gdb-multiarch
@@ -53,7 +53,7 @@ sudo apt-get install gdb-multiarch
 
 #### `minicom`
 
-On Debian and derived distros, the following package need to be installed:
+On Debian and derived distros, the following package needs to be installed:
 
 ```sh
 sudo apt-get install minicom
@@ -64,7 +64,7 @@ sudo apt-get install minicom
 Create the file `/etc/udev/rules.d/99-microbit.rules` and add the following content to it:
 
 ```text
-# CMSIS-DAP for microbit
+# CMSIS-DAP for Micro:bit
 SUBSYSTEM=="usb", ATTR{idVendor}=="0d28", ATTR{idProduct}=="0204", MODE:="666"
 ```
 
@@ -76,7 +76,7 @@ sudo udevadm control --reload-rules
 
 If the micro:bit was plugged in, unplug it and then plug it in again.
 
-Now let verify the permissions. Make sure the micro:bit is connected with the USB cable. It should appear as a USB
+Now let us verify the permissions. Make sure the micro:bit is connected with the USB cable. It should appear as a USB
 device in `/dev/bus/usb`.
 
 ```sh
@@ -85,7 +85,7 @@ Bus 003 Device 004: ID 0d28:0204 NXP ARM mbed
 # ^^^        ^^^
 ```
 
-In the above example the micro:bit got connected to the bus #3 and got assigned the device #4. This means the file
+In the above example, the micro:bit got connected to the bus #3 and got assigned the device #4. This means the file
 `/dev/bus/usb/003/004` is the micro:bit. To check the permissions:
 
 ```sh
@@ -102,4 +102,50 @@ cable.
 
 ```sh
 cargo embed --release
+```
+
+## [QuinLED Dig Quad](https://quinled.info/pre-assembled-quinled-dig-quad/)
+
+### Prerequisites
+
+#### Install `espup`
+
+```sh
+cargo install espup
+```
+
+#### Install Necessary Toolchains
+
+```sh
+espup install
+```
+
+#### Set Up Environment Variables
+
+`espup` creates an export file (On Unix-based systems: $HOME/export-esp.sh) that contains some environment variables
+required to build projects.
+
+To add the environment variables to your shell profile directly:
+
+```sh
+cat $HOME/export-esp.sh >> [path to profile]
+source [path to profile]
+```
+
+#### Install `cargo-espflash`
+
+```sh
+cargo install cargo-espflash
+```
+
+#### Install `espflash`
+
+```sh
+cargo install espflash
+```
+
+### Build
+
+```sh
+cargo +esp build --target xtensa-esp32-none-elf
 ```

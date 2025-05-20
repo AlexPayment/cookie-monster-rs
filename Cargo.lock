@@ -139,7 +139,9 @@ dependencies = [
 name = "cookie-monster-quinled-dig-quad"
 version = "0.1.0"
 dependencies = [
+ "defmt 1.0.1",
  "embassy-executor",
+ "embassy-time",
  "esp-backtrace",
  "esp-hal",
  "esp-hal-embassy",
@@ -372,6 +374,7 @@ dependencies = [
  "critical-section",
  "document-features",
  "embassy-time-driver",
+ "embassy-time-queue-utils",
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
