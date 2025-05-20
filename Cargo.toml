@@ -9,6 +9,7 @@ members = [
 [workspace.dependencies]
 cookie-monster-common = { path = "./common" }
 defmt = "1.0.1"
+ws2812-spi = "0.5.0"
 
 [profile.dev]
 lto = true
