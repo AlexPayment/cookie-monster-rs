@@ -106,6 +106,8 @@ cargo embed --release
 
 ## [QuinLED Dig Quad](https://quinled.info/pre-assembled-quinled-dig-quad/)
 
+![Photo of a QuinLED Dig Quad](./quinled_dig_quad/quinled_dig_quad.jpg "QuinLED Dig Quad")
+
 ### Prerequisites
 
 #### Install `espup`
