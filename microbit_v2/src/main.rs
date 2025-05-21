@@ -6,7 +6,7 @@ use animations::{
     MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
     NUM_LEDS, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
-use cookie_monster_common::animations::Settings;
+use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings, calculate_index};
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m_rt::entry;
@@ -100,40 +100,34 @@ fn main() -> ! {
         &mut multi_color_heartbeat,
     ];
 
-    let mut animation_value = default_value as i16;
+    let mut animation_value = default_value;
     let mut previous_animation_index = None;
-    let mut brightness_value = default_value as i16;
-    let mut color_value = default_value as i16;
-    let mut color_index = 9;
-    let mut delay_value = default_value as i16;
+    let mut brightness_value = default_value;
+    let mut color_value = default_value;
+    let mut color_index = DEFAULT_COLOR_INDEX;
+    let mut delay_value = default_value;
 
     let mut settings = Settings::new(
         color_index,
-        // Value between 0 and 1
-        f32::from(brightness_value) / f32::from(max_value),
-        calculate_delay(delay_value, max_value),
+        brightness_value,
+        delay_value,
+        max_value,
+        NUM_COLORS,
     );
 
     info!("Starting main loop...");
     loop {
-        animation_value = read_potentiometer(
-            &mut adc,
-            &mut animation_pin,
-            animation_value,
-            0,
-            max_value as i16,
-        );
+        animation_value =
+            read_potentiometer(&mut adc, &mut animation_pin, animation_value, 0, max_value);
         brightness_value = read_potentiometer(
             &mut adc,
             &mut brightness_pin,
             brightness_value,
             1,
-            max_value as i16,
+            max_value,
         );
-        color_value =
-            read_potentiometer(&mut adc, &mut color_pin, color_value, 0, max_value as i16);
-        delay_value =
-            read_potentiometer(&mut adc, &mut delay_pin, delay_value, 0, max_value as i16);
+        color_value = read_potentiometer(&mut adc, &mut color_pin, color_value, 0, max_value);
+        delay_value = read_potentiometer(&mut adc, &mut delay_pin, delay_value, 0, max_value);
 
         debug!(
             "Animation: {}, Brightness: {}, Color: {}, Delay: {}",
@@ -150,10 +144,9 @@ fn main() -> ! {
             previous_animation_index = Some(animation_index);
         }
 
-        // Value between 0 and 1
-        settings.set_brightness(calculate_brightness(brightness_value, max_value));
+        settings.set_brightness(brightness_value);
         settings.set_color_index(color_index);
-        settings.set_delay(calculate_delay(delay_value, max_value));
+        settings.set_delay(delay_value);
 
         debug!("{:?}", settings);
         debug!("Current animation: {}", animation_index);
@@ -162,28 +155,14 @@ fn main() -> ! {
     }
 }
 
-/// Calculate the brightness based on the value of the potentiometer.
-///
-/// The value is between 0 and 1.
-fn calculate_brightness(value: i16, max_value: u16) -> f32 {
-    f32::from(value) / f32::from(max_value)
-}
-
-/// Calculate the delay in milliseconds based on the value of the potentiometer.
-fn calculate_delay(value: i16, max_value: u16) -> u32 {
-    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
-}
-
-fn calculate_index(value: i16, max_value: u16, num_values: usize) -> usize {
-    let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
-    cmp::min(index, num_values - 1)
-}
-
 fn read_potentiometer<PIN: Channel>(
-    adc: &mut Saadc, pin: &mut PIN, default_value: i16, min_value: i16, max_value: i16,
-) -> i16 {
+    adc: &mut Saadc, pin: &mut PIN, default_value: u16, min_value: u16, max_value: u16,
+) -> u16 {
     cmp::max(
         min_value,
-        cmp::min(adc.read_channel(pin).unwrap_or(default_value), max_value),
+        cmp::min(
+            adc.read_channel(pin).unwrap_or(default_value as i16) as u16,
+            max_value,
+        ),
     )
 }
