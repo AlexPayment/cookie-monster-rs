@@ -4,9 +4,11 @@
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
+use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::timer::timg::TimerGroup;
+use nb::block;
 use {esp_backtrace as _, esp_println as _};
 
 use crate::controls::{animation_button_task, color_button_task};
@@ -27,18 +29,39 @@ async fn main(spawner: Spawner) {
 
     info!("Embassy initialized!");
 
-    // GPIO15 is the Q1 pin on the board, it's pulled low. Which means the button should also be
-    // connected to a 3.3 or 5 V pin.
-    let animation_pin = peripherals.GPIO15.degrade();
-    // GPIO12 is the Q2 pin on the board, it's pulled low. Which means the button should also be
-    // connected to a 3.3 or 5 V pin.
-    let color_pin = peripherals.GPIO12.degrade();
+    // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should also be
+    // connected to a ground pin. It's on ADC2 channel 2.
+    let animation_pin = peripherals.GPIO2.degrade();
+
+    // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should also be
+    // connected to a 3.3 or 5 V pin. It's on ADC2 channel 3.
+    let brightness_pin = peripherals.GPIO15;
+
+    // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button should also be
+    // connected to a ground pin. It's on ADC1 channel 4.
+    let color_pin = peripherals.GPIO32.degrade();
+
+    // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button should also be
+    // connected to a 3.3 or 5 V pin. It's on ADC2 channel 5.
+    let delay_pin = peripherals.GPIO12;
+
+    // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
+    let mut adc2_config = AdcConfig::default();
+    // Because the brightness potentiometer is connected to the 3.3 V pin, we need to set the
+    // attenuation to 11 dB to cover the 0 to 3.3 V range.
+    let mut brightness_pin = adc2_config.enable_pin(brightness_pin, Attenuation::_11dB);
+    // Because the delay potentiometer is connected to the 3.3 V pin, we need to set the
+    // attenuation to 11 dB to cover the 0 to 3.3 V range.
+    let mut delay_pin = adc2_config.enable_pin(delay_pin, Attenuation::_11dB);
+    let mut adc2 = Adc::new(peripherals.ADC2, adc2_config);
 
     spawn_control_tasks(&spawner, animation_pin, color_pin);
 
     loop {
-        info!("Hello world!");
-        Timer::after(Duration::from_secs(1)).await;
+        let brightness_value = block!(adc2.read_oneshot(&mut brightness_pin)).unwrap();
+        let delay_value = block!(adc2.read_oneshot(&mut delay_pin)).unwrap();
+        info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
+        Timer::after(Duration::from_millis(500)).await;
     }
 }
 
