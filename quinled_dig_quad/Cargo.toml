@@ -16,3 +16,4 @@ esp-backtrace = { version = "0.15.1", features = ["defmt", "esp32", "exception-h
 esp-hal = { version = "1.0.0-beta.0", features = ["defmt", "esp32", "unstable"] }
 esp-hal-embassy = { version = "0.7.0", features = ["esp32"] }
 esp-println = { version = "0.13.1", features = ["defmt-espflash", "esp32"] }
+nb = "1.1.0"
