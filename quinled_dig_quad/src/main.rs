@@ -20,7 +20,7 @@ const NUM_COLORS: usize = 11;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    // TODO: Check if the CPU clock could be set lower to save power
+    // TODO: Check if the CPU clock could lowered to save power
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
@@ -29,20 +29,24 @@ async fn main(spawner: Spawner) {
 
     info!("Embassy initialized!");
 
-    // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should also be
-    // connected to a ground pin. It's on ADC2 channel 2.
+    // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should be
+    // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
+    // 3.3 V. This pin is on ADC2 channel 2.
     let animation_pin = peripherals.GPIO2.degrade();
 
-    // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should also be
-    // connected to a 3.3 or 5 V pin. It's on ADC2 channel 3.
+    // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should be
+    // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher than
+    // 3.3 V. This pin is on ADC2 channel 3.
     let brightness_pin = peripherals.GPIO15;
 
-    // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button should also be
-    // connected to a ground pin. It's on ADC1 channel 4.
+    // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button also be
+    // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
+    // 3.3 V. This pin is on ADC1 channel 4.
     let color_pin = peripherals.GPIO32.degrade();
 
-    // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button should also be
-    // connected to a 3.3 or 5 V pin. It's on ADC2 channel 5.
+    // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button also be
+    // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher than
+    // 3.3 V. This pin is on ADC2 channel 5.
     let delay_pin = peripherals.GPIO12;
 
     // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
@@ -65,7 +69,7 @@ async fn main(spawner: Spawner) {
     }
 }
 
-/// Spawns the tasks for the animation, brightness, color and delay controls.
+/// Spawns the tasks for all the manual controls.
 fn spawn_control_tasks(spawner: &Spawner, animation_pin: AnyPin, color_pin: AnyPin) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
