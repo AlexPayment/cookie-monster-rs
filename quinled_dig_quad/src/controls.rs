@@ -1,12 +1,12 @@
 use defmt::{debug, info};
 use embassy_time::{Duration, Timer};
-use esp_hal::gpio::Pull::Down;
+use esp_hal::gpio::Pull::Up;
 use esp_hal::gpio::{AnyPin, Input, InputConfig};
 
 /// Task that waits for a button to be pressed to change the animation.
 #[embassy_executor::task]
 pub async fn animation_button_task(button: AnyPin, mut animation: usize, num_animations: usize) {
-    let mut button = Input::new(button, InputConfig::default().with_pull(Down));
+    let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || {
@@ -21,7 +21,7 @@ pub async fn animation_button_task(button: AnyPin, mut animation: usize, num_ani
 /// Task that waits for a button to be pressed to change the color.
 #[embassy_executor::task]
 pub async fn color_button_task(button: AnyPin, mut color: usize, num_colors: usize) {
-    let mut button = Input::new(button, InputConfig::default().with_pull(Down));
+    let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || {
