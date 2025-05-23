@@ -1,20 +1,27 @@
 #![no_std]
 #![no_main]
 
+use crate::controls::{
+    BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
+    color_button_task,
+};
+use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
+use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Timer};
-use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
+use esp_hal::peripherals::ADC2;
 use esp_hal::timer::timg::TimerGroup;
-use nb::block;
+use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
 
-use crate::controls::{animation_button_task, color_button_task};
-
 static ANIMATION: usize = 0;
-static COLOR: usize = 0;
+static SETTINGS: StaticCell<SettingsMutex> = StaticCell::new();
+const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
+const ADC_RESOLUTION: u32 = 12;
+const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 const NUM_ANIMATIONS: usize = 14;
 const NUM_COLORS: usize = 11;
 
@@ -49,28 +56,35 @@ async fn main(spawner: Spawner) {
     // 3.3 V. This pin is on ADC2 channel 5.
     let delay_pin = peripherals.GPIO12;
 
-    // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
-    let mut adc2_config = AdcConfig::default();
-    // Because the brightness potentiometer is connected to the 3.3 V pin, we need to set the
-    // attenuation to 11 dB to cover the 0 to 3.3 V range.
-    let mut brightness_pin = adc2_config.enable_pin(brightness_pin, Attenuation::_11dB);
-    // Because the delay potentiometer is connected to the 3.3 V pin, we need to set the
-    // attenuation to 11 dB to cover the 0 to 3.3 V range.
-    let mut delay_pin = adc2_config.enable_pin(delay_pin, Attenuation::_11dB);
-    let mut adc2 = Adc::new(peripherals.ADC2, adc2_config);
+    let settings = Settings::new(
+        DEFAULT_COLOR_INDEX,
+        DEFAULT_ANALOG_VALUE,
+        DEFAULT_ANALOG_VALUE,
+        ADC_MAX_VALUE,
+        NUM_COLORS,
+    );
+    let settings_mutex = SETTINGS.init(Mutex::new(settings));
 
-    spawn_control_tasks(&spawner, animation_pin, color_pin);
+    spawn_control_tasks(
+        &spawner,
+        peripherals.ADC2,
+        animation_pin,
+        brightness_pin,
+        color_pin,
+        delay_pin,
+        settings_mutex,
+    );
 
     loop {
-        let brightness_value = block!(adc2.read_oneshot(&mut brightness_pin)).unwrap();
-        let delay_value = block!(adc2.read_oneshot(&mut delay_pin)).unwrap();
-        info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
         Timer::after(Duration::from_millis(500)).await;
     }
 }
 
 /// Spawns the tasks for all the manual controls.
-fn spawn_control_tasks(spawner: &Spawner, animation_pin: AnyPin, color_pin: AnyPin) {
+fn spawn_control_tasks(
+    spawner: &Spawner, adc: ADC2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
+    color_pin: AnyPin, delay_pin: DelayPin, settings_mutex: &'static SettingsMutex,
+) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
         animation_pin,
@@ -79,7 +93,15 @@ fn spawn_control_tasks(spawner: &Spawner, animation_pin: AnyPin, color_pin: AnyP
     )));
 
     // Spawn the color button task
-    unwrap!(spawner.spawn(color_button_task(color_pin, COLOR, NUM_COLORS)));
+    unwrap!(spawner.spawn(color_button_task(color_pin, settings_mutex)));
+
+    // Spawn the analog sensors task
+    unwrap!(spawner.spawn(analog_sensors_task(
+        adc,
+        brightness_pin,
+        delay_pin,
+        settings_mutex
+    )));
 }
 
 mod controls;

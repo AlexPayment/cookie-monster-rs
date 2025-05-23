@@ -139,14 +139,17 @@ dependencies = [
 name = "cookie-monster-quinled-dig-quad"
 version = "0.1.0"
 dependencies = [
+ "cookie-monster-common",
  "defmt 1.0.1",
  "embassy-executor",
+ "embassy-sync",
  "embassy-time",
  "esp-backtrace",
  "esp-hal",
  "esp-hal-embassy",
  "esp-println",
  "nb 1.1.0",
+ "static_cell",
 ]
 
 [[package]]
