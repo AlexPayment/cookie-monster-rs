@@ -13,6 +13,8 @@ use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::ADC2;
+use esp_hal::spi::master::{Config as SpiConfig, Spi};
+use esp_hal::time::Rate;
 use esp_hal::timer::timg::TimerGroup;
 use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
@@ -74,6 +76,18 @@ async fn main(spawner: Spawner) {
         delay_pin,
         settings_mutex,
     );
+
+    // Pin that's labeled LED1 on the board.
+    let led1_pin = peripherals.GPIO16;
+
+    // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
+    let _spi = Spi::new(
+        peripherals.SPI2,
+        SpiConfig::default().with_frequency(Rate::from_mhz(2)),
+    )
+    .unwrap()
+    .with_mosi(led1_pin)
+    .into_async();
 
     loop {
         Timer::after(Duration::from_millis(500)).await;
