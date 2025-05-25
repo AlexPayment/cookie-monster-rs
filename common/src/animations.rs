@@ -2,7 +2,10 @@ use crate::Timer;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::Format;
-use smart_leds::colors::{BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED, WHITE};
+use smart_leds::colors::{
+    BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
+    WHITE,
+};
 use smart_leds_trait::{RGB8, SmartLedsWrite};
 
 pub const DEFAULT_COLOR_INDEX: usize = 9;
@@ -30,12 +33,8 @@ pub trait Animation {
 
     /// Renders the animation.
     fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
-    );
-
-    #[allow(async_fn_in_trait)]
-    async fn render_async(
-        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ()>,
+        timer: &mut impl Timer, settings: &Settings,
     );
 
     /// Resets the animation to its initial state.
@@ -57,7 +56,7 @@ pub struct Settings {
     color_index: usize,
 
     /// Delay between frames in milliseconds.
-    delay: u32,
+    delay: u64,
 
     /// Maximum value of the analog sensors (potentiometers).
     max_analog_value: u16,
@@ -91,7 +90,7 @@ impl Settings {
     }
 
     #[must_use]
-    pub fn delay(&self) -> u32 {
+    pub fn delay(&self) -> u64 {
         self.delay
     }
 
@@ -129,8 +128,8 @@ fn calculate_brightness(value: u16, max_value: u16) -> f32 {
 ///
 /// The delay is calculated as a fraction of the maximum analog value times one thousand. The
 /// resulting value is then clamped to a minimum of 1.
-fn calculate_delay(value: u16, max_value: u16) -> u32 {
-    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
+fn calculate_delay(value: u16, max_value: u16) -> u64 {
+    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u64, 1)
 }
 
 fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {

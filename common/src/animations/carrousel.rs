@@ -1,10 +1,11 @@
 use crate::animations::{Animation, NUM_COLORS, NUM_LEDS, Settings};
 use crate::{Timer, animations};
 use core::cell::RefCell;
+use core::time::Duration;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use smart_leds::RGB8;
-use smart_leds_trait::{SmartLedsWrite};
+use smart_leds_trait::SmartLedsWrite;
 
 pub struct Carrousel<'a> {
     color_index: usize,
@@ -32,15 +33,11 @@ impl Animation for Carrousel<'_> {
     }
 
     fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
-    ) {
-        todo!()
-    }
-
-    async fn render_async(
-        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ()>,
+        timer: &mut impl Timer, settings: &Settings,
     ) {
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        timer.pause(Duration::from_millis(settings.delay));
     }
 
     fn reset(&mut self) {

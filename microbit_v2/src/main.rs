@@ -180,8 +180,4 @@ impl Timer for NrfTimer {
     fn pause(&mut self, duration: Duration) {
         self.0.delay_ms(duration.as_millis() as u32);
     }
-
-    async fn pause_async(&self, duration: Duration) {
-        unimplemented!();
-    }
 }

@@ -52,7 +52,7 @@ impl Animation for MultiColorSparkle<'_> {
             .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
-        timer.delay_ms(random_delay);
+        timer.delay_ms(random_delay as u32);
     }
 
     fn reset(&mut self) {

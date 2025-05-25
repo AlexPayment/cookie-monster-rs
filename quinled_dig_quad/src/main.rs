@@ -117,11 +117,9 @@ struct EmbassyTimer(embassy_time::Timer);
 
 impl Timer for EmbassyTimer {
     fn pause(&mut self, duration: Duration) {
-        embassy_futures::block_on(self.pause_async(duration));
-    }
-
-    async fn pause_async(&self, duration: Duration) {
-        embassy_time::Timer::after(embassy_time::Duration::try_from(duration).unwrap()).await;
+        embassy_futures::block_on(embassy_time::Timer::after(
+            embassy_time::Duration::try_from(duration).unwrap(),
+        ));
     }
 }
 
