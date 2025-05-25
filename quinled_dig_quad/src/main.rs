@@ -113,10 +113,10 @@ fn spawn_control_tasks(
     unwrap!(spawner.spawn(led_task(spi, led_pin)))
 }
 
-struct EmbassyTime(embassy_time::Timer);
+struct EmbassyTimer(embassy_time::Timer);
 
-impl Timer for EmbassyTime {
-    fn pause(&self, duration: Duration) {
+impl Timer for EmbassyTimer {
+    fn pause(&mut self, duration: Duration) {
         embassy_futures::block_on(self.pause_async(duration));
     }
 

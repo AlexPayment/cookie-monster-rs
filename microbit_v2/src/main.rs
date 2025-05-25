@@ -6,18 +6,22 @@ use animations::{
     MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
     NUM_LEDS, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
+use cookie_monster_common::Timer;
 use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings, calculate_index};
 use core::cell::RefCell;
 use core::cmp;
+use core::time::Duration;
 use cortex_m_rt::entry;
 use defmt::{debug, info};
 use defmt_rtt as _;
+use embedded_hal::delay::DelayNs;
 use microbit::adc::{Adc, AdcConfig};
 use microbit::hal::gpio::Level;
 use microbit::hal::gpio::p0::Parts;
-use microbit::hal::{Timer, spi, spim};
+use microbit::hal::{spi, spim};
 use microbit::{Peripherals, hal};
 use nrf52833_hal::Saadc;
+use nrf52833_hal::pac::TIMER0;
 use nrf52833_hal::saadc::Channel;
 use panic_probe as _;
 use smart_leds::RGB8;
@@ -44,7 +48,7 @@ fn main() -> ! {
     };
     let spi = spi::Spi::new(peripherals.SPI0, pins, spi::Frequency::M4, spim::MODE_0);
     let mut ws2812 = Ws2812::new(spi);
-    let mut timer = Timer::new(peripherals.TIMER0);
+    let mut timer = hal::Timer::new(peripherals.TIMER0);
 
     let mut adc = Adc::new(peripherals.SAADC, AdcConfig::default());
     // This analog pin is the big "0" connector or pin 0 on the micro:bit.
@@ -155,9 +159,12 @@ fn main() -> ! {
     }
 }
 
-fn read_potentiometer<PIN: Channel>(
+fn read_potentiometer<PIN>(
     adc: &mut Saadc, pin: &mut PIN, default_value: u16, min_value: u16, max_value: u16,
-) -> u16 {
+) -> u16
+where
+    PIN: Channel,
+{
     cmp::max(
         min_value,
         cmp::min(
@@ -165,4 +172,16 @@ fn read_potentiometer<PIN: Channel>(
             max_value,
         ),
     )
+}
+
+struct NrfTimer(hal::Timer<TIMER0>);
+
+impl Timer for NrfTimer {
+    fn pause(&mut self, duration: Duration) {
+        self.0.delay_ms(duration.as_millis() as u32);
+    }
+
+    async fn pause_async(&self, duration: Duration) {
+        unimplemented!();
+    }
 }

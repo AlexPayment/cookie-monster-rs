@@ -114,6 +114,8 @@ name = "cookie-monster-common"
 version = "0.1.0"
 dependencies = [
  "defmt 1.0.1",
+ "rand",
+ "smart-leds",
  "smart-leds-trait",
 ]
 
