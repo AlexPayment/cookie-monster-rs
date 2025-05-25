@@ -6,8 +6,11 @@ use embassy_time::{Duration, Timer};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::gpio::Pull::Up;
 use esp_hal::gpio::{AnyPin, GpioPin, Input, InputConfig};
-use esp_hal::peripherals::ADC2;
+use esp_hal::peripherals::{ADC2, SPI2};
+use esp_hal::spi::master::{Config as SpiConfig, Spi};
+use esp_hal::time::Rate;
 use nb::block;
+use ws2812_spi::Ws2812;
 
 const ANALOG_SENSORS_READ_FREQUENCY: Duration = Duration::from_millis(100);
 const DEBOUNCE_PERIOD: Duration = Duration::from_millis(50);
@@ -89,6 +92,19 @@ pub async fn color_button_task(button: AnyPin, settings_mutex: &'static Settings
         })
         .await;
     }
+}
+
+#[embassy_executor::task]
+pub async fn led_task(spi: SPI2, led: AnyPin) {
+    // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
+    let spi = Spi::new(spi, SpiConfig::default().with_frequency(Rate::from_mhz(2)))
+        .unwrap()
+        .with_mosi(led)
+        .into_async();
+
+    let ws2812 = Ws2812::new(spi);
+
+    loop {}
 }
 
 /// Executes the provided action when the button is pressed.

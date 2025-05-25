@@ -1,7 +1,31 @@
+use crate::Timer;
 use core::cmp;
 use defmt::Format;
+use smart_leds_trait::SmartLedsWrite;
 
 pub const DEFAULT_COLOR_INDEX: usize = 9;
+
+pub trait Animation {
+    /// Returns the brightness of the animation.
+    ///
+    /// The value is between 0.0 and 1.0.
+    fn brightness(&self, settings: &Settings) -> f32;
+
+    /// Renders the animation.
+    fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
+    );
+
+    async fn render_async(
+        &mut self, ws2812: &mut impl SmartLedsWrite, timer: &mut impl Timer, settings: &Settings,
+    );
+
+    /// Resets the animation to its initial state.
+    fn reset(&mut self);
+    
+    /// Updates the state of the animation based on the settings.
+    fn update(&mut self, settings: &Settings);
+}
 
 /// Common settings for the animations.
 #[derive(Clone, Copy, Debug, Format)]
@@ -11,7 +35,7 @@ pub struct Settings {
 
     /// Index of the color to be used in the animation.
     ///
-    /// Multicolor animations will generally ignore this value.
+    /// Multicolor animations generally ignore this value.
     color_index: usize,
 
     /// Delay between frames in milliseconds.

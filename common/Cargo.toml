@@ -10,3 +10,4 @@ publish = false
 
 [dependencies]
 defmt = { workspace = true }
+smart-leds-trait = { workspace = true }

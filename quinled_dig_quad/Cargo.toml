@@ -12,6 +12,7 @@ publish = false
 cookie-monster-common = { workspace = true }
 defmt = { workspace = true }
 embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-20480"] }
+embassy-futures = "0.1.1"
 embassy-sync = "0.6.2"
 embassy-time = { version = "0.4.0", features = ["generic-queue-8"] }
 esp-backtrace = { version = "0.15.1", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
@@ -20,3 +21,4 @@ esp-hal-embassy = { version = "0.7.0", features = ["esp32"] }
 esp-println = { version = "0.13.1", features = ["defmt-espflash", "esp32"] }
 nb = "1.1.0"
 static_cell = "2.1.0"
+ws2812-spi = { workspace = true }

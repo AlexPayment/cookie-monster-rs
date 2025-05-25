@@ -1,20 +1,19 @@
 #![no_std]
 #![no_main]
 
-use crate::controls::{
+use crate::input::{
     BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
-    color_button_task,
+    color_button_task, led_task,
 };
+use cookie_monster_common::Timer;
 use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
+use core::time::Duration;
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_sync::mutex::Mutex;
-use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
-use esp_hal::peripherals::ADC2;
-use esp_hal::spi::master::{Config as SpiConfig, Spi};
-use esp_hal::time::Rate;
+use esp_hal::peripherals::{ADC2, SPI2};
 use esp_hal::timer::timg::TimerGroup;
 use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
@@ -58,6 +57,9 @@ async fn main(spawner: Spawner) {
     // 3.3 V. This pin is on ADC2 channel 5.
     let delay_pin = peripherals.GPIO12;
 
+    // Pin that's labeled LED1 on the board.
+    let led1_pin = peripherals.GPIO16.degrade();
+
     let settings = Settings::new(
         DEFAULT_COLOR_INDEX,
         DEFAULT_ANALOG_VALUE,
@@ -70,34 +72,25 @@ async fn main(spawner: Spawner) {
     spawn_control_tasks(
         &spawner,
         peripherals.ADC2,
+        peripherals.SPI2,
         animation_pin,
         brightness_pin,
         color_pin,
         delay_pin,
+        led1_pin,
         settings_mutex,
     );
 
-    // Pin that's labeled LED1 on the board.
-    let led1_pin = peripherals.GPIO16;
-
-    // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
-    let _spi = Spi::new(
-        peripherals.SPI2,
-        SpiConfig::default().with_frequency(Rate::from_mhz(2)),
-    )
-    .unwrap()
-    .with_mosi(led1_pin)
-    .into_async();
-
     loop {
-        Timer::after(Duration::from_millis(500)).await;
+        embassy_time::Timer::after(embassy_time::Duration::from_millis(500)).await;
     }
 }
 
 /// Spawns the tasks for all the manual controls.
 fn spawn_control_tasks(
-    spawner: &Spawner, adc: ADC2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
-    color_pin: AnyPin, delay_pin: DelayPin, settings_mutex: &'static SettingsMutex,
+    spawner: &Spawner, adc: ADC2, spi: SPI2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
+    color_pin: AnyPin, delay_pin: DelayPin, led_pin: AnyPin,
+    settings_mutex: &'static SettingsMutex,
 ) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
@@ -116,6 +109,20 @@ fn spawn_control_tasks(
         delay_pin,
         settings_mutex
     )));
+
+    unwrap!(spawner.spawn(led_task(spi, led_pin)))
 }
 
-mod controls;
+struct EmbassyTime(embassy_time::Timer);
+
+impl Timer for EmbassyTime {
+    fn pause(&self, duration: Duration) {
+        embassy_futures::block_on(self.pause_async(duration));
+    }
+
+    async fn pause_async(&self, duration: Duration) {
+        embassy_time::Timer::after(embassy_time::Duration::try_from(duration).unwrap()).await;
+    }
+}
+
+mod input;
