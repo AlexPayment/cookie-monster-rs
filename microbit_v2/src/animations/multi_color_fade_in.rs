@@ -55,7 +55,7 @@ impl Animation for MultiColorFadeIn<'_> {
         }
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
-        timer.delay_ms(settings.delay() as u32);
+        timer.delay_ms(settings.delay());
     }
 
     fn reset(&mut self) {

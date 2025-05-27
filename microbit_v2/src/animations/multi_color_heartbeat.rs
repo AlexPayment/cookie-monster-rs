@@ -73,8 +73,8 @@ impl Animation for MultiColorHeartbeat<'_> {
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
         match self.sequence {
-            3 => timer.delay_ms((settings.delay() * 25) as u32),
-            _ => timer.delay_ms(settings.delay() as u32),
+            3 => timer.delay_ms(settings.delay() * 25),
+            _ => timer.delay_ms(settings.delay()),
         }
     }
 

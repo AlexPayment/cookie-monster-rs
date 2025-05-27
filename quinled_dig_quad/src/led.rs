@@ -1,8 +1,9 @@
+use crate::AnimationSignal;
 use crate::input::SettingsMutex;
-use crate::{AnimationSignal, EmbassyTimer};
 use cookie_monster_common::animations::carrousel::Carrousel;
 use cookie_monster_common::animations::{Animation, create_data};
 use defmt::info;
+use embassy_time::Delay;
 use esp_hal::gpio::AnyPin;
 use esp_hal::peripherals::{RNG, SPI2};
 use esp_hal::rng::Rng;
@@ -24,7 +25,7 @@ pub async fn led_task(
         .into_async();
 
     let mut ws2812 = Ws2812::new(spi);
-    let mut timer = EmbassyTimer();
+    let mut delay = Delay;
 
     // Setup Pseudo Random Number Generator
     let mut rng = Rng::new(rng);
@@ -45,6 +46,6 @@ pub async fn led_task(
 
         let settings = settings_mutex.lock().await;
         animations[animation_index].update(&settings);
-        animations[animation_index].render(&mut ws2812, &mut timer, &settings);
+        animations[animation_index].render(&mut ws2812, &mut delay, &settings);
     }
 }

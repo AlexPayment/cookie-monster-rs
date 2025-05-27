@@ -68,8 +68,8 @@ impl Animation for UniColorHeartbeat<'_> {
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
         match self.sequence {
-            3 => timer.delay_ms((settings.delay() * 30) as u32),
-            _ => timer.delay_ms(settings.delay() as u32),
+            3 => timer.delay_ms(settings.delay() * 30),
+            _ => timer.delay_ms(settings.delay()),
         }
     }
 

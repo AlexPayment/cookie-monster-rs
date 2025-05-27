@@ -1,8 +1,8 @@
-use crate::Timer;
 use crate::animations::carrousel::Carrousel;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::Format;
+use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
@@ -35,10 +35,10 @@ impl Animation<'_> {
     /// Renders the animation.
     pub fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
-        timer: &mut impl Timer, settings: &Settings,
+        delay: &mut impl DelayNs, settings: &Settings,
     ) {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.render(ws2812, timer, settings),
+            Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings),
         }
     }
 
@@ -69,7 +69,7 @@ pub struct Settings {
     color_index: usize,
 
     /// Delay between frames in milliseconds.
-    delay: u64,
+    delay: u32,
 
     /// Maximum value of the analog sensors (potentiometers).
     max_analog_value: u16,
@@ -103,7 +103,7 @@ impl Settings {
     }
 
     #[must_use]
-    pub fn delay(&self) -> u64 {
+    pub fn delay(&self) -> u32 {
         self.delay
     }
 
@@ -145,8 +145,8 @@ fn calculate_brightness(value: u16, max_value: u16) -> f32 {
 ///
 /// The delay is calculated as a fraction of the maximum analog value times one thousand. The
 /// resulting value is then clamped to a minimum of 1.
-fn calculate_delay(value: u16, max_value: u16) -> u64 {
-    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u64, 1)
+fn calculate_delay(value: u16, max_value: u16) -> u32 {
+    cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
 }
 
 fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {

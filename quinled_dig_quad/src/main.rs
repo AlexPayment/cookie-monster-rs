@@ -6,9 +6,7 @@ use crate::input::{
     color_button_task,
 };
 use crate::led::{NUM_ANIMATIONS, led_task};
-use cookie_monster_common::Timer;
 use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
-use core::time::Duration;
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -120,16 +118,6 @@ fn spawn_tasks(
         &ANIMATION_SIGNAL,
         settings_mutex
     )))
-}
-
-struct EmbassyTimer();
-
-impl Timer for EmbassyTimer {
-    fn start(&mut self, duration: Duration) {
-        embassy_futures::block_on(embassy_time::Timer::after(
-            embassy_time::Duration::try_from(duration).unwrap(),
-        ));
-    }
 }
 
 mod input;

@@ -6,22 +6,18 @@ use animations::{
     MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
     NUM_LEDS, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
-use cookie_monster_common::Timer;
 use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings, calculate_index};
 use core::cell::RefCell;
 use core::cmp;
-use core::time::Duration;
 use cortex_m_rt::entry;
 use defmt::{debug, info};
 use defmt_rtt as _;
-use embedded_hal::delay::DelayNs;
 use microbit::adc::{Adc, AdcConfig};
 use microbit::hal::gpio::Level;
 use microbit::hal::gpio::p0::Parts;
 use microbit::hal::{spi, spim};
 use microbit::{Peripherals, hal};
 use nrf52833_hal::Saadc;
-use nrf52833_hal::pac::TIMER0;
 use nrf52833_hal::saadc::Channel;
 use panic_probe as _;
 use smart_leds::RGB8;
@@ -172,12 +168,4 @@ where
             max_value,
         ),
     )
-}
-
-struct NrfTimer(hal::Timer<TIMER0>);
-
-impl Timer for NrfTimer {
-    fn start(&mut self, duration: Duration) {
-        self.0.delay_ms(duration.as_millis() as u32);
-    }
 }

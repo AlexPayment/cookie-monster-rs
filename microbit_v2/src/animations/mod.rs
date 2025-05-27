@@ -55,7 +55,7 @@ pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
 ];
 
 const NUM_STRANDS: usize = NUM_LEDS / 7;
-const SHORTEST_DELAY: u64 = 5;
+const SHORTEST_DELAY: u32 = 5;
 
 #[rustfmt::skip]
 const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [

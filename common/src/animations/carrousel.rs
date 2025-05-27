@@ -1,7 +1,7 @@
+use crate::animations;
 use crate::animations::{NUM_COLORS, NUM_LEDS, Settings};
-use crate::{Timer, animations};
 use core::cell::RefCell;
-use core::time::Duration;
+use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -31,10 +31,10 @@ impl<'a> Carrousel<'a> {
 impl Carrousel<'_> {
     pub fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
-        timer: &mut impl Timer, settings: &Settings,
+        delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
-        timer.start(Duration::from_millis(settings.delay));
+        delay.delay_ms(settings.delay());
     }
 
     pub fn reset(&mut self) {
