@@ -1,7 +1,8 @@
-use crate::animations::{Animation, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{NUM_COLORS, NUM_LEDS, Settings};
 use crate::{Timer, animations};
 use core::cell::RefCell;
 use core::time::Duration;
+use embedded_hal::spi;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use smart_leds::RGB8;
@@ -27,25 +28,21 @@ impl<'a> Carrousel<'a> {
     }
 }
 
-impl Animation for Carrousel<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
-    }
-
-    fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ()>,
+impl Carrousel<'_> {
+    pub fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
         timer: &mut impl Timer, settings: &Settings,
     ) {
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
-        timer.pause(Duration::from_millis(settings.delay));
+        timer.start(Duration::from_millis(settings.delay));
     }
 
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         animations::reset_data(self.data);
         self.position = 0;
     }
 
-    fn update(&mut self, settings: &Settings) {
+    pub fn update(&mut self, settings: &Settings) {
         self.data.borrow_mut()[self.position] = animations::create_color_with_brightness(
             animations::COLORS[self.color_index],
             self.brightness(settings),
@@ -61,5 +58,9 @@ impl Animation for Carrousel<'_> {
             }
             self.color_index = new_color;
         }
+    }
+
+    pub(crate) fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness() * 0.05
     }
 }

@@ -3,8 +3,9 @@
 
 use crate::input::{
     BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
-    color_button_task, led_task,
+    color_button_task,
 };
+use crate::led::{NUM_ANIMATIONS, led_task};
 use cookie_monster_common::Timer;
 use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
 use core::time::Duration;
@@ -13,7 +14,7 @@ use embassy_executor::Spawner;
 use embassy_sync::mutex::Mutex;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
-use esp_hal::peripherals::{ADC2, SPI2};
+use esp_hal::peripherals::{ADC2, RNG, SPI2};
 use esp_hal::timer::timg::TimerGroup;
 use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
@@ -23,7 +24,6 @@ static SETTINGS: StaticCell<SettingsMutex> = StaticCell::new();
 const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
 const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
-const NUM_ANIMATIONS: usize = 14;
 const NUM_COLORS: usize = 11;
 
 #[esp_hal_embassy::main]
@@ -72,6 +72,7 @@ async fn main(spawner: Spawner) {
     spawn_control_tasks(
         &spawner,
         peripherals.ADC2,
+        peripherals.RNG,
         peripherals.SPI2,
         animation_pin,
         brightness_pin,
@@ -88,8 +89,8 @@ async fn main(spawner: Spawner) {
 
 /// Spawns the tasks for all the manual controls.
 fn spawn_control_tasks(
-    spawner: &Spawner, adc: ADC2, spi: SPI2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
-    color_pin: AnyPin, delay_pin: DelayPin, led_pin: AnyPin,
+    spawner: &Spawner, adc: ADC2, rng: RNG, spi: SPI2, animation_pin: AnyPin,
+    brightness_pin: BrightnessPin, color_pin: AnyPin, delay_pin: DelayPin, led_pin: AnyPin,
     settings_mutex: &'static SettingsMutex,
 ) {
     // Spawn the animation button task
@@ -110,13 +111,13 @@ fn spawn_control_tasks(
         settings_mutex
     )));
 
-    unwrap!(spawner.spawn(led_task(spi, led_pin)))
+    unwrap!(spawner.spawn(led_task(rng, spi, led_pin, ANIMATION, settings_mutex)))
 }
 
-struct EmbassyTimer(embassy_time::Timer);
+struct EmbassyTimer();
 
 impl Timer for EmbassyTimer {
-    fn pause(&mut self, duration: Duration) {
+    fn start(&mut self, duration: Duration) {
         embassy_futures::block_on(embassy_time::Timer::after(
             embassy_time::Duration::try_from(duration).unwrap(),
         ));
@@ -124,3 +125,4 @@ impl Timer for EmbassyTimer {
 }
 
 mod input;
+mod led;

@@ -3,7 +3,8 @@
 use core::time::Duration;
 
 pub trait Timer {
-    fn pause(&mut self, duration: Duration);
+    /// Starts a blocking timer for a given duration.
+    fn start(&mut self, duration: Duration);
 }
 
 pub mod animations;

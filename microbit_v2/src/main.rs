@@ -177,7 +177,7 @@ where
 struct NrfTimer(hal::Timer<TIMER0>);
 
 impl Timer for NrfTimer {
-    fn pause(&mut self, duration: Duration) {
+    fn start(&mut self, duration: Duration) {
         self.0.delay_ms(duration.as_millis() as u32);
     }
 }

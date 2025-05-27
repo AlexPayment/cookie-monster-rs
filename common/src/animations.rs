@@ -1,7 +1,9 @@
 use crate::Timer;
+use crate::animations::carrousel::Carrousel;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::Format;
+use embedded_hal::spi;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
     WHITE,
@@ -25,23 +27,43 @@ pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
 pub(crate) const NUM_COLORS: usize = 11;
 pub(crate) const NUM_LEDS: usize = 96 * 10;
 
-pub trait Animation {
+pub enum Animation<'a> {
+    Carrousel(Carrousel<'a>),
+}
+
+impl Animation<'_> {
     /// Returns the brightness of the animation.
     ///
     /// The value is between 0.0 and 1.0.
-    fn brightness(&self, settings: &Settings) -> f32;
+    fn brigtness(&self, settings: &Settings) -> f32 {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.brightness(settings),
+        }
+    }
 
     /// Renders the animation.
-    fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ()>,
+    pub fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
         timer: &mut impl Timer, settings: &Settings,
-    );
+    ) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.render(ws2812, timer, settings),
+        }
+    }
 
     /// Resets the animation to its initial state.
-    fn reset(&mut self);
+    fn reset(&mut self) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.reset(),
+        }
+    }
 
     /// Updates the state of the animation based on the settings.
-    fn update(&mut self, settings: &Settings);
+    pub fn update(&mut self, settings: &Settings) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.update(settings),
+        }
+    }
 }
 
 /// Common settings for the animations.
@@ -115,6 +137,10 @@ impl Settings {
 pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
     let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
     cmp::min(index, num_values - 1)
+}
+
+pub fn create_data() -> RefCell<[RGB8; NUM_LEDS]> {
+    RefCell::new([RGB8::default(); NUM_LEDS])
 }
 
 /// Calculate the brightness based on the value of the potentiometer reading.
