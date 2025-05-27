@@ -43,7 +43,7 @@ impl Animation<'_> {
     }
 
     /// Resets the animation to its initial state.
-    fn reset(&mut self) {
+    pub fn reset(&mut self) {
         match self {
             Animation::Carrousel(carrousel) => carrousel.reset(),
         }

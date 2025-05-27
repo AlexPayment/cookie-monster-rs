@@ -1,3 +1,4 @@
+use crate::AnimationSignal;
 use cookie_monster_common::animations::Settings;
 use defmt::{debug, info};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
@@ -18,14 +19,18 @@ pub type SettingsMutex = Mutex<CriticalSectionRawMutex, Settings>;
 
 /// Task that waits for a button to be pressed to change the animation.
 #[embassy_executor::task]
-pub async fn animation_button_task(button: AnyPin, mut animation: usize, num_animations: usize) {
+pub async fn animation_button_task(
+    button: AnyPin, animation_signal: &'static AnimationSignal, num_animations: usize,
+) {
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
+    let mut animation = 0;
 
     loop {
         perform_when_button_pressed(&mut button, || async {
             // Increment the animation index or wrap around if it exceeds the number of animations.
             animation = (animation + 1) % num_animations;
             info!("Animation changed to: {}", animation);
+            animation_signal.signal(animation);
         })
         .await;
     }

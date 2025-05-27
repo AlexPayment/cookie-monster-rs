@@ -11,7 +11,9 @@ use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
 use core::time::Duration;
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
+use embassy_sync::signal::Signal;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::{ADC2, RNG, SPI2};
@@ -19,12 +21,14 @@ use esp_hal::timer::timg::TimerGroup;
 use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
 
-static ANIMATION: usize = 0;
+static ANIMATION_SIGNAL: AnimationSignal = Signal::new();
 static SETTINGS: StaticCell<SettingsMutex> = StaticCell::new();
 const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
 const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 const NUM_COLORS: usize = 11;
+
+type AnimationSignal = Signal<CriticalSectionRawMutex, usize>;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -85,7 +89,7 @@ fn spawn_tasks(
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
         animation_pin,
-        ANIMATION,
+        &ANIMATION_SIGNAL,
         NUM_ANIMATIONS
     )));
 
@@ -109,7 +113,13 @@ fn spawn_tasks(
         settings_mutex
     )));
 
-    unwrap!(spawner.spawn(led_task(rng, spi, led_pin, ANIMATION, settings_mutex)))
+    unwrap!(spawner.spawn(led_task(
+        rng,
+        spi,
+        led_pin,
+        &ANIMATION_SIGNAL,
+        settings_mutex
+    )))
 }
 
 struct EmbassyTimer();
