@@ -60,7 +60,7 @@ impl Carrousel<'_> {
         }
     }
 
-    pub(crate) fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> f32 {
         settings.brightness() * 0.05
     }
 }

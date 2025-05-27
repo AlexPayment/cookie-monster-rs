@@ -60,16 +60,7 @@ async fn main(spawner: Spawner) {
     // Pin that's labeled LED1 on the board.
     let led1_pin = peripherals.GPIO16.degrade();
 
-    let settings = Settings::new(
-        DEFAULT_COLOR_INDEX,
-        DEFAULT_ANALOG_VALUE,
-        DEFAULT_ANALOG_VALUE,
-        ADC_MAX_VALUE,
-        NUM_COLORS,
-    );
-    let settings_mutex = SETTINGS.init(Mutex::new(settings));
-
-    spawn_control_tasks(
+    spawn_tasks(
         &spawner,
         peripherals.ADC2,
         peripherals.RNG,
@@ -79,7 +70,6 @@ async fn main(spawner: Spawner) {
         color_pin,
         delay_pin,
         led1_pin,
-        settings_mutex,
     );
 
     loop {
@@ -87,11 +77,10 @@ async fn main(spawner: Spawner) {
     }
 }
 
-/// Spawns the tasks for all the manual controls.
-fn spawn_control_tasks(
+/// Spawns all the tasks.
+fn spawn_tasks(
     spawner: &Spawner, adc: ADC2, rng: RNG, spi: SPI2, animation_pin: AnyPin,
     brightness_pin: BrightnessPin, color_pin: AnyPin, delay_pin: DelayPin, led_pin: AnyPin,
-    settings_mutex: &'static SettingsMutex,
 ) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
@@ -99,6 +88,15 @@ fn spawn_control_tasks(
         ANIMATION,
         NUM_ANIMATIONS
     )));
+
+    let settings = Settings::new(
+        DEFAULT_COLOR_INDEX,
+        DEFAULT_ANALOG_VALUE,
+        DEFAULT_ANALOG_VALUE,
+        ADC_MAX_VALUE,
+        NUM_COLORS,
+    );
+    let settings_mutex = SETTINGS.init(Mutex::new(settings));
 
     // Spawn the color button task
     unwrap!(spawner.spawn(color_button_task(color_pin, settings_mutex)));

@@ -32,15 +32,6 @@ pub enum Animation<'a> {
 }
 
 impl Animation<'_> {
-    /// Returns the brightness of the animation.
-    ///
-    /// The value is between 0.0 and 1.0.
-    fn brigtness(&self, settings: &Settings) -> f32 {
-        match self {
-            Animation::Carrousel(carrousel) => carrousel.brightness(settings),
-        }
-    }
-
     /// Renders the animation.
     pub fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
