@@ -114,6 +114,10 @@ name = "cookie-monster-common"
 version = "0.1.0"
 dependencies = [
  "defmt 1.0.1",
+ "embedded-hal 1.0.0",
+ "rand",
+ "smart-leds",
+ "smart-leds-trait",
 ]
 
 [[package]]
@@ -142,6 +146,7 @@ dependencies = [
  "cookie-monster-common",
  "defmt 1.0.1",
  "embassy-executor",
+ "embassy-futures",
  "embassy-sync",
  "embassy-time",
  "esp-backtrace",
@@ -150,6 +155,7 @@ dependencies = [
  "esp-println",
  "nb 1.1.0",
  "static_cell",
+ "ws2812-spi",
 ]
 
 [[package]]
