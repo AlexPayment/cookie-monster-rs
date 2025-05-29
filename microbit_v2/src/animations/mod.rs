@@ -1,4 +1,4 @@
-use cookie_monster_common::animations::{NUM_COLORS, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{NUM_LEDS, Settings};
 use core::cell::RefCell;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
