@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use crate::controls::{
+use crate::input::{
     BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
     color_button_task,
 };
@@ -103,4 +103,4 @@ fn spawn_control_tasks(
     )));
 }
 
-mod controls;
+mod input;
