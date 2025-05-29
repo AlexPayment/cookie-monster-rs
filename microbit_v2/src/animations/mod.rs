@@ -1,14 +1,10 @@
-use cookie_monster_common::animations::Settings;
+use cookie_monster_common::animations::{NUM_LEDS, Settings};
 use core::cell::RefCell;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
 use microbit::pac::SPI0;
 use rand::rngs::SmallRng;
 use smart_leds::RGB8;
-use smart_leds::colors::{
-    BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
-    WHITE,
-};
 use ws2812_spi::Ws2812;
 
 pub(crate) mod carrousel;
@@ -26,9 +22,6 @@ pub(crate) mod uni_color_heartbeat;
 pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
-pub const NUM_COLORS: usize = 11;
-pub const NUM_LEDS: usize = 96 * 10;
-
 pub(crate) trait Animation {
     fn brightness(&self, settings: &Settings) -> f32;
 
@@ -39,20 +32,6 @@ pub(crate) trait Animation {
 
     fn reset(&mut self);
 }
-
-pub(crate) const COLORS: [RGB8; NUM_COLORS] = [
-    WHITE,
-    RED,
-    DARK_RED,
-    GOLD,
-    GREEN,
-    DARK_GREEN,
-    DARK_TURQUOISE,
-    BLUE,
-    MIDNIGHT_BLUE,
-    PURPLE,
-    INDIGO,
-];
 
 const NUM_STRANDS: usize = NUM_LEDS / 7;
 const SHORTEST_DELAY: u32 = 5;
@@ -490,19 +469,4 @@ pub(crate) struct UniColorSolid<'a> {
 pub(crate) struct UniColorSparkle<'a> {
     data: &'a RefCell<[RGB8; NUM_LEDS]>,
     prng: SmallRng,
-}
-
-fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
-    RGB8::new(
-        (f32::from(color.r) * brightness) as u8,
-        (f32::from(color.g) * brightness) as u8,
-        (f32::from(color.b) * brightness) as u8,
-    )
-}
-
-fn reset_data(data: &RefCell<[RGB8; NUM_LEDS]>) {
-    let mut data = data.borrow_mut();
-    for i in 0..NUM_LEDS {
-        data[i] = RGB8::default();
-    }
 }

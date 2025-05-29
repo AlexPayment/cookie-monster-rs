@@ -3,10 +3,12 @@
 
 use animations::{
     Animation, Carrousel, DoubleCarrousel, ForwardWave, MultiColorFadeIn, MultiColorHeartbeat,
-    MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, NUM_COLORS,
-    NUM_LEDS, UniColorFadeIn, UniColorHeartbeat, UniColorSolid, UniColorSparkle,
+    MultiColorSolid, MultiColorSolidRandom, MultiColorSparkle, MultiColorStrand, UniColorFadeIn,
+    UniColorHeartbeat, UniColorSolid, UniColorSparkle,
 };
-use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings, calculate_index};
+use cookie_monster_common::animations::{
+    DEFAULT_COLOR_INDEX, NUM_COLORS, NUM_LEDS, Settings, calculate_index,
+};
 use core::cell::RefCell;
 use core::cmp;
 use cortex_m_rt::entry;
