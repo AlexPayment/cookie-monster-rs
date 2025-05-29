@@ -1,6 +1,6 @@
-use crate::animations;
-use crate::animations::{Animation, MultiColorSparkle, NUM_LEDS, SHORTEST_DELAY};
-use cookie_monster_common::animations::Settings;
+use crate::animations::{Animation, MultiColorSparkle, SHORTEST_DELAY};
+use cookie_monster_common::animations;
+use cookie_monster_common::animations::{NUM_LEDS, Settings};
 use core::cell::RefCell;
 use core::cmp;
 use embedded_hal::delay::DelayNs;

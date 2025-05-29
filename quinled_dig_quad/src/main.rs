@@ -5,7 +5,7 @@ use crate::controls::{
     BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
     color_button_task,
 };
-use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, Settings};
+use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, NUM_COLORS, Settings};
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_sync::mutex::Mutex;
@@ -23,7 +23,6 @@ const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
 const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 const NUM_ANIMATIONS: usize = 14;
-const NUM_COLORS: usize = 11;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {

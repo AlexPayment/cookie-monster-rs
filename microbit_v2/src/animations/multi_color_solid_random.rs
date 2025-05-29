@@ -1,6 +1,6 @@
-use crate::animations;
-use crate::animations::{Animation, MultiColorSolidRandom, NUM_LEDS};
-use cookie_monster_common::animations::Settings;
+use crate::animations::{Animation, MultiColorSolidRandom};
+use cookie_monster_common::animations;
+use cookie_monster_common::animations::{NUM_LEDS, Settings};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;

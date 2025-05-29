@@ -1,7 +1,28 @@
+use core::cell::RefCell;
 use core::cmp;
 use defmt::Format;
+use smart_leds::RGB8;
+use smart_leds::colors::{
+    BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
+    WHITE,
+};
 
+pub const COLORS: [RGB8; NUM_COLORS] = [
+    WHITE,
+    RED,
+    DARK_RED,
+    GOLD,
+    GREEN,
+    DARK_GREEN,
+    DARK_TURQUOISE,
+    BLUE,
+    MIDNIGHT_BLUE,
+    PURPLE,
+    INDIGO,
+];
 pub const DEFAULT_COLOR_INDEX: usize = 9;
+pub const NUM_COLORS: usize = 11;
+pub const NUM_LEDS: usize = 96 * 10;
 
 /// Common settings for the animations.
 #[derive(Clone, Copy, Debug, Format)]
@@ -76,6 +97,23 @@ pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
     cmp::min(index, num_values - 1)
 }
 
+/// Create a color from a provided color adjusted by a brightness value between 0 and 1.
+pub fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
+    RGB8::new(
+        (f32::from(color.r) * brightness) as u8,
+        (f32::from(color.g) * brightness) as u8,
+        (f32::from(color.b) * brightness) as u8,
+    )
+}
+
+/// Resets the LEDs data to its default state.
+pub fn reset_data(data: &RefCell<[RGB8; NUM_LEDS]>) {
+    let mut data = data.borrow_mut();
+    for i in 0..NUM_LEDS {
+        data[i] = RGB8::default();
+    }
+}
+
 /// Calculate the brightness based on the value of the potentiometer reading.
 ///
 /// The value is between 0 and 1.
@@ -90,3 +128,5 @@ fn calculate_brightness(value: u16, max_value: u16) -> f32 {
 fn calculate_delay(value: u16, max_value: u16) -> u32 {
     cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
 }
+
+pub mod carrousel;
