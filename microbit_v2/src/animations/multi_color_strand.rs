@@ -1,7 +1,6 @@
 use crate::animations::{Animation, MultiColorStrand, NUM_STRANDS, Strand};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{NUM_LEDS, Settings};
-use core::cell::RefCell;
+use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -24,7 +23,7 @@ const COLORS: [RGB8; 7] = [
 ];
 
 impl<'a> MultiColorStrand<'a> {
-    pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
+    pub fn new(data: &'a LedData, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
 
         let mut strands = [Strand::default(); NUM_STRANDS];

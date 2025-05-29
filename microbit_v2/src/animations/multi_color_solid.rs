@@ -1,19 +1,17 @@
 use crate::animations::{Animation, MultiColorSolid};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{NUM_COLORS, NUM_LEDS, Settings};
-use core::cell::RefCell;
+use cookie_monster_common::animations::{LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
 use microbit::pac::{SPI0, TIMER0};
-use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
 const LEDS_PER_COLOR: usize = NUM_LEDS / NUM_COLORS;
 
 impl<'a> MultiColorSolid<'a> {
-    pub(crate) fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
+    pub(crate) fn new(data: &'a LedData) -> Self {
         Self { data }
     }
 }

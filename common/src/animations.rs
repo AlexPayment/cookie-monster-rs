@@ -24,6 +24,8 @@ pub const DEFAULT_COLOR_INDEX: usize = 9;
 pub const NUM_COLORS: usize = 11;
 pub const NUM_LEDS: usize = 96 * 10;
 
+pub type LedData = RefCell<[RGB8; NUM_LEDS]>;
+
 /// Common settings for the animations.
 #[derive(Clone, Copy, Debug, Format)]
 pub struct Settings {
@@ -107,7 +109,7 @@ pub fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
 }
 
 /// Resets the LEDs data to its default state.
-pub fn reset_data(data: &RefCell<[RGB8; NUM_LEDS]>) {
+pub fn reset_data(data: &LedData) {
     let mut data = data.borrow_mut();
     for i in 0..NUM_LEDS {
         data[i] = RGB8::default();
