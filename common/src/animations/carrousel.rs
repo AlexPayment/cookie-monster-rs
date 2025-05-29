@@ -1,6 +1,5 @@
 use crate::animations;
-use crate::animations::{NUM_COLORS, NUM_LEDS, Settings};
-use core::cell::RefCell;
+use crate::animations::{LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
 use rand::rngs::SmallRng;
@@ -10,13 +9,13 @@ use smart_leds_trait::SmartLedsWrite;
 
 pub struct Carrousel<'a> {
     color_index: usize,
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     position: usize,
     prng: SmallRng,
 }
 
 impl<'a> Carrousel<'a> {
-    pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>, random_seed: u64) -> Self {
+    pub fn new(data: &'a LedData, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         let color_index = prng.random_range(0..NUM_COLORS);
         Self {

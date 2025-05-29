@@ -1,5 +1,4 @@
-use cookie_monster_common::animations::{NUM_LEDS, Settings};
-use core::cell::RefCell;
+use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings};
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
 use microbit::pac::SPI0;
@@ -380,7 +379,7 @@ const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [
 
 pub(crate) struct Carrousel<'a> {
     color_index: usize,
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     position: usize,
     prng: SmallRng,
 }
@@ -388,20 +387,20 @@ pub(crate) struct Carrousel<'a> {
 pub(crate) struct DoubleCarrousel<'a> {
     color_index_1: usize,
     color_index_2: usize,
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     position_1: usize,
     position_2: usize,
     prng: SmallRng,
 }
 
 pub(crate) struct ForwardWave<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     position: usize,
     wrapped: bool,
 }
 
 pub(crate) struct MultiColorFadeIn<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     ascending: bool,
     color_index: usize,
     prng: SmallRng,
@@ -409,7 +408,7 @@ pub(crate) struct MultiColorFadeIn<'a> {
 }
 
 pub(crate) struct MultiColorHeartbeat<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     color_index: usize,
     prng: SmallRng,
     current_step: u8,
@@ -417,22 +416,22 @@ pub(crate) struct MultiColorHeartbeat<'a> {
 }
 
 pub(crate) struct MultiColorSolid<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
 }
 
 pub(crate) struct MultiColorSolidRandom<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     prng: SmallRng,
     rendered_data: [RGB8; NUM_LEDS],
 }
 
 pub(crate) struct MultiColorSparkle<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     prng: SmallRng,
 }
 
 pub(crate) struct MultiColorStrand<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     prng: SmallRng,
     strands: [Strand; NUM_STRANDS],
 }
@@ -446,27 +445,27 @@ struct Strand {
 }
 
 pub(crate) struct UniColorFadeIn<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     ascending: bool,
     current_step: u8,
 }
 
 pub(crate) struct UniColorFrontToBackWave<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     position: usize,
 }
 
 pub(crate) struct UniColorHeartbeat<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     current_step: u8,
     sequence: u8,
 }
 
 pub(crate) struct UniColorSolid<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
 }
 
 pub(crate) struct UniColorSparkle<'a> {
-    data: &'a RefCell<[RGB8; NUM_LEDS]>,
+    data: &'a LedData,
     prng: SmallRng,
 }

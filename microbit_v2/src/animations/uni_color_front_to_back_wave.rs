@@ -1,17 +1,15 @@
 use crate::animations::{Animation, UniColorFrontToBackWave, VERTICAL_SLICES};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, NUM_LEDS, Settings};
-use core::cell::RefCell;
+use cookie_monster_common::animations::{COLORS, LedData, Settings};
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
 use nrf52833_hal::Timer;
 use nrf52833_hal::spi::Spi;
-use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 use ws2812_spi::Ws2812;
 
 impl<'a> UniColorFrontToBackWave<'a> {
-    pub fn new(data: &'a RefCell<[RGB8; NUM_LEDS]>) -> Self {
+    pub fn new(data: &'a LedData) -> Self {
         Self { data, position: 0 }
     }
 }
