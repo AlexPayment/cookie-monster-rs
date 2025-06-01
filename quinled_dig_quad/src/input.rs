@@ -1,4 +1,6 @@
-use crate::{AnimationChangedSignal, BrightnessReadSignal, ColorChangedSignal, DelayReadSignal};
+use crate::signal::{
+    ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
+};
 use defmt::{debug, info};
 use embassy_time::{Duration, Timer};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
@@ -15,14 +17,12 @@ pub type DelayPin = GpioPin<12>;
 
 /// Task that waits for a button to be pressed to signal an animation change.
 #[embassy_executor::task]
-pub async fn animation_button_task(
-    button: AnyPin, animation_changed_signal: &'static AnimationChangedSignal,
-) {
+pub async fn animation_button_task(button: AnyPin) {
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || async {
-            animation_changed_signal.signal(());
+            ANIMATION_CHANGED_SIGNAL.signal(());
             info!("Animation change signaled");
         })
         .await;
@@ -34,11 +34,7 @@ pub async fn animation_button_task(
 /// All sensors are connected to ADC2, which is a 12-bit ADC. Unfortunately, embassy doesn't allow a
 /// task to be generic.
 #[embassy_executor::task]
-pub async fn analog_sensors_task(
-    adc: ADC2, brightness_pin: BrightnessPin, delay_pin: DelayPin,
-    brightness_read_signal: &'static BrightnessReadSignal,
-    delay_read_signal: &'static DelayReadSignal,
-) {
+pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay_pin: DelayPin) {
     // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
     let mut adc2_config = AdcConfig::default();
     // Because the brightness potentiometer is connected to the 3.3 V pin, we need to set the
@@ -54,8 +50,8 @@ pub async fn analog_sensors_task(
         let brightness_value: u16 = block!(adc2.read_oneshot(&mut brightness_pin)).unwrap();
         let delay_value: u16 = block!(adc2.read_oneshot(&mut delay_pin)).unwrap();
 
-        brightness_read_signal.signal(brightness_value);
-        delay_read_signal.signal(delay_value);
+        BRIGHTNESS_READ_SIGNAL.signal(brightness_value);
+        DELAY_READ_SIGNAL.signal(delay_value);
 
         info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
 
@@ -66,12 +62,12 @@ pub async fn analog_sensors_task(
 
 /// Task that waits for a button to be pressed to signal a color change.
 #[embassy_executor::task]
-pub async fn color_button_task(button: AnyPin, color_change_signal: &'static ColorChangedSignal) {
+pub async fn color_button_task(button: AnyPin) {
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || async {
-            color_change_signal.signal(());
+            COLOR_CHANGED_SIGNAL.signal(());
             info!("Color change signaled");
         })
         .await;

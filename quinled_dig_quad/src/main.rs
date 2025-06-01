@@ -6,24 +6,18 @@ use crate::input::{
 };
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
-use esp_hal::peripherals::ADC2;
+use esp_hal::peripherals::{ADC2, RNG, SPI2};
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
-type AnimationChangedSignal = Signal<CriticalSectionRawMutex, ()>;
-type BrightnessReadSignal = Signal<CriticalSectionRawMutex, u16>;
-type ColorChangedSignal = Signal<CriticalSectionRawMutex, ()>;
-type DelayReadSignal = Signal<CriticalSectionRawMutex, u16>;
-
-static ANIMATION_CHANGED_SIGNAL: AnimationChangedSignal = AnimationChangedSignal::new();
-static BRIGHTNESS_READ_SIGNAL: BrightnessReadSignal = BrightnessReadSignal::new();
-static COLOR_CHANGED_SIGNAL: ColorChangedSignal = ColorChangedSignal::new();
-static DELAY_READ_SIGNAL: DelayReadSignal = DelayReadSignal::new();
+// The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
+const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
+const ADC_RESOLUTION: u32 = 12;
+// The default analog value is set to half of the maximum value, which is 2048.
+const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -36,33 +30,39 @@ async fn main(spawner: Spawner) {
 
     info!("Embassy initialized!");
 
-    // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should be
-    // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
-    // 3.3 V. This pin is on ADC2 channel 2.
-    let animation_pin = peripherals.GPIO2.degrade();
+    let pins = Pins {
+        // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should be
+        // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
+        // 3.3 V. This pin is on ADC2 channel 2.
+        animation: peripherals.GPIO2.degrade(),
 
-    // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should be
-    // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher than
-    // 3.3 V. This pin is on ADC2 channel 3.
-    let brightness_pin = peripherals.GPIO15;
+        // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should be
+        // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
+        // than 3.3 V. This pin is on ADC2 channel 3.
+        brightness: peripherals.GPIO15,
 
-    // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button also be
-    // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
-    // 3.3 V. This pin is on ADC1 channel 4.
-    let color_pin = peripherals.GPIO32.degrade();
+        // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button also be
+        // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
+        // 3.3 V. This pin is on ADC1 channel 4.
+        color: peripherals.GPIO32.degrade(),
 
-    // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button also be
-    // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher than
-    // 3.3 V. This pin is on ADC2 channel 5.
-    let delay_pin = peripherals.GPIO12;
+        // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button also be
+        // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
+        // than 3.3 V. This pin is on ADC2 channel 5.
+        delay: peripherals.GPIO12,
+
+        // Pin that's labeled LED1 on the board.
+        led: peripherals.GPIO16.degrade(),
+    };
 
     spawn_control_tasks(
         &spawner,
         peripherals.ADC2,
-        animation_pin,
-        brightness_pin,
-        color_pin,
-        delay_pin,
+        peripherals.RNG,
+        // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
+        // in many examples.
+        peripherals.SPI2,
+        pins,
     );
 
     loop {
@@ -70,28 +70,36 @@ async fn main(spawner: Spawner) {
     }
 }
 
+/// Represents the pins used for both input and output.
+struct Pins {
+    animation: AnyPin,
+    brightness: BrightnessPin,
+    color: AnyPin,
+    delay: DelayPin,
+    led: AnyPin,
+}
+
 /// Spawns the tasks for all the manual controls.
-fn spawn_control_tasks(
-    spawner: &Spawner, adc: ADC2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
-    color_pin: AnyPin, delay_pin: DelayPin,
-) {
+fn spawn_control_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: SPI2, pins: Pins) {
     // Spawn the animation button task
-    unwrap!(spawner.spawn(animation_button_task(
-        animation_pin,
-        &ANIMATION_CHANGED_SIGNAL
-    )));
+    unwrap!(spawner.spawn(animation_button_task(pins.animation)));
 
     // Spawn the color button task
-    unwrap!(spawner.spawn(color_button_task(color_pin, &COLOR_CHANGED_SIGNAL)));
+    unwrap!(spawner.spawn(color_button_task(pins.color)));
 
     // Spawn the analog sensors task
-    unwrap!(spawner.spawn(analog_sensors_task(
-        adc,
-        brightness_pin,
-        delay_pin,
-        &BRIGHTNESS_READ_SIGNAL,
-        &DELAY_READ_SIGNAL
+    unwrap!(spawner.spawn(analog_sensors_task(adc, pins.brightness, pins.delay)));
+
+    // Spawn the LED task
+    unwrap!(spawner.spawn(led::led_task(
+        rng,
+        spi,
+        pins.led,
+        DEFAULT_ANALOG_VALUE,
+        ADC_MAX_VALUE
     )));
 }
 
 mod input;
+mod led;
+mod signal;
