@@ -2,27 +2,28 @@
 #![no_main]
 
 use crate::input::{
-    BrightnessPin, DelayPin, SettingsMutex, analog_sensors_task, animation_button_task,
-    color_button_task,
+    BrightnessPin, DelayPin, analog_sensors_task, animation_button_task, color_button_task,
 };
-use cookie_monster_common::animations::{DEFAULT_COLOR_INDEX, NUM_COLORS, Settings};
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
-use embassy_sync::mutex::Mutex;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::ADC2;
 use esp_hal::timer::timg::TimerGroup;
-use static_cell::StaticCell;
 use {esp_backtrace as _, esp_println as _};
 
-static ANIMATION: usize = 0;
-static SETTINGS: StaticCell<SettingsMutex> = StaticCell::new();
-const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
-const ADC_RESOLUTION: u32 = 12;
-const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
-const NUM_ANIMATIONS: usize = 14;
+type AnimationChangedSignal = Signal<CriticalSectionRawMutex, ()>;
+type BrightnessReadSignal = Signal<CriticalSectionRawMutex, u16>;
+type ColorChangedSignal = Signal<CriticalSectionRawMutex, ()>;
+type DelayReadSignal = Signal<CriticalSectionRawMutex, u16>;
+
+static ANIMATION_CHANGED_SIGNAL: AnimationChangedSignal = AnimationChangedSignal::new();
+static BRIGHTNESS_READ_SIGNAL: BrightnessReadSignal = BrightnessReadSignal::new();
+static COLOR_CHANGED_SIGNAL: ColorChangedSignal = ColorChangedSignal::new();
+static DELAY_READ_SIGNAL: DelayReadSignal = DelayReadSignal::new();
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -55,15 +56,6 @@ async fn main(spawner: Spawner) {
     // 3.3 V. This pin is on ADC2 channel 5.
     let delay_pin = peripherals.GPIO12;
 
-    let settings = Settings::new(
-        DEFAULT_COLOR_INDEX,
-        DEFAULT_ANALOG_VALUE,
-        DEFAULT_ANALOG_VALUE,
-        ADC_MAX_VALUE,
-        NUM_COLORS,
-    );
-    let settings_mutex = SETTINGS.init(Mutex::new(settings));
-
     spawn_control_tasks(
         &spawner,
         peripherals.ADC2,
@@ -71,7 +63,6 @@ async fn main(spawner: Spawner) {
         brightness_pin,
         color_pin,
         delay_pin,
-        settings_mutex,
     );
 
     loop {
@@ -82,24 +73,24 @@ async fn main(spawner: Spawner) {
 /// Spawns the tasks for all the manual controls.
 fn spawn_control_tasks(
     spawner: &Spawner, adc: ADC2, animation_pin: AnyPin, brightness_pin: BrightnessPin,
-    color_pin: AnyPin, delay_pin: DelayPin, settings_mutex: &'static SettingsMutex,
+    color_pin: AnyPin, delay_pin: DelayPin,
 ) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(
         animation_pin,
-        ANIMATION,
-        NUM_ANIMATIONS
+        &ANIMATION_CHANGED_SIGNAL
     )));
 
     // Spawn the color button task
-    unwrap!(spawner.spawn(color_button_task(color_pin, settings_mutex)));
+    unwrap!(spawner.spawn(color_button_task(color_pin, &COLOR_CHANGED_SIGNAL)));
 
     // Spawn the analog sensors task
     unwrap!(spawner.spawn(analog_sensors_task(
         adc,
         brightness_pin,
         delay_pin,
-        settings_mutex
+        &BRIGHTNESS_READ_SIGNAL,
+        &DELAY_READ_SIGNAL
     )));
 }
 
