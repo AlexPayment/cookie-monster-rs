@@ -1,7 +1,5 @@
-use cookie_monster_common::animations::Settings;
+use crate::{AnimationChangedSignal, BrightnessReadSignal, ColorChangedSignal, DelayReadSignal};
 use defmt::{debug, info};
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Timer};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::gpio::Pull::Up;
@@ -14,31 +12,32 @@ const DEBOUNCE_PERIOD: Duration = Duration::from_millis(50);
 
 pub type BrightnessPin = GpioPin<15>;
 pub type DelayPin = GpioPin<12>;
-pub type SettingsMutex = Mutex<CriticalSectionRawMutex, Settings>;
 
-/// Task that waits for a button to be pressed to change the animation.
+/// Task that waits for a button to be pressed to signal an animation change.
 #[embassy_executor::task]
-pub async fn animation_button_task(button: AnyPin, mut animation: usize, num_animations: usize) {
+pub async fn animation_button_task(
+    button: AnyPin, animation_changed_signal: &'static AnimationChangedSignal,
+) {
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || async {
-            // Increment the animation index or wrap around if it exceeds the number of animations.
-            animation = (animation + 1) % num_animations;
-            info!("Animation changed to: {}", animation);
+            animation_changed_signal.signal(());
+            info!("Animation change signaled");
         })
         .await;
     }
 }
 
-/// Task that reads analog sensors (potentiometers) to set the brightness and the delay.
+/// Task that reads analog sensors (potentiometers) to signal the brightness and delay values.
 ///
 /// All sensors are connected to ADC2, which is a 12-bit ADC. Unfortunately, embassy doesn't allow a
 /// task to be generic.
 #[embassy_executor::task]
 pub async fn analog_sensors_task(
     adc: ADC2, brightness_pin: BrightnessPin, delay_pin: DelayPin,
-    settings_mutex: &'static SettingsMutex,
+    brightness_read_signal: &'static BrightnessReadSignal,
+    delay_read_signal: &'static DelayReadSignal,
 ) {
     // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
     let mut adc2_config = AdcConfig::default();
@@ -55,37 +54,25 @@ pub async fn analog_sensors_task(
         let brightness_value: u16 = block!(adc2.read_oneshot(&mut brightness_pin)).unwrap();
         let delay_value: u16 = block!(adc2.read_oneshot(&mut delay_pin)).unwrap();
 
-        {
-            debug!("Waiting for mutex lock...");
-            let mut settings = settings_mutex.lock().await;
+        brightness_read_signal.signal(brightness_value);
+        delay_read_signal.signal(delay_value);
 
-            settings.set_brightness(brightness_value);
-            settings.set_delay(delay_value);
-
-            info!(
-                "Brightness: {}, Delay: {}",
-                settings.brightness(),
-                settings.delay()
-            );
-        }
+        info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
 
         // Wait for a short period before reading again.
         Timer::after(ANALOG_SENSORS_READ_FREQUENCY).await;
     }
 }
 
-/// Task that waits for a button to be pressed to change the color.
+/// Task that waits for a button to be pressed to signal a color change.
 #[embassy_executor::task]
-pub async fn color_button_task(button: AnyPin, settings_mutex: &'static SettingsMutex) {
+pub async fn color_button_task(button: AnyPin, color_change_signal: &'static ColorChangedSignal) {
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
         perform_when_button_pressed(&mut button, || async {
-            debug!("Waiting for mutex lock...");
-            let mut settings = settings_mutex.lock().await;
-            // Increment the color index or wrap around if it exceeds the number of colors.
-            settings.increment_color_index();
-            info!("Color changed to: {}", settings.color_index());
+            color_change_signal.signal(());
+            info!("Color change signaled");
         })
         .await;
     }
