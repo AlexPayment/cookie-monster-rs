@@ -1,11 +1,15 @@
+use crate::animations::carrousel::Carrousel;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::Format;
+use embedded_hal::delay::DelayNs;
+use embedded_hal::spi;
 use smart_leds::RGB8;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
     WHITE,
 };
+use smart_leds_trait::SmartLedsWrite;
 
 pub const COLORS: [RGB8; NUM_COLORS] = [
     WHITE,
@@ -21,10 +25,41 @@ pub const COLORS: [RGB8; NUM_COLORS] = [
     INDIGO,
 ];
 pub const DEFAULT_COLOR_INDEX: usize = 9;
+pub const NUM_ANIMATIONS: usize = 1;
 pub const NUM_COLORS: usize = 11;
 pub const NUM_LEDS: usize = 96 * 10;
 
 pub type LedData = RefCell<[RGB8; NUM_LEDS]>;
+
+pub enum Animation<'a> {
+    Carrousel(Carrousel<'a>),
+}
+
+impl Animation<'_> {
+    /// Renders the animation.
+    pub fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
+        delay: &mut impl DelayNs, settings: &Settings,
+    ) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings),
+        }
+    }
+
+    /// Resets the animation to its initial state.
+    pub fn reset(&mut self) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.reset(),
+        }
+    }
+
+    /// Updates the state of the animation based on the settings.
+    pub fn update(&mut self, settings: &Settings) {
+        match self {
+            Animation::Carrousel(carrousel) => carrousel.update(settings),
+        }
+    }
+}
 
 /// Common settings for the animations.
 #[derive(Clone, Copy, Debug, Format)]
@@ -34,7 +69,7 @@ pub struct Settings {
 
     /// Index of the color to be used in the animation.
     ///
-    /// Multicolor animations will generally ignore this value.
+    /// Multicolor animations generally ignore this value.
     color_index: usize,
 
     /// Delay between frames in milliseconds.
@@ -106,6 +141,11 @@ pub fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
         (f32::from(color.g) * brightness) as u8,
         (f32::from(color.b) * brightness) as u8,
     )
+}
+
+/// Create a new [`LedData`] structure initialized with default colors.
+pub fn create_data() -> LedData {
+    RefCell::new([RGB8::default(); NUM_LEDS])
 }
 
 /// Resets the LEDs data to its default state.
