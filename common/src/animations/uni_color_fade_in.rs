@@ -1,0 +1,65 @@
+use crate::animations;
+use crate::animations::{COLORS, LedData, NUM_LEDS, Settings};
+use embedded_hal::delay::DelayNs;
+use embedded_hal::spi;
+use smart_leds::RGB8;
+use smart_leds_trait::SmartLedsWrite;
+
+const STEP: u8 = 23;
+
+pub struct UniColorFadeIn<'a> {
+    data: &'a LedData,
+    ascending: bool,
+    current_step: u8,
+}
+
+impl<'a> UniColorFadeIn<'a> {
+    pub(crate) fn new(data: &'a LedData) -> Self {
+        Self {
+            data,
+            ascending: true,
+            current_step: 0,
+        }
+    }
+
+    pub(crate) fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
+        delay: &mut impl DelayNs, settings: &Settings,
+    ) {
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        delay.delay_ms(settings.delay());
+    }
+
+    pub(crate) fn reset(&mut self) {
+        animations::reset_data(self.data);
+        self.ascending = true;
+        self.current_step = 0;
+    }
+
+    pub(crate) fn update(&mut self, settings: &Settings) {
+        animations::reset_data(self.data);
+
+        let brightness =
+            (self.brightness(settings) / f32::from(STEP)) * f32::from(self.current_step);
+        let color =
+            animations::create_color_with_brightness(COLORS[settings.color_index()], brightness);
+        for i in 0..NUM_LEDS {
+            self.data.borrow_mut()[i] = color;
+        }
+        if self.ascending {
+            self.current_step += 1;
+            if self.current_step >= STEP {
+                self.ascending = false;
+            }
+        } else {
+            self.current_step -= 1;
+            if self.current_step == 1 {
+                self.ascending = true;
+            }
+        }
+    }
+
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness() * 0.05
+    }
+}
