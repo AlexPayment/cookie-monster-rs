@@ -2,7 +2,7 @@ use crate::animations;
 use crate::animations::{LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
-use rand::prelude::SmallRng;
+use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
@@ -19,7 +19,7 @@ pub struct DoubleCarrousel<'a> {
 }
 
 impl<'a> DoubleCarrousel<'a> {
-    pub fn new(data: &'a LedData, random_seed: u64) -> Self {
+    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         let color_index_1 = prng.random_range(0..NUM_COLORS);
         let color_index_2 = prng.random_range(0..NUM_COLORS);

@@ -15,7 +15,7 @@ pub struct Carrousel<'a> {
 }
 
 impl<'a> Carrousel<'a> {
-    pub fn new(data: &'a LedData, random_seed: u64) -> Self {
+    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         let color_index = prng.random_range(0..NUM_COLORS);
         Self {
