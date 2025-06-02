@@ -1,6 +1,6 @@
-use crate::animations::{Animation, UniColorFrontToBackWave, VERTICAL_SLICES};
+use crate::animations::{Animation, UniColorFrontToBackWave};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, Settings};
+use cookie_monster_common::animations::{COLORS, LedData, Settings, VERTICAL_SLICES};
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
 use nrf52833_hal::Timer;

@@ -1,15 +1,17 @@
-use crate::animations::{Animation, UniColorSparkle};
-use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, SHORTEST_DELAY, Settings};
+use crate::animations;
+use crate::animations::{COLORS, LedData, NUM_LEDS, SHORTEST_DELAY, Settings};
 use core::cmp;
 use embedded_hal::delay::DelayNs;
-use microbit::hal::Timer;
-use microbit::hal::spi::Spi;
-use microbit::pac::{SPI0, TIMER0};
+use embedded_hal::spi;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
-use ws2812_spi::Ws2812;
+
+pub struct UniColorSparkle<'a> {
+    data: &'a LedData,
+    prng: SmallRng,
+}
 
 impl<'a> UniColorSparkle<'a> {
     pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
@@ -18,16 +20,24 @@ impl<'a> UniColorSparkle<'a> {
             prng: SmallRng::seed_from_u64(random_seed),
         }
     }
-}
 
-impl Animation for UniColorSparkle<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness()
+    pub(crate) fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
+        delay: &mut impl DelayNs, settings: &Settings,
+    ) {
+        let random_delay = self
+            .prng
+            .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
+
+        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        delay.delay_ms(random_delay);
     }
 
-    fn render(
-        &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
-    ) {
+    pub(crate) fn reset(&mut self) {
+        animations::reset_data(self.data);
+    }
+
+    pub(crate) fn update(&mut self, settings: &Settings) {
         animations::reset_data(self.data);
 
         // The amount of sparkles, up to 10% of the total number of LEDs
@@ -41,16 +51,9 @@ impl Animation for UniColorSparkle<'_> {
                 brightness,
             );
         }
-
-        let random_delay = self
-            .prng
-            .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
-
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
-        timer.delay_ms(random_delay);
     }
 
-    fn reset(&mut self) {
-        animations::reset_data(self.data);
+    fn brightness(&self, settings: &Settings) -> f32 {
+        settings.brightness()
     }
 }
