@@ -25,10 +25,8 @@ impl<'a> Carrousel<'a> {
             prng,
         }
     }
-}
 
-impl Carrousel<'_> {
-    pub fn render(
+    pub(crate) fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
@@ -36,12 +34,12 @@ impl Carrousel<'_> {
         delay.delay_ms(settings.delay());
     }
 
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         animations::reset_data(self.data);
         self.position = 0;
     }
 
-    pub fn update(&mut self, settings: &Settings) {
+    pub(crate) fn update(&mut self, settings: &Settings) {
         self.data.borrow_mut()[self.position] = animations::create_color_with_brightness(
             animations::COLORS[self.color_index],
             self.brightness(settings),
