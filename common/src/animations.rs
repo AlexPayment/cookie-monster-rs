@@ -1,5 +1,10 @@
 use crate::animations::carrousel::Carrousel;
 use crate::animations::double_carrousel::DoubleCarrousel;
+use crate::animations::forward_wave::ForwardWave;
+use crate::animations::multi_color_fade_in::MultiColorFadeIn;
+use crate::animations::multi_color_heartbeat::MultiColorHeartbeat;
+use crate::animations::multi_color_solid::MultiColorSolid;
+use crate::animations::multi_color_solid_random::MultiColorSolidRandom;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::{Format, info};
@@ -28,15 +33,21 @@ pub const COLORS: [RGB8; NUM_COLORS] = [
     INDIGO,
 ];
 pub const DEFAULT_COLOR_INDEX: usize = 9;
-pub const NUM_ANIMATIONS: usize = 2;
+pub const NUM_ANIMATIONS: usize = 7;
 pub const NUM_COLORS: usize = 11;
 pub const NUM_LEDS: usize = 96 * 10;
 
 pub type LedData = RefCell<[RGB8; NUM_LEDS]>;
 
+#[allow(clippy::large_enum_variant)]
 pub enum Animation<'a> {
     Carrousel(Carrousel<'a>),
     DoubleCarrousel(DoubleCarrousel<'a>),
+    ForwardWave(ForwardWave<'a>),
+    MultiColorFadeIn(MultiColorFadeIn<'a>),
+    MultiColorHeartbeat(MultiColorHeartbeat<'a>),
+    MultiColorSolid(MultiColorSolid<'a>),
+    MultiColorSolidRandom(MultiColorSolidRandom<'a>),
 }
 
 impl Animation<'_> {
@@ -50,6 +61,19 @@ impl Animation<'_> {
             Animation::DoubleCarrousel(double_carrousel) => {
                 double_carrousel.render(ws2812, delay, settings)
             }
+            Animation::ForwardWave(forward_wave) => forward_wave.render(ws2812, delay, settings),
+            Animation::MultiColorFadeIn(multi_color_fade_in) => {
+                multi_color_fade_in.render(ws2812, delay, settings)
+            }
+            Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
+                multi_color_heartbeat.render(ws2812, delay, settings)
+            }
+            Animation::MultiColorSolid(multi_color_solid) => {
+                multi_color_solid.render(ws2812, delay)
+            }
+            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
+                multi_color_solid_random.render(ws2812, delay)
+            }
         }
     }
 
@@ -58,6 +82,13 @@ impl Animation<'_> {
         match self {
             Animation::Carrousel(carrousel) => carrousel.reset(),
             Animation::DoubleCarrousel(double_carrousel) => double_carrousel.reset(),
+            Animation::ForwardWave(forward_wave) => forward_wave.reset(),
+            Animation::MultiColorFadeIn(multi_color_fade_in) => multi_color_fade_in.reset(),
+            Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.reset(),
+            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.reset(),
+            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
+                multi_color_solid_random.reset()
+            }
         }
     }
 
@@ -66,6 +97,17 @@ impl Animation<'_> {
         match self {
             Animation::Carrousel(carrousel) => carrousel.update(settings),
             Animation::DoubleCarrousel(double_carrousel) => double_carrousel.update(settings),
+            Animation::ForwardWave(forward_wave) => forward_wave.update(settings),
+            Animation::MultiColorFadeIn(multi_color_fade_in) => {
+                multi_color_fade_in.update(settings)
+            }
+            Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
+                multi_color_heartbeat.update(settings)
+            }
+            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.update(settings),
+            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
+                multi_color_solid_random.update(settings)
+            }
         }
     }
 }
@@ -164,10 +206,20 @@ pub fn initialize_animations<'a>(
     info!("Initialize animations...");
     let carrousel = Carrousel::new(led_data, prng.random());
     let double_carrousel = DoubleCarrousel::new(led_data, prng.random());
+    let forward_wave = ForwardWave::new(led_data);
+    let multi_color_fade_in = MultiColorFadeIn::new(led_data, prng.random());
+    let multi_color_heartbeat = MultiColorHeartbeat::new(led_data, prng.random());
+    let multi_color_solid = MultiColorSolid::new(led_data);
+    let multi_color_solid_random = MultiColorSolidRandom::new(led_data, prng.random());
 
     [
         Animation::Carrousel(carrousel),
         Animation::DoubleCarrousel(double_carrousel),
+        Animation::ForwardWave(forward_wave),
+        Animation::MultiColorFadeIn(multi_color_fade_in),
+        Animation::MultiColorHeartbeat(multi_color_heartbeat),
+        Animation::MultiColorSolid(multi_color_solid),
+        Animation::MultiColorSolidRandom(multi_color_solid_random),
     ]
 }
 
@@ -196,3 +248,8 @@ fn calculate_delay(value: u16, max_value: u16) -> u32 {
 
 pub mod carrousel;
 pub mod double_carrousel;
+pub mod forward_wave;
+pub mod multi_color_fade_in;
+pub mod multi_color_heartbeat;
+pub mod multi_color_solid;
+pub mod multi_color_solid_random;
