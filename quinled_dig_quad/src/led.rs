@@ -1,17 +1,17 @@
 use crate::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
-use cookie_monster_common::animations::carrousel::Carrousel;
 use cookie_monster_common::animations::{
-    Animation, DEFAULT_COLOR_INDEX, NUM_ANIMATIONS, NUM_COLORS, Settings, create_data,
+    DEFAULT_COLOR_INDEX, NUM_ANIMATIONS, NUM_COLORS, Settings, create_data, initialize_animations,
 };
-use defmt::info;
 use embassy_time::Delay;
 use esp_hal::gpio::AnyPin;
 use esp_hal::peripherals::{RNG, SPI2};
 use esp_hal::rng::Rng;
 use esp_hal::spi::master::{Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
+use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use ws2812_spi::Ws2812;
 
 #[embassy_executor::task]
@@ -29,14 +29,12 @@ pub async fn led_task(
 
     // Setup Pseudo Random Number Generator
     let mut rng = Rng::new(rng);
+    let mut prng = SmallRng::seed_from_u64(rng.random() as u64);
 
     let data = create_data();
 
-    info!("Initialize animations...");
-    let carrousel = Carrousel::new(&data, rng.random() as u64);
-
     let mut animation_index = 0;
-    let mut animations: [Animation; NUM_ANIMATIONS] = [Animation::Carrousel(carrousel)];
+    let mut animations = initialize_animations(&data, &mut prng);
 
     let mut settings = Settings::new(
         DEFAULT_COLOR_INDEX,
@@ -47,8 +45,6 @@ pub async fn led_task(
     );
 
     loop {
-        // TODO: remove this once more animations are implemented
-        #[allow(clippy::modulo_one)]
         if let Some(()) = ANIMATION_CHANGED_SIGNAL.try_take() {
             animation_index = (animation_index + 1) % NUM_ANIMATIONS;
             animations[animation_index].reset();

@@ -1,9 +1,12 @@
 use crate::animations::carrousel::Carrousel;
+use crate::animations::double_carrousel::DoubleCarrousel;
 use core::cell::RefCell;
 use core::cmp;
-use defmt::Format;
+use defmt::{Format, info};
 use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
+use rand::Rng;
+use rand::rngs::SmallRng;
 use smart_leds::RGB8;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
@@ -25,7 +28,7 @@ pub const COLORS: [RGB8; NUM_COLORS] = [
     INDIGO,
 ];
 pub const DEFAULT_COLOR_INDEX: usize = 9;
-pub const NUM_ANIMATIONS: usize = 1;
+pub const NUM_ANIMATIONS: usize = 2;
 pub const NUM_COLORS: usize = 11;
 pub const NUM_LEDS: usize = 96 * 10;
 
@@ -33,6 +36,7 @@ pub type LedData = RefCell<[RGB8; NUM_LEDS]>;
 
 pub enum Animation<'a> {
     Carrousel(Carrousel<'a>),
+    DoubleCarrousel(DoubleCarrousel<'a>),
 }
 
 impl Animation<'_> {
@@ -43,6 +47,9 @@ impl Animation<'_> {
     ) {
         match self {
             Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings),
+            Animation::DoubleCarrousel(double_carrousel) => {
+                double_carrousel.render(ws2812, delay, settings)
+            }
         }
     }
 
@@ -50,6 +57,7 @@ impl Animation<'_> {
     pub fn reset(&mut self) {
         match self {
             Animation::Carrousel(carrousel) => carrousel.reset(),
+            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.reset(),
         }
     }
 
@@ -57,6 +65,7 @@ impl Animation<'_> {
     pub fn update(&mut self, settings: &Settings) {
         match self {
             Animation::Carrousel(carrousel) => carrousel.update(settings),
+            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.update(settings),
         }
     }
 }
@@ -148,6 +157,20 @@ pub fn create_data() -> LedData {
     RefCell::new([RGB8::default(); NUM_LEDS])
 }
 
+/// Initialize the animations with the provided LED data and a pseudo-random number generator.
+pub fn initialize_animations<'a>(
+    led_data: &'a LedData, prng: &mut SmallRng,
+) -> [Animation<'a>; NUM_ANIMATIONS] {
+    info!("Initialize animations...");
+    let carrousel = Carrousel::new(led_data, prng.random());
+    let double_carrousel = DoubleCarrousel::new(led_data, prng.random());
+
+    [
+        Animation::Carrousel(carrousel),
+        Animation::DoubleCarrousel(double_carrousel),
+    ]
+}
+
 /// Resets the LEDs data to its default state.
 pub fn reset_data(data: &LedData) {
     let mut data = data.borrow_mut();
@@ -172,3 +195,4 @@ fn calculate_delay(value: u16, max_value: u16) -> u32 {
 }
 
 pub mod carrousel;
+pub mod double_carrousel;
