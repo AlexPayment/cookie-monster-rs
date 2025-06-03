@@ -149,6 +149,7 @@ dependencies = [
  "embassy-executor",
  "embassy-sync 0.7.0",
  "embassy-time",
+ "embedded-hal-async",
  "esp-backtrace",
  "esp-hal",
  "esp-hal-embassy",

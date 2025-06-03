@@ -15,7 +15,7 @@ use crate::animations::uni_color_sparkle::UniColorSparkle;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::{Format, info};
-use embedded_hal::spi;
+use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::Rng;
 use rand::rngs::SmallRng;
@@ -412,7 +412,7 @@ pub enum Animation<'a> {
 impl Animation<'_> {
     /// Renders the animation.
     pub async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         match self {

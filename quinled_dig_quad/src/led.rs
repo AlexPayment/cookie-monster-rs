@@ -7,8 +7,9 @@ use cookie_monster_common::animations::{
 use defmt::{debug, info};
 use embassy_time::Delay;
 use esp_hal::gpio::AnyPin;
-use esp_hal::peripherals::{RNG, SPI2};
+use esp_hal::peripherals::RNG;
 use esp_hal::rng::Rng;
+use esp_hal::spi::AnySpi;
 use esp_hal::spi::master::{Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
 use rand::SeedableRng;
@@ -17,7 +18,7 @@ use ws2812_spi::Ws2812;
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG, spi: SPI2, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
+    rng: RNG, spi: AnySpi, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
