@@ -23,10 +23,14 @@ pub async fn led_task(
     info!("Starting LED task...");
 
     // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
-    let spi = Spi::new(spi, SpiConfig::default().with_frequency(Rate::from_mhz(2)))
-        .unwrap()
-        .with_mosi(led)
-        .into_async();
+    // Though, in practice, it seems to have a lower limit of around 2.2 MHz.
+    let spi = Spi::new(
+        spi,
+        SpiConfig::default().with_frequency(Rate::from_khz(2_200)),
+    )
+    .unwrap()
+    .with_mosi(led)
+    .into_async();
 
     let mut ws2812 = Ws2812::new(spi);
     let mut delay = Delay;

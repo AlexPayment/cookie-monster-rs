@@ -8,7 +8,7 @@ rustflags = [
 target = "xtensa-esp32-none-elf"
 
 [env]
-DEFMT_LOG="debug"
+DEFMT_LOG="info"
 
 [unstable]
 build-std = ["core"]
