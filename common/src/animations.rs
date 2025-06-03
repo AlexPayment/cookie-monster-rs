@@ -627,20 +627,20 @@ pub fn initialize_animations<'a>(
     let uni_color_sparkle = UniColorSparkle::new(led_data, prng.random());
 
     [
+        Animation::MultiColorStrand(multi_color_strand),
         Animation::Carrousel(carrousel),
         Animation::DoubleCarrousel(double_carrousel),
+        Animation::UniColorSparkle(uni_color_sparkle),
+        Animation::MultiColorSparkle(multi_color_sparkle),
         Animation::ForwardWave(forward_wave),
+        Animation::UniColorFadeIn(uni_color_fade_in),
         Animation::MultiColorFadeIn(multi_color_fade_in),
-        Animation::MultiColorHeartbeat(multi_color_heartbeat),
+        Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave),
         Animation::MultiColorSolid(multi_color_solid),
         Animation::MultiColorSolidRandom(multi_color_solid_random),
-        Animation::MultiColorSparkle(multi_color_sparkle),
-        Animation::MultiColorStrand(multi_color_strand),
-        Animation::UniColorFadeIn(uni_color_fade_in),
-        Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave),
-        Animation::UniColorHeartbeat(uni_color_heartbeat),
         Animation::UniColorSolid(uni_color_solid),
-        Animation::UniColorSparkle(uni_color_sparkle),
+        Animation::UniColorHeartbeat(uni_color_heartbeat),
+        Animation::MultiColorHeartbeat(multi_color_heartbeat),
     ]
 }
 
