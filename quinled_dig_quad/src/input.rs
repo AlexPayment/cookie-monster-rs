@@ -10,7 +10,7 @@ use esp_hal::gpio::{AnyPin, GpioPin, Input, InputConfig};
 use esp_hal::peripherals::ADC2;
 use nb::block;
 
-const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 100;
+const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
 pub type BrightnessPin = GpioPin<15>;
