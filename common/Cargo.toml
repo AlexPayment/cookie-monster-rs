@@ -11,7 +11,7 @@ publish = false
 [dependencies]
 defmt = { workspace = true }
 embedded-hal = { workspace = true }
-embedded-hal-async = "1.0.0"
+embedded-hal-async = { workspace = true }
 rand = { workspace = true }
 smart-leds = { workspace = true }
 smart-leds-trait = { workspace = true }

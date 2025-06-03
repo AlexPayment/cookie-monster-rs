@@ -6,10 +6,12 @@ use crate::input::{
 };
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
+use embassy_time::Delay;
+use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
 use esp_hal::gpio::{AnyPin, Pin};
-use esp_hal::peripherals::{ADC2, RNG, SPI2};
+use esp_hal::peripherals::{ADC2, RNG};
+use esp_hal::spi::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
@@ -61,12 +63,14 @@ async fn main(spawner: Spawner) {
         peripherals.RNG,
         // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
         // in many examples.
-        peripherals.SPI2,
+        AnySpi::from(peripherals.SPI2),
         pins,
     );
 
+    let mut delay = Delay;
+
     loop {
-        Timer::after(Duration::from_millis(500)).await;
+        delay.delay_ms(1_000).await
     }
 }
 
@@ -80,7 +84,7 @@ struct Pins {
 }
 
 /// Spawns the tasks for all the manual controls.
-fn spawn_control_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: SPI2, pins: Pins) {
+fn spawn_control_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: AnySpi, pins: Pins) {
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(pins.animation)));
 

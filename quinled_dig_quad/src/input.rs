@@ -2,15 +2,16 @@ use crate::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
 use defmt::{debug, info};
-use embassy_time::{Duration, Timer};
+use embassy_time::Delay;
+use embedded_hal_async::delay::DelayNs;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_hal::gpio::Pull::Up;
 use esp_hal::gpio::{AnyPin, GpioPin, Input, InputConfig};
 use esp_hal::peripherals::ADC2;
 use nb::block;
 
-const ANALOG_SENSORS_READ_FREQUENCY: Duration = Duration::from_millis(100);
-const DEBOUNCE_PERIOD: Duration = Duration::from_millis(50);
+const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 100;
+const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
 pub type BrightnessPin = GpioPin<15>;
 pub type DelayPin = GpioPin<12>;
@@ -49,6 +50,8 @@ pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay
     let mut delay_pin = adc2_config.enable_pin(delay_pin, Attenuation::_11dB);
     let mut adc2 = Adc::new(adc, adc2_config);
 
+    let mut delay = Delay;
+
     loop {
         // Read the brightness and delay values from the potentiometers.
         let brightness_value: u16 = block!(adc2.read_oneshot(&mut brightness_pin)).unwrap();
@@ -60,7 +63,9 @@ pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay
         info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
 
         // Wait for a short period before reading again.
-        Timer::after(ANALOG_SENSORS_READ_FREQUENCY).await;
+        delay
+            .delay_ms(ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS)
+            .await;
     }
 }
 
@@ -89,13 +94,16 @@ where
     Fut: Future<Output = ()>,
 {
     debug!("Waiting for button press...");
+
+    let mut delay = Delay;
+
     // Wait for the button to be pressed (falling edge).
     // This will block until the button is pressed.
     button.wait_for_falling_edge().await;
 
     // Wait for a short debounce period. This allows the physical bouncing to settle. Adjust the
     // duration (e.g., 20 ms, 50 ms, 100 ms) based on the button's characteristics.
-    Timer::after(DEBOUNCE_PERIOD).await;
+    delay.delay_ms(DEBOUNCE_PERIOD_MILLISECONDS).await;
 
     // After the debounce time, check the *actual* state of the pin. If it's still low, it's a
     // valid press.
@@ -110,7 +118,7 @@ where
         button.wait_for_rising_edge().await;
 
         // Add a small delay after release to debounce the release too.
-        Timer::after(DEBOUNCE_PERIOD).await;
+        delay.delay_ms(DEBOUNCE_PERIOD_MILLISECONDS).await;
     }
 
     // If button_pin.is_high() here, it means it was a very short bounce that didn't settle, so we

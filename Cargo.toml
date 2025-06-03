@@ -10,6 +10,7 @@ members = [
 cookie-monster-common = { path = "./common" }
 defmt = "1.0.1"
 embedded-hal = "1.0.0"
+embedded-hal-async = "1.0.0"
 rand = { version = "0.9.1", default-features = false, features = ["small_rng"] }
 smart-leds = "0.4.0"
 smart-leds-trait = "0.3.1"
