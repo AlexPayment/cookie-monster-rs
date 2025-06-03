@@ -1,7 +1,7 @@
 use crate::animations;
 use crate::animations::{LedData, NUM_LEDS, Settings};
-use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
+use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use smart_leds::RGB8;
@@ -33,14 +33,14 @@ impl<'a> MultiColorSolidRandom<'a> {
         animation
     }
 
-    pub(crate) fn render(
+    pub(crate) async fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
         delay: &mut impl DelayNs,
     ) {
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
-        delay.delay_ms(1_000u32);
+        delay.delay_ms(1_000u32).await;
     }
 
     pub(crate) fn reset(&mut self) {

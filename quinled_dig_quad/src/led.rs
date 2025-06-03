@@ -4,6 +4,7 @@ use crate::signal::{
 use cookie_monster_common::animations::{
     DEFAULT_COLOR_INDEX, NUM_ANIMATIONS, NUM_COLORS, Settings, create_data, initialize_animations,
 };
+use defmt::{debug, info};
 use embassy_time::Delay;
 use esp_hal::gpio::AnyPin;
 use esp_hal::peripherals::{RNG, SPI2};
@@ -18,6 +19,8 @@ use ws2812_spi::Ws2812;
 pub async fn led_task(
     rng: RNG, spi: SPI2, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
 ) {
+    info!("Starting LED task...");
+
     // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
     let spi = Spi::new(spi, SpiConfig::default().with_frequency(Rate::from_mhz(2)))
         .unwrap()
@@ -36,6 +39,8 @@ pub async fn led_task(
     let mut animation_index = 0;
     let mut animations = initialize_animations(&data, &mut prng);
 
+    info!("Creating default animation settings");
+
     let mut settings = Settings::new(
         DEFAULT_COLOR_INDEX,
         default_analog_value,
@@ -46,6 +51,7 @@ pub async fn led_task(
 
     loop {
         if let Some(()) = ANIMATION_CHANGED_SIGNAL.try_take() {
+            info!("Animation changed signal received");
             animation_index = (animation_index + 1) % NUM_ANIMATIONS;
             animations[animation_index].reset();
         }
@@ -55,6 +61,7 @@ pub async fn led_task(
         }
 
         if let Some(()) = COLOR_CHANGED_SIGNAL.try_take() {
+            info!("Color changed signal received");
             settings.set_color_index((settings.color_index() + 1) % NUM_COLORS);
         }
 
@@ -62,7 +69,11 @@ pub async fn led_task(
             settings.set_delay(delay);
         }
 
+        debug!("Updating animation data");
         animations[animation_index].update(&settings);
-        animations[animation_index].render(&mut ws2812, &mut delay, &settings);
+        debug!("Rendering animation");
+        animations[animation_index]
+            .render(&mut ws2812, &mut delay, &settings)
+            .await;
     }
 }
