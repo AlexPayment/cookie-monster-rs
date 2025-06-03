@@ -15,8 +15,8 @@ use crate::animations::uni_color_sparkle::UniColorSparkle;
 use core::cell::RefCell;
 use core::cmp;
 use defmt::{Format, info};
-use embedded_hal::delay::DelayNs;
 use embedded_hal::spi;
+use embedded_hal_async::delay::DelayNs;
 use rand::Rng;
 use rand::rngs::SmallRng;
 use smart_leds::RGB8;
@@ -411,46 +411,52 @@ pub enum Animation<'a> {
 
 impl Animation<'_> {
     /// Renders the animation.
-    pub fn render(
+    pub async fn render(
         &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl spi::Error>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings),
+            Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings).await,
             Animation::DoubleCarrousel(double_carrousel) => {
-                double_carrousel.render(ws2812, delay, settings)
+                double_carrousel.render(ws2812, delay, settings).await
             }
-            Animation::ForwardWave(forward_wave) => forward_wave.render(ws2812, delay, settings),
+            Animation::ForwardWave(forward_wave) => {
+                forward_wave.render(ws2812, delay, settings).await
+            }
             Animation::MultiColorFadeIn(multi_color_fade_in) => {
-                multi_color_fade_in.render(ws2812, delay, settings)
+                multi_color_fade_in.render(ws2812, delay, settings).await
             }
             Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
-                multi_color_heartbeat.render(ws2812, delay, settings)
+                multi_color_heartbeat.render(ws2812, delay, settings).await
             }
             Animation::MultiColorSolid(multi_color_solid) => {
-                multi_color_solid.render(ws2812, delay)
+                multi_color_solid.render(ws2812, delay).await
             }
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.render(ws2812, delay)
+                multi_color_solid_random.render(ws2812, delay).await
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => {
-                multi_color_sparkle.render(ws2812, delay, settings)
+                multi_color_sparkle.render(ws2812, delay, settings).await
             }
             Animation::MultiColorStrand(multi_color_strand) => {
-                multi_color_strand.render(ws2812, delay, settings)
+                multi_color_strand.render(ws2812, delay, settings).await
             }
             Animation::UniColorFadeIn(uni_color_fade_in) => {
-                uni_color_fade_in.render(ws2812, delay, settings)
+                uni_color_fade_in.render(ws2812, delay, settings).await
             }
             Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
-                uni_color_front_to_back_wave.render(ws2812, delay, settings)
+                uni_color_front_to_back_wave
+                    .render(ws2812, delay, settings)
+                    .await
             }
             Animation::UniColorHeartbeat(uni_color_heartbeat) => {
-                uni_color_heartbeat.render(ws2812, delay, settings)
+                uni_color_heartbeat.render(ws2812, delay, settings).await
             }
-            Animation::UniColorSolid(uni_color_solid) => uni_color_solid.render(ws2812, delay),
+            Animation::UniColorSolid(uni_color_solid) => {
+                uni_color_solid.render(ws2812, delay).await
+            }
             Animation::UniColorSparkle(uni_color_sparkle) => {
-                uni_color_sparkle.render(ws2812, delay, settings)
+                uni_color_sparkle.render(ws2812, delay, settings).await
             }
         }
     }

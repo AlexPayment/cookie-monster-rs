@@ -18,6 +18,8 @@ pub type DelayPin = GpioPin<12>;
 /// Task that waits for a button to be pressed to signal an animation change.
 #[embassy_executor::task]
 pub async fn animation_button_task(button: AnyPin) {
+    info!("Starting animation button task...");
+
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {
@@ -35,6 +37,8 @@ pub async fn animation_button_task(button: AnyPin) {
 /// task to be generic.
 #[embassy_executor::task]
 pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay_pin: DelayPin) {
+    info!("Starting analog sensors task...");
+
     // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
     let mut adc2_config = AdcConfig::default();
     // Because the brightness potentiometer is connected to the 3.3 V pin, we need to set the
@@ -63,6 +67,8 @@ pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay
 /// Task that waits for a button to be pressed to signal a color change.
 #[embassy_executor::task]
 pub async fn color_button_task(button: AnyPin) {
+    info!("Starting color button task...");
+
     let mut button = Input::new(button, InputConfig::default().with_pull(Up));
 
     loop {

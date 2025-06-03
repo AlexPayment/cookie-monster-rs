@@ -115,6 +115,7 @@ version = "0.1.0"
 dependencies = [
  "defmt 1.0.1",
  "embedded-hal 1.0.0",
+ "embedded-hal-async",
  "rand",
  "smart-leds",
  "smart-leds-trait",
@@ -544,13 +545,17 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "esp-backtrace"
-version = "0.15.1"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4cd70abe47945c9116972781b5c05277ad855a5f5569fe2afd3e2e61a103cc0"
+checksum = "7c304bbe17df32db8bc0027a9da989aa3efebbd4e7a79d58850deb29e2af577f"
 dependencies = [
- "defmt 0.3.100",
- "esp-build",
+ "cfg-if",
+ "defmt 1.0.1",
+ "esp-build 0.3.0",
+ "esp-config 0.4.0",
+ "esp-metadata 0.7.0",
  "esp-println",
+ "heapless",
  "semihosting",
 ]
 
@@ -566,12 +571,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "esp-build"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "837020ff95fbf4c15c206541dda7994f1bbe6e1505e36a6a5ecb51fdb61656d7"
+dependencies = [
+ "quote",
+ "syn",
+ "termcolor",
+]
+
+[[package]]
 name = "esp-config"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "158dba334d3a2acd8d93873c0ae723ca1037cc78eefe5d6b4c5919b0ca28e38e"
 dependencies = [
  "document-features",
+]
+
+[[package]]
+name = "esp-config"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c8c4c95d8d6243ddb39efe1fcf2524c9becd0f86bb3e24048ed30b4f553609f"
+dependencies = [
+ "document-features",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -599,10 +626,10 @@ dependencies = [
  "embedded-io",
  "embedded-io-async",
  "enumset",
- "esp-build",
- "esp-config",
+ "esp-build 0.2.0",
+ "esp-config 0.3.1",
  "esp-hal-procmacros",
- "esp-metadata",
+ "esp-metadata 0.6.0",
  "esp-riscv-rt",
  "esp32",
  "esp32c2",
@@ -639,11 +666,11 @@ dependencies = [
  "embassy-time",
  "embassy-time-driver",
  "embassy-time-queue-utils",
- "esp-build",
- "esp-config",
+ "esp-build 0.2.0",
+ "esp-config 0.3.1",
  "esp-hal",
  "esp-hal-procmacros",
- "esp-metadata",
+ "esp-metadata 0.6.0",
  "portable-atomic",
  "static_cell",
 ]
@@ -677,14 +704,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "esp-println"
-version = "0.13.1"
+name = "esp-metadata"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "960703930f9f3c899ddedd122ea27a09d6a612c22323157e524af5b18876448e"
+checksum = "0154d59933c2419ef25a01938517cc6969f47b6af53ebb34c279393aa20d9654"
+dependencies = [
+ "anyhow",
+ "basic-toml",
+ "serde",
+ "strum 0.27.1",
+]
+
+[[package]]
+name = "esp-println"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fae8b38d5fdc1d29d823c4737f18edfb0ccf0406985cf893f87c0cfc26a6ab33"
 dependencies = [
  "critical-section",
- "defmt 0.3.100",
- "esp-build",
+ "defmt 1.0.1",
+ "document-features",
+ "esp-build 0.3.0",
+ "esp-metadata 0.7.0",
  "log",
  "portable-atomic",
 ]
@@ -916,6 +957,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "itoa"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "litrs"
@@ -1222,6 +1269,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a0d197bd2c9dc6e53b84da9556a69ba4cdfab8619eb41a8bd1cc2027a0f6b1d"
 
 [[package]]
+name = "ryu"
+version = "1.0.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
+
+[[package]]
 name = "semihosting"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1260,6 +1313,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.140"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20068b6e96dc6c9bd23e01df8827e6c7e1f2fddd43c21810382803c136b99373"
+dependencies = [
+ "itoa",
+ "memchr",
+ "ryu",
+ "serde",
 ]
 
 [[package]]
@@ -1583,9 +1648,9 @@ dependencies = [
 
 [[package]]
 name = "ws2812-spi"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f4ce053ea8f2d86623af8be7358837b374f710374663d4fab7043aab14a6aa7"
+checksum = "b2fd98e2b649252eced2ec3aa8d5048e7d2ac294276b0567939bbf47741f9934"
 dependencies = [
  "embedded-hal 1.0.0",
  "smart-leds-trait",
