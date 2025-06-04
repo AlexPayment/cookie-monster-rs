@@ -646,10 +646,7 @@ pub fn initialize_animations<'a>(
 
 /// Resets the LEDs data to its default state.
 pub fn reset_data(data: &LedData) {
-    let mut data = data.borrow_mut();
-    for i in 0..NUM_LEDS {
-        data[i] = RGB8::default();
-    }
+    *data.borrow_mut() = [RGB8::default(); NUM_LEDS];
 }
 
 /// Calculate the brightness based on the value of the potentiometer reading.
