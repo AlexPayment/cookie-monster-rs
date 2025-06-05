@@ -64,7 +64,7 @@ impl Animation for ForwardWave<'_> {
         let wave = self.get_wave(settings);
 
         for (i, item) in wave.iter().enumerate() {
-            let led_index = (self.position - i) as isize;
+            let led_index = self.position as isize - i as isize;
             if self.wrapped {
                 if led_index < 0 {
                     self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
