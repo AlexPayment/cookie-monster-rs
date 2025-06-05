@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Update README with a section on QuinLED Dig Quad.
 - Move `Settings` to the `common` crate.
 - `Animation` is now an enum in the `common` crate.
+- Migrate the micro:bit v2 implementation to Embassy.
 - Address some clippy lints.
 - Update `defmt` to version 1.0.1.
 - Update `rand` to version 0.9.1.

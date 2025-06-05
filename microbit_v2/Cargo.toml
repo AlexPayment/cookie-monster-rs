@@ -3,22 +3,21 @@ name = "cookie-monster-microbit-v2"
 version = "0.1.0"
 authors = ["Alex Payment <3332420+AlexPayment@users.noreply.github.com>"]
 edition = "2024"
-description = "Binary for Cookie Monster running on the micro:bit V2 (nRF52833, Cortex-M4 with FPU)"
+description = "Binary for Cookie Monster running on the micro:bit V2 (nRF52833, Cortex-M4 with FPU) with Embassy"
 repository = "https://github.com/AlexPayment/cookie-monster-rs/"
 license = "MIT"
 publish = false
 
 [dependencies]
 cookie-monster-common = { workspace = true }
-cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m = { version = "0.7.7", features = ["inline-asm", "critical-section-single-core"] }
 cortex-m-rt = "0.7.5"
 defmt = { workspace = true }
 defmt-rtt = "1.0.0"
-embedded-hal = { workspace = true }
-microbit-v2 = "0.15.1"
-nrf52833-hal = "0.18.0"
+embassy-executor = { features = ["arch-cortex-m", "executor-interrupt", "executor-thread"], workspace = true }
+embassy-nrf = { version = "0.3.1", features = ["defmt", "nrf52833", "time-driver-rtc1", "gpiote", "unstable-pac", "time"] }
+embassy-time = { features = ["defmt", "defmt-timestamp-uptime"], workspace = true }
+embedded-hal-async = { workspace = true }
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 rand = { workspace = true }
-smart-leds = { workspace = true }
-smart-leds-trait = { workspace = true }
 ws2812-spi = { workspace = true }
