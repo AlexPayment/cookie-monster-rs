@@ -4,8 +4,7 @@
 use crate::input::{
     BrightnessPin, DelayPin, analog_sensors_task, animation_button_task, color_button_task,
 };
-use core::sync::atomic::{AtomicUsize, Ordering};
-use defmt::{info, timestamp, unwrap};
+use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
@@ -16,9 +15,6 @@ use esp_hal::spi::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
-// WARNING may overflow and wrap-around in long-lived apps
-static COUNT: AtomicUsize = AtomicUsize::new(0);
-
 // The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
 const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
@@ -27,8 +23,6 @@ const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    timestamp!("{=usize}", COUNT.fetch_add(1, Ordering::Relaxed));
-
     // TODO: Check if the CPU clock could lowered to save power
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
@@ -39,22 +33,22 @@ async fn main(spawner: Spawner) {
     info!("Embassy initialized!");
 
     let pins = Pins {
-        // GPIO02 is the Q3 pin on the board, it's pulled high. Which means a button should be
+        // GPIO02 is the Q3 pin on the board, it's pull high. Which means a button should be
         // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
         // 3.3 V. This pin is on ADC2 channel 2.
         animation: peripherals.GPIO2.degrade(),
 
-        // GPIO15 is the Q1 pin on the board, it's pulled low. Which means a button should be
+        // GPIO15 is the Q1 pin on the board, it's pull low. Which means a button should be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
         // than 3.3 V. This pin is on ADC2 channel 3.
         brightness: peripherals.GPIO15,
 
-        // GPIO32 is the Q4 pin on the board, it's pulled high. Which means a button also be
+        // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button also be
         // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
         // 3.3 V. This pin is on ADC1 channel 4.
         color: peripherals.GPIO32.degrade(),
 
-        // GPIO12 is the Q2 pin on the board, it's pulled low. Which means a button also be
+        // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button also be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
         // than 3.3 V. This pin is on ADC2 channel 5.
         delay: peripherals.GPIO12,
@@ -63,7 +57,7 @@ async fn main(spawner: Spawner) {
         led: peripherals.GPIO16.degrade(),
     };
 
-    spawn_control_tasks(
+    spawn_all_tasks(
         &spawner,
         peripherals.ADC2,
         peripherals.RNG,
@@ -89,8 +83,10 @@ struct Pins {
     led: AnyPin,
 }
 
-/// Spawns the tasks for all the manual controls.
-fn spawn_control_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: AnySpi, pins: Pins) {
+/// Spawns all the tasks for the inputs and LEDs.
+fn spawn_all_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: AnySpi, pins: Pins) {
+    info!("Spawning all tasks...");
+
     // Spawn the animation button task
     unwrap!(spawner.spawn(animation_button_task(pins.animation)));
 
@@ -112,4 +108,3 @@ fn spawn_control_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: AnySpi, pins
 
 mod input;
 mod led;
-mod signal;

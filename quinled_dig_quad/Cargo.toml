@@ -11,9 +11,8 @@ publish = false
 [dependencies]
 cookie-monster-common = { workspace = true }
 defmt = { workspace = true }
-embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-65536"] }
-embassy-sync = "0.7.0"
-embassy-time = { version = "0.4.0", features = ["generic-queue-8"] }
+embassy-executor = { workspace = true }
+embassy-time = { features = ["defmt", "defmt-timestamp-uptime", "generic-queue-8"], workspace = true }
 embedded-hal-async = { workspace = true }
 esp-backtrace = { version = "0.16.0", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
 esp-hal = { version = "<1.0.0-beta.1", features = ["defmt", "esp32", "unstable"] }

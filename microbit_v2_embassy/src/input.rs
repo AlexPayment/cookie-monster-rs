@@ -2,44 +2,39 @@ use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
 use defmt::{debug, info};
+use embassy_nrf::gpio::{AnyPin, Input, Pull};
+use embassy_nrf::peripherals::SAADC;
+use embassy_nrf::saadc::{AnyInput, ChannelConfig, Config, Saadc};
+use embassy_nrf::{bind_interrupts, saadc};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
-use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
-use esp_hal::gpio::Pull::Up;
-use esp_hal::gpio::{AnyPin, GpioPin, Input, InputConfig};
-use esp_hal::peripherals::ADC2;
-use nb::block;
+
+bind_interrupts!(struct Irqs {
+    SAADC => saadc::InterruptHandler;
+});
 
 const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
-pub type BrightnessPin = GpioPin<15>;
-pub type DelayPin = GpioPin<12>;
-
 /// Task that reads analog sensors (potentiometers) to signal the brightness and delay values.
 ///
-/// All sensors are connected to ADC2, which is a 12-bit ADC. Unfortunately, embassy doesn't allow a
-/// task to be generic.
+/// All sensors are connected to SAADC, which has a 12-bit resolution. Unfortunately, embassy
+/// doesn't allow a task to be generic.
 #[embassy_executor::task]
-pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay_pin: DelayPin) {
+pub async fn analog_sensors_task(adc: SAADC, brightness_pin: AnyInput, delay_pin: AnyInput) {
     info!("Starting analog sensors task...");
 
-    // The ESP32 ADC has a resolution of 12 bits, which means the maximum value is 4095.
-    let mut adc_config = AdcConfig::default();
-    // Because the brightness potentiometer is connected to the 3.3 V pin, we need to set the
-    // attenuation to 11 dB to cover the 0 to 3.3 V range.
-    let mut brightness_pin = adc_config.enable_pin(brightness_pin, Attenuation::_11dB);
-    // Because the delay potentiometer is connected to the 3.3 V pin, we need to set the
-    // attenuation to 11 dB to cover the 0 to 3.3 V range.
-    let mut delay_pin = adc_config.enable_pin(delay_pin, Attenuation::_11dB);
-    let mut adc = Adc::new(adc, adc_config);
+    let mut saadc = configure_adc(adc, brightness_pin, delay_pin).await;
 
+    let mut buffer = [0; 2];
     let mut delay = Delay;
 
     loop {
         // Read the brightness and delay values from the potentiometers.
-        let brightness_value: u16 = block!(adc.read_oneshot(&mut brightness_pin)).unwrap();
-        let delay_value: u16 = block!(adc.read_oneshot(&mut delay_pin)).unwrap();
+        saadc.sample(&mut buffer).await;
+
+        let brightness_value = u16::try_from(buffer[0]).unwrap_or_default();
+        let delay_value = u16::try_from(buffer[1]).unwrap_or_default();
 
         BRIGHTNESS_READ_SIGNAL.signal(brightness_value);
         DELAY_READ_SIGNAL.signal(delay_value);
@@ -58,7 +53,7 @@ pub async fn analog_sensors_task(adc: ADC2, brightness_pin: BrightnessPin, delay
 pub async fn animation_button_task(button: AnyPin) {
     info!("Starting animation button task...");
 
-    let mut button = Input::new(button, InputConfig::default().with_pull(Up));
+    let mut button = Input::new(button, Pull::Up);
 
     loop {
         perform_when_button_pressed(&mut button, || async {
@@ -74,7 +69,7 @@ pub async fn animation_button_task(button: AnyPin) {
 pub async fn color_button_task(button: AnyPin) {
     info!("Starting color button task...");
 
-    let mut button = Input::new(button, InputConfig::default().with_pull(Up));
+    let mut button = Input::new(button, Pull::Up);
 
     loop {
         perform_when_button_pressed(&mut button, || async {
@@ -83,6 +78,29 @@ pub async fn color_button_task(button: AnyPin) {
         })
         .await;
     }
+}
+
+async fn configure_adc<'a>(
+    adc: SAADC, brightness_pin: AnyInput, delay_pin: AnyInput,
+) -> Saadc<'a, 2> {
+    info!("Configuring SAADC...");
+
+    // The ADC resolution is 12 bits, which means the maximum value is 4095.
+    let config = Config::default();
+    let brightness_channel_config = ChannelConfig::single_ended(brightness_pin);
+    let delay_channel_config = ChannelConfig::single_ended(delay_pin);
+
+    let saadc = Saadc::new(
+        adc,
+        Irqs,
+        config,
+        [brightness_channel_config, delay_channel_config],
+    );
+
+    info!("Calibrating SAADC...");
+    saadc.calibrate().await;
+
+    saadc
 }
 
 /// Executes the provided action when the button is pressed.

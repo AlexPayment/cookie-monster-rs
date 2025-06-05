@@ -14,7 +14,8 @@ use crate::animations::uni_color_solid::UniColorSolid;
 use crate::animations::uni_color_sparkle::UniColorSparkle;
 use core::cell::RefCell;
 use core::cmp;
-use defmt::{Format, info};
+use defmt::{Format, info, trace};
+use embassy_time::Instant;
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::Rng;
@@ -673,6 +674,16 @@ pub(crate) fn gamma_correct(color: RGB8) -> RGB8 {
         g: GAMMA8[color.g as usize],
         b: GAMMA8[color.b as usize],
     }
+}
+
+/// Measure the time taken to execute a function and log it.
+pub(crate) fn time_function(function: impl FnOnce()) {
+    let start = Instant::now();
+
+    function();
+
+    let elapsed = start.elapsed();
+    trace!("Time taken to write data: {} us", elapsed.as_micros());
 }
 
 /// Calculate the brightness based on the value of the potentiometer reading.
