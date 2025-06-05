@@ -114,6 +114,7 @@ name = "cookie-monster-common"
 version = "0.1.0"
 dependencies = [
  "defmt 1.0.1",
+ "embassy-sync 0.7.0",
  "embedded-hal 1.0.0",
  "embedded-hal-async",
  "rand",
@@ -142,13 +143,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "cookie-monster-microbit-v2-embassy"
+version = "0.1.0"
+dependencies = [
+ "cookie-monster-common",
+ "cortex-m",
+ "cortex-m-rt",
+ "defmt 1.0.1",
+ "defmt-rtt",
+ "embassy-executor",
+ "embassy-nrf",
+ "embassy-time",
+ "embedded-hal-async",
+ "panic-probe",
+ "rand",
+]
+
+[[package]]
 name = "cookie-monster-quinled-dig-quad"
 version = "0.1.0"
 dependencies = [
  "cookie-monster-common",
  "defmt 1.0.1",
  "embassy-executor",
- "embassy-sync 0.7.0",
  "embassy-time",
  "embedded-hal-async",
  "esp-backtrace",
@@ -317,6 +334,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41fea5ef5bed4d3468dfd44f5c9fa4cda8f54c86d4fb4ae683eacf9d39e2ea12"
 dependencies = [
+ "defmt 0.3.100",
  "embassy-futures",
  "embassy-sync 0.6.2",
  "embassy-time",
@@ -334,6 +352,7 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90327bcc66333a507f89ecc4e2d911b265c45f5c9bc241f98eee076752d35ac6"
 dependencies = [
+ "cortex-m",
  "critical-section",
  "defmt 0.3.100",
  "document-features",
@@ -359,6 +378,50 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f878075b9794c1e4ac788c95b728f26aa6366d32eeb10c7051389f898f7d067"
 dependencies = [
  "defmt 0.3.100",
+]
+
+[[package]]
+name = "embassy-hal-internal"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ef3bac31ec146321248a169e9c7b5799f1e0b3829c7a9b324cb4600a7438f59"
+dependencies = [
+ "cortex-m",
+ "critical-section",
+ "defmt 0.3.100",
+ "num-traits",
+]
+
+[[package]]
+name = "embassy-nrf"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d7494efe1e0183568327c7e681d4b77ed5241921dcb5976426d9a65b65a0c81"
+dependencies = [
+ "bitflags 2.9.1",
+ "cfg-if",
+ "cortex-m",
+ "cortex-m-rt",
+ "critical-section",
+ "defmt 0.3.100",
+ "document-features",
+ "embassy-embedded-hal",
+ "embassy-hal-internal",
+ "embassy-sync 0.6.2",
+ "embassy-time",
+ "embassy-time-driver",
+ "embassy-time-queue-utils",
+ "embassy-usb-driver",
+ "embedded-hal 0.2.7",
+ "embedded-hal 1.0.0",
+ "embedded-hal-async",
+ "embedded-io",
+ "embedded-io-async",
+ "embedded-storage",
+ "embedded-storage-async",
+ "fixed",
+ "nrf-pac",
+ "rand_core 0.6.4",
 ]
 
 [[package]]
@@ -398,6 +461,7 @@ checksum = "f820157f198ada183ad62e0a66f554c610cdcd1a9f27d4b316358103ced7a1f8"
 dependencies = [
  "cfg-if",
  "critical-section",
+ "defmt 0.3.100",
  "document-features",
  "embassy-time-driver",
  "embassy-time-queue-utils",
@@ -424,6 +488,15 @@ checksum = "dc55c748d16908a65b166d09ce976575fb8852cf60ccd06174092b41064d8f83"
 dependencies = [
  "embassy-executor",
  "heapless",
+]
+
+[[package]]
+name = "embassy-usb-driver"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fc247028eae04174b6635104a35b1ed336aabef4654f5e87a8f32327d231970"
+dependencies = [
+ "defmt 0.3.100",
 ]
 
 [[package]]
@@ -1051,6 +1124,16 @@ dependencies = [
  "nrf52833-pac",
  "rand_core 0.6.4",
  "void",
+]
+
+[[package]]
+name = "nrf-pac"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d334027d6703534f2a80de0794ae435c0e029358d28278533d3935e69b221b01"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
 ]
 
 [[package]]

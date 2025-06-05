@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 defmt = { workspace = true }
+embassy-sync = "0.7.0"
 embedded-hal = { workspace = true }
 embedded-hal-async = { workspace = true }
 rand = { workspace = true }
