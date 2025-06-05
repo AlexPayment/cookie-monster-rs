@@ -1,6 +1,6 @@
 use crate::animations::{Animation, UniColorFadeIn};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, Settings, brightness_correct};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -21,8 +21,8 @@ impl<'a> UniColorFadeIn<'a> {
 }
 
 impl Animation for UniColorFadeIn<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.05) as u8
     }
 
     fn render(
@@ -30,10 +30,9 @@ impl Animation for UniColorFadeIn<'_> {
     ) {
         animations::reset_data(self.data);
 
-        let brightness =
-            (self.brightness(settings) / f32::from(STEP)) * f32::from(self.current_step);
-        let color =
-            animations::create_color_with_brightness(COLORS[settings.color_index()], brightness);
+        let brightness = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
+            / f32::from(STEP)) as u8;
+        let color = brightness_correct(COLORS[settings.color_index()], brightness);
         for i in 0..NUM_LEDS {
             self.data.borrow_mut()[i] = color;
         }

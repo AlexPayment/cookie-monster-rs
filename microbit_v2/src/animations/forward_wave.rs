@@ -1,6 +1,6 @@
 use crate::animations::{Animation, ForwardWave};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, Settings, brightness_correct};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -20,11 +20,11 @@ impl<'a> ForwardWave<'a> {
         }
     }
 
-    fn get_wave(&self, settings: &Settings) -> [f32; WAVE_LENGTH] {
-        let mut wave = [0.0; WAVE_LENGTH];
+    fn get_wave(&self, settings: &Settings) -> [u8; WAVE_LENGTH] {
+        let mut wave = [0; WAVE_LENGTH];
 
         wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
-            *item = self.brightness(settings) / 10.0;
+            *item = self.brightness(settings) / 10;
         });
         wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)]
             .iter_mut()
@@ -34,17 +34,17 @@ impl<'a> ForwardWave<'a> {
         wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 4.0;
+                *item = self.brightness(settings) / 4;
             });
         wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 6.0;
+                *item = self.brightness(settings) / 6;
             });
         wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 10.0;
+                *item = self.brightness(settings) / 10;
             });
 
         wave
@@ -52,7 +52,7 @@ impl<'a> ForwardWave<'a> {
 }
 
 impl Animation for ForwardWave<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
@@ -68,20 +68,14 @@ impl Animation for ForwardWave<'_> {
             if self.wrapped {
                 if led_index < 0 {
                     self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
-                        animations::create_color_with_brightness(
-                            COLORS[settings.color_index()],
-                            *item,
-                        );
+                        brightness_correct(COLORS[settings.color_index()], *item);
                 } else {
                     self.data.borrow_mut()[led_index as usize] =
-                        animations::create_color_with_brightness(
-                            COLORS[settings.color_index()],
-                            *item,
-                        );
+                        brightness_correct(COLORS[settings.color_index()], *item);
                 }
             } else if led_index >= 0 {
                 self.data.borrow_mut()[led_index as usize] =
-                    animations::create_color_with_brightness(COLORS[settings.color_index()], *item);
+                    brightness_correct(COLORS[settings.color_index()], *item);
             }
         }
 

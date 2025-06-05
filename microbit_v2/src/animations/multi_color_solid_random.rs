@@ -1,6 +1,6 @@
 use crate::animations::{Animation, MultiColorSolidRandom};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings, brightness_correct};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -33,18 +33,16 @@ impl<'a> MultiColorSolidRandom<'a> {
 }
 
 impl Animation for MultiColorSolidRandom<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.2
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.2) as u8
     }
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         for i in 0..NUM_LEDS {
-            self.data.borrow_mut()[i] = animations::create_color_with_brightness(
-                self.rendered_data[i],
-                self.brightness(settings),
-            );
+            self.data.borrow_mut()[i] =
+                brightness_correct(self.rendered_data[i], self.brightness(settings));
         }
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();

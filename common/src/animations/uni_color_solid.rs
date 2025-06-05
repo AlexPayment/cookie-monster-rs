@@ -2,7 +2,7 @@ use crate::animations;
 use crate::animations::{COLORS, LedData, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
-use smart_leds::RGB8;
+use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
 pub struct UniColorSolid<'a> {
@@ -14,11 +14,20 @@ impl<'a> UniColorSolid<'a> {
         Self { data }
     }
 
-    pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
-        delay: &mut impl DelayNs,
-    ) {
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+    pub(crate) async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+        delay: &mut impl DelayNs, settings: &Settings,
+    ) where
+        E: SpiError,
+    {
+        ws2812
+            .write(brightness(
+                gamma(self.data.borrow().iter().copied()),
+                self.brightness(settings),
+            ))
+            .unwrap();
+
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
         delay.delay_ms(1_000u32).await;
@@ -30,14 +39,11 @@ impl<'a> UniColorSolid<'a> {
 
     pub(crate) fn update(&mut self, settings: &Settings) {
         self.data.borrow_mut().iter_mut().for_each(|e| {
-            *e = animations::create_color_with_brightness(
-                COLORS[settings.color_index()],
-                self.brightness(settings),
-            );
+            *e = COLORS[settings.color_index()];
         });
     }
 
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.05) as u8
     }
 }

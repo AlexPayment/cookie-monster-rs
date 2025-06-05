@@ -1,6 +1,8 @@
 use crate::animations::{Animation, UniColorFrontToBackWave};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, Settings, VERTICAL_SLICES};
+use cookie_monster_common::animations::{
+    COLORS, LedData, Settings, VERTICAL_SLICES, brightness_correct,
+};
 use embedded_hal::delay::DelayNs;
 use microbit::pac::{SPI0, TIMER0};
 use nrf52833_hal::Timer;
@@ -15,7 +17,7 @@ impl<'a> UniColorFrontToBackWave<'a> {
 }
 
 impl Animation for UniColorFrontToBackWave<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
@@ -28,10 +30,8 @@ impl Animation for UniColorFrontToBackWave<'_> {
 
         for led in &slice {
             led.map(|l| {
-                self.data.borrow_mut()[l as usize] = animations::create_color_with_brightness(
-                    COLORS[settings.color_index()],
-                    self.brightness(settings),
-                );
+                self.data.borrow_mut()[l as usize] =
+                    brightness_correct(COLORS[settings.color_index()], self.brightness(settings));
             });
         }
 

@@ -1,10 +1,10 @@
 use crate::animations;
-use crate::animations::{LedData, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::RGB8;
+use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
 const LEDS_PER_CARROUSEL: usize = NUM_LEDS / 2;
@@ -33,11 +33,20 @@ impl<'a> DoubleCarrousel<'a> {
         }
     }
 
-    pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
+    pub(crate) async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) {
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+    ) where
+        E: SpiError,
+    {
+        ws2812
+            .write(brightness(
+                gamma(self.data.borrow().iter().copied()),
+                self.brightness(settings),
+            ))
+            .unwrap();
+
         delay.delay_ms(settings.delay()).await;
     }
 
@@ -49,15 +58,9 @@ impl<'a> DoubleCarrousel<'a> {
         self.position_2 = NUM_LEDS - 1;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        self.data.borrow_mut()[self.position_1] = animations::create_color_with_brightness(
-            animations::COLORS[self.color_index_1],
-            self.brightness(settings),
-        );
-        self.data.borrow_mut()[self.position_2] = animations::create_color_with_brightness(
-            animations::COLORS[self.color_index_2],
-            self.brightness(settings),
-        );
+    pub(crate) fn update(&mut self) {
+        self.data.borrow_mut()[self.position_1] = COLORS[self.color_index_1];
+        self.data.borrow_mut()[self.position_2] = COLORS[self.color_index_2];
 
         self.position_1 += 1;
         if self.position_1 >= LEDS_PER_CARROUSEL {
@@ -82,7 +85,7 @@ impl<'a> DoubleCarrousel<'a> {
         }
     }
 
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.05) as u8
     }
 }

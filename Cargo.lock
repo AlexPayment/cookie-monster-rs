@@ -119,6 +119,7 @@ dependencies = [
  "rand",
  "smart-leds",
  "smart-leds-trait",
+ "ws2812-spi",
 ]
 
 [[package]]

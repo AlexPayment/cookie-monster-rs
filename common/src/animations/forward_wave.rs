@@ -1,5 +1,5 @@
 use crate::animations;
-use crate::animations::{COLORS, LedData, NUM_LEDS, Settings};
+use crate::animations::{COLORS, LedData, NUM_LEDS, Settings, brightness_correct, gamma_correct};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::RGB8;
@@ -23,11 +23,17 @@ impl<'a> ForwardWave<'a> {
         }
     }
 
-    pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
+    pub(crate) async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) {
+    ) where
+        E: SpiError,
+    {
+        // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
+        // not all LEDs have the same brightness.
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
+
         delay.delay_ms(settings.delay()).await;
     }
 
@@ -47,20 +53,14 @@ impl<'a> ForwardWave<'a> {
             if self.wrapped {
                 if led_index < 0 {
                     self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
-                        animations::create_color_with_brightness(
-                            COLORS[settings.color_index()],
-                            *item,
-                        );
+                        brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
                 } else {
                     self.data.borrow_mut()[led_index as usize] =
-                        animations::create_color_with_brightness(
-                            COLORS[settings.color_index()],
-                            *item,
-                        );
+                        brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
                 }
             } else if led_index >= 0 {
                 self.data.borrow_mut()[led_index as usize] =
-                    animations::create_color_with_brightness(COLORS[settings.color_index()], *item);
+                    brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
             }
         }
 
@@ -71,15 +71,15 @@ impl<'a> ForwardWave<'a> {
         }
     }
 
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
-    fn get_wave(&self, settings: &Settings) -> [f32; WAVE_LENGTH] {
-        let mut wave = [0.0; WAVE_LENGTH];
+    fn get_wave(&self, settings: &Settings) -> [u8; WAVE_LENGTH] {
+        let mut wave = [0; WAVE_LENGTH];
 
         wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
-            *item = self.brightness(settings) / 10.0;
+            *item = self.brightness(settings) / 10;
         });
         wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)]
             .iter_mut()
@@ -89,17 +89,17 @@ impl<'a> ForwardWave<'a> {
         wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 4.0;
+                *item = self.brightness(settings) / 4;
             });
         wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 6.0;
+                *item = self.brightness(settings) / 6;
             });
         wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 10.0;
+                *item = self.brightness(settings) / 10;
             });
 
         wave

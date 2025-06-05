@@ -1,6 +1,6 @@
 use crate::animations::{Animation, UniColorSolid};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, Settings};
+use cookie_monster_common::animations::{COLORS, LedData, Settings, brightness_correct};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -15,18 +15,15 @@ impl<'a> UniColorSolid<'a> {
 }
 
 impl Animation for UniColorSolid<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.05) as u8
     }
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<TIMER0>, settings: &Settings,
     ) {
         self.data.borrow_mut().iter_mut().for_each(|e| {
-            *e = animations::create_color_with_brightness(
-                COLORS[settings.color_index()],
-                self.brightness(settings),
-            );
+            *e = brightness_correct(COLORS[settings.color_index()], self.brightness(settings));
         });
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();

@@ -4,7 +4,8 @@
 use crate::input::{
     BrightnessPin, DelayPin, analog_sensors_task, animation_button_task, color_button_task,
 };
-use defmt::{info, unwrap};
+use core::sync::atomic::{AtomicUsize, Ordering};
+use defmt::{info, timestamp, unwrap};
 use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
@@ -15,6 +16,9 @@ use esp_hal::spi::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
+// WARNING may overflow and wrap-around in long-lived apps
+static COUNT: AtomicUsize = AtomicUsize::new(0);
+
 // The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
 const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
@@ -23,6 +27,8 @@ const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
+    timestamp!("{=usize}", COUNT.fetch_add(1, Ordering::Relaxed));
+
     // TODO: Check if the CPU clock could lowered to save power
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
@@ -63,7 +69,7 @@ async fn main(spawner: Spawner) {
         peripherals.RNG,
         // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
         // in many examples.
-        AnySpi::from(peripherals.SPI2),
+        peripherals.SPI2.into(),
         pins,
     );
 

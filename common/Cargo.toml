@@ -15,3 +15,4 @@ embedded-hal-async = { workspace = true }
 rand = { workspace = true }
 smart-leds = { workspace = true }
 smart-leds-trait = { workspace = true }
+ws2812-spi = { workspace = true }
