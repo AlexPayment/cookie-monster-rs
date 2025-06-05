@@ -1,6 +1,6 @@
 use crate::animations::{Animation, MultiColorStrand, NUM_STRANDS, Strand};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{LedData, NUM_LEDS, Settings, brightness_correct};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -47,7 +47,7 @@ impl<'a> MultiColorStrand<'a> {
 }
 
 impl Animation for MultiColorStrand<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
@@ -61,10 +61,7 @@ impl Animation for MultiColorStrand<'_> {
         for strand in &mut self.strands {
             update_strand(strand);
             self.data.borrow_mut()[strand.position as usize] =
-                animations::create_color_with_brightness(
-                    COLORS[strand.color_index as usize],
-                    brightness,
-                );
+                brightness_correct(COLORS[strand.color_index as usize], brightness);
         }
 
         ws2812.write(self.data.borrow().iter().copied()).unwrap();

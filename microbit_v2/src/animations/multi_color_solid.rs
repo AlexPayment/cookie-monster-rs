@@ -1,6 +1,8 @@
 use crate::animations::{Animation, MultiColorSolid};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{LedData, NUM_COLORS, NUM_LEDS, Settings};
+use cookie_monster_common::animations::{
+    LedData, NUM_COLORS, NUM_LEDS, Settings, brightness_correct,
+};
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
 use microbit::hal::spi::Spi;
@@ -17,8 +19,8 @@ impl<'a> MultiColorSolid<'a> {
 }
 
 impl Animation for MultiColorSolid<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
-        settings.brightness() * 0.05
+    fn brightness(&self, settings: &Settings) -> u8 {
+        (f32::from(settings.brightness()) * 0.05) as u8
     }
 
     fn render(
@@ -30,7 +32,7 @@ impl Animation for MultiColorSolid<'_> {
             if i % LEDS_PER_COLOR == 0 {
                 color_index += 1;
             }
-            self.data.borrow_mut()[i] = animations::create_color_with_brightness(
+            self.data.borrow_mut()[i] = brightness_correct(
                 animations::COLORS[color_index % NUM_COLORS],
                 self.brightness(settings),
             );

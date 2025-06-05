@@ -391,6 +391,20 @@ pub const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [
     ],
 ];
 
+const GAMMA8: [u8; 256] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5,
+    5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10, 11, 11, 11, 12, 12, 13, 13, 13, 14,
+    14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 27,
+    27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36, 37, 38, 39, 39, 40, 41, 42, 43, 44, 45, 46,
+    47, 48, 49, 50, 50, 51, 52, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 66, 67, 68, 69, 70, 72,
+    73, 74, 75, 77, 78, 79, 81, 82, 83, 85, 86, 87, 89, 90, 92, 93, 95, 96, 98, 99, 101, 102, 104,
+    105, 107, 109, 110, 112, 114, 115, 117, 119, 120, 122, 124, 126, 127, 129, 131, 133, 135, 137,
+    138, 140, 142, 144, 146, 148, 150, 152, 154, 156, 158, 160, 162, 164, 167, 169, 171, 173, 175,
+    177, 180, 182, 184, 186, 189, 191, 193, 196, 198, 200, 203, 205, 208, 210, 213, 215, 218, 220,
+    223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255,
+];
+
 #[allow(clippy::large_enum_variant)]
 pub enum Animation<'a> {
     Carrousel(Carrousel<'a>),
@@ -411,10 +425,13 @@ pub enum Animation<'a> {
 
 impl Animation<'_> {
     /// Renders the animation.
-    pub async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
+    pub async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) {
+    ) where
+        E: SpiError,
+    {
         match self {
             Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings).await,
             Animation::DoubleCarrousel(double_carrousel) => {
@@ -430,10 +447,12 @@ impl Animation<'_> {
                 multi_color_heartbeat.render(ws2812, delay, settings).await
             }
             Animation::MultiColorSolid(multi_color_solid) => {
-                multi_color_solid.render(ws2812, delay).await
+                multi_color_solid.render(ws2812, delay, settings).await
             }
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.render(ws2812, delay).await
+                multi_color_solid_random
+                    .render(ws2812, delay, settings)
+                    .await
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => {
                 multi_color_sparkle.render(ws2812, delay, settings).await
@@ -453,7 +472,7 @@ impl Animation<'_> {
                 uni_color_heartbeat.render(ws2812, delay, settings).await
             }
             Animation::UniColorSolid(uni_color_solid) => {
-                uni_color_solid.render(ws2812, delay).await
+                uni_color_solid.render(ws2812, delay, settings).await
             }
             Animation::UniColorSparkle(uni_color_sparkle) => {
                 uni_color_sparkle.render(ws2812, delay, settings).await
@@ -488,23 +507,19 @@ impl Animation<'_> {
     /// Updates the state of the animation based on the settings.
     pub fn update(&mut self, settings: &Settings) {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.update(settings),
-            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.update(settings),
+            Animation::Carrousel(carrousel) => carrousel.update(),
+            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.update(),
             Animation::ForwardWave(forward_wave) => forward_wave.update(settings),
-            Animation::MultiColorFadeIn(multi_color_fade_in) => {
-                multi_color_fade_in.update(settings)
-            }
-            Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
-                multi_color_heartbeat.update(settings)
-            }
-            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.update(settings),
+            Animation::MultiColorFadeIn(multi_color_fade_in) => multi_color_fade_in.update(),
+            Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.update(),
+            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.update(),
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.update(settings)
+                multi_color_solid_random.update()
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => {
                 multi_color_sparkle.update(settings)
             }
-            Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.update(settings),
+            Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.update(),
             Animation::UniColorFadeIn(uni_color_fade_in) => uni_color_fade_in.update(settings),
             Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
                 uni_color_front_to_back_wave.update(settings)
@@ -522,7 +537,7 @@ impl Animation<'_> {
 #[derive(Clone, Copy, Debug, Format)]
 pub struct Settings {
     /// Brightness of the LEDs, between 0.0 and 1.0.
-    brightness: f32,
+    brightness: u8,
 
     /// Index of the color to be used in the animation.
     ///
@@ -554,7 +569,7 @@ impl Settings {
     }
 
     #[must_use]
-    pub fn brightness(&self) -> f32 {
+    pub fn brightness(&self) -> u8 {
         self.brightness
     }
 
@@ -586,18 +601,20 @@ impl Settings {
     }
 }
 
+/// Correct the RGB8 color based on the brightness value.
+///
+/// [`gamma_correct`] should be called before this function to apply gamma correction properly.
+pub fn brightness_correct(color: RGB8, brightness: u8) -> RGB8 {
+    RGB8 {
+        r: (color.r as u16 * (brightness as u16 + 1) / 256) as u8,
+        g: (color.g as u16 * (brightness as u16 + 1) / 256) as u8,
+        b: (color.b as u16 * (brightness as u16 + 1) / 256) as u8,
+    }
+}
+
 pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
     let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
     cmp::min(index, num_values - 1)
-}
-
-/// Create a color from a provided color adjusted by a brightness value between 0 and 1.
-pub fn create_color_with_brightness(color: RGB8, brightness: f32) -> RGB8 {
-    RGB8::new(
-        (f32::from(color.r) * brightness) as u8,
-        (f32::from(color.g) * brightness) as u8,
-        (f32::from(color.b) * brightness) as u8,
-    )
 }
 
 /// Create a new [`LedData`] structure initialized with default colors.
@@ -649,11 +666,20 @@ pub fn reset_data(data: &LedData) {
     *data.borrow_mut() = [RGB8::default(); NUM_LEDS];
 }
 
+/// Apply gamma correction to the provided RGB8 color.
+pub(crate) fn gamma_correct(color: RGB8) -> RGB8 {
+    RGB8 {
+        r: GAMMA8[color.r as usize],
+        g: GAMMA8[color.g as usize],
+        b: GAMMA8[color.b as usize],
+    }
+}
+
 /// Calculate the brightness based on the value of the potentiometer reading.
 ///
-/// The value is between 0 and 1.
-fn calculate_brightness(value: u16, max_value: u16) -> f32 {
-    f32::from(value) / f32::from(max_value)
+/// The value is between 0 and 255.
+fn calculate_brightness(value: u16, max_value: u16) -> u8 {
+    (f32::from(value) / f32::from(max_value) * 255_f32).clamp(0.0, 255.0) as u8
 }
 
 /// Calculate the delay in milliseconds based on the value of the potentiometer reading.

@@ -1,5 +1,7 @@
 use crate::animations;
-use crate::animations::{LedData, NUM_LEDS, SHORTEST_DELAY, Settings};
+use crate::animations::{
+    LedData, NUM_LEDS, SHORTEST_DELAY, Settings, brightness_correct, gamma_correct,
+};
 use core::cmp;
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -21,15 +23,21 @@ impl<'a> MultiColorSparkle<'a> {
         }
     }
 
-    pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
+    pub(crate) async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) {
+    ) where
+        E: SpiError,
+    {
         let random_delay = self
             .prng
             .random_range(SHORTEST_DELAY..cmp::max(settings.delay(), SHORTEST_DELAY + 1));
 
+        // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
+        // not all LEDs have the same brightness.
         ws2812.write(self.data.borrow().iter().copied()).unwrap();
+
         delay.delay_ms(random_delay).await;
     }
 
@@ -45,18 +53,18 @@ impl<'a> MultiColorSparkle<'a> {
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.random_range(0.0..=self.brightness(settings));
+            let brightness = self.prng.random_range(0..=self.brightness(settings));
             let random_color = RGB8::new(
                 self.prng.random_range(0..255),
                 self.prng.random_range(0..255),
                 self.prng.random_range(0..255),
             );
             self.data.borrow_mut()[index] =
-                animations::create_color_with_brightness(random_color, brightness);
+                brightness_correct(gamma_correct(random_color), brightness);
         }
     }
 
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 }

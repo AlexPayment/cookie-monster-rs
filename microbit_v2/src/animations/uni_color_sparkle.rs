@@ -1,6 +1,8 @@
 use crate::animations::{Animation, UniColorSparkle};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{COLORS, LedData, NUM_LEDS, SHORTEST_DELAY, Settings};
+use cookie_monster_common::animations::{
+    COLORS, LedData, NUM_LEDS, SHORTEST_DELAY, Settings, brightness_correct,
+};
 use core::cmp;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -21,7 +23,7 @@ impl<'a> UniColorSparkle<'a> {
 }
 
 impl Animation for UniColorSparkle<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
@@ -35,11 +37,9 @@ impl Animation for UniColorSparkle<'_> {
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.random_range(0.0..=self.brightness(settings));
-            self.data.borrow_mut()[index] = animations::create_color_with_brightness(
-                COLORS[settings.color_index()],
-                brightness,
-            );
+            let brightness = self.prng.random_range(0..=self.brightness(settings));
+            self.data.borrow_mut()[index] =
+                brightness_correct(COLORS[settings.color_index()], brightness);
         }
 
         let random_delay = self

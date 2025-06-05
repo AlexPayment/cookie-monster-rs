@@ -4,8 +4,8 @@ use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
-use smart_leds::RGB8;
 use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
+use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
 const COLORS: [RGB8; 7] = [
@@ -48,11 +48,20 @@ impl<'a> MultiColorStrand<'a> {
         }
     }
 
-    pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl SpiError>,
+    pub(crate) async fn render<E>(
+        &mut self,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) {
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+    ) where
+        E: SpiError,
+    {
+        ws2812
+            .write(brightness(
+                gamma(self.data.borrow().iter().copied()),
+                self.brightness(settings),
+            ))
+            .unwrap();
+
         delay.delay_ms(settings.delay()).await;
     }
 
@@ -70,22 +79,16 @@ impl<'a> MultiColorStrand<'a> {
         }
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
+    pub(crate) fn update(&mut self) {
         animations::reset_data(self.data);
-
-        let brightness = self.brightness(settings);
 
         for strand in &mut self.strands {
             strand.update();
-            self.data.borrow_mut()[strand.position as usize] =
-                animations::create_color_with_brightness(
-                    COLORS[strand.color_index as usize],
-                    brightness,
-                );
+            self.data.borrow_mut()[strand.position as usize] = COLORS[strand.color_index as usize];
         }
     }
 
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 }

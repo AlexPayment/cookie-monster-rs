@@ -1,6 +1,8 @@
 use crate::animations::{Animation, MultiColorSparkle};
 use cookie_monster_common::animations;
-use cookie_monster_common::animations::{LedData, NUM_LEDS, SHORTEST_DELAY, Settings};
+use cookie_monster_common::animations::{
+    LedData, NUM_LEDS, SHORTEST_DELAY, Settings, brightness_correct,
+};
 use core::cmp;
 use embedded_hal::delay::DelayNs;
 use microbit::hal::Timer;
@@ -22,7 +24,7 @@ impl<'a> MultiColorSparkle<'a> {
 }
 
 impl Animation for MultiColorSparkle<'_> {
-    fn brightness(&self, settings: &Settings) -> f32 {
+    fn brightness(&self, settings: &Settings) -> u8 {
         settings.brightness()
     }
 
@@ -36,14 +38,13 @@ impl Animation for MultiColorSparkle<'_> {
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..NUM_LEDS);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.random_range(0.0..=self.brightness(settings));
+            let brightness = self.prng.random_range(0..=self.brightness(settings));
             let random_color = RGB8::new(
                 self.prng.random_range(0..255),
                 self.prng.random_range(0..255),
                 self.prng.random_range(0..255),
             );
-            self.data.borrow_mut()[index] =
-                animations::create_color_with_brightness(random_color, brightness);
+            self.data.borrow_mut()[index] = brightness_correct(random_color, brightness);
         }
 
         let random_delay = self

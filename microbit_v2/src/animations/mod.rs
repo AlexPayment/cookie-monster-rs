@@ -22,7 +22,7 @@ pub(crate) mod uni_color_solid;
 pub(crate) mod uni_color_sparkle;
 
 pub(crate) trait Animation {
-    fn brightness(&self, settings: &Settings) -> f32;
+    fn brightness(&self, settings: &Settings) -> u8;
 
     fn render(
         &mut self, ws2812: &mut Ws2812<Spi<SPI0>>, timer: &mut Timer<microbit::pac::TIMER0>,
