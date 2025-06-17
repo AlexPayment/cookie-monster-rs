@@ -1,5 +1,5 @@
 use crate::animations;
-use crate::animations::{LedData, NUM_LEDS, Settings};
+use crate::animations::{LedData, NUM_LEDS, Settings, time_function};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
@@ -55,12 +55,14 @@ impl<'a> MultiColorStrand<'a> {
     ) where
         E: SpiError,
     {
-        ws2812
-            .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
-                self.brightness(settings),
-            ))
-            .unwrap();
+        time_function(|| {
+            ws2812
+                .write(brightness(
+                    gamma(self.data.borrow().iter().copied()),
+                    self.brightness(settings),
+                ))
+                .unwrap();
+        });
 
         delay.delay_ms(settings.delay()).await;
     }

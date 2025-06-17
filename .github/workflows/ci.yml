@@ -6,11 +6,17 @@ on:
     paths-ignore:
       - 'CHANGELOG.md'
       - 'LICENSE'
+      - '**/*.drawio'
+      - '**/*.jpg'
+      - '**/*.png'
       - '**/README.md'
   pull_request:
     paths-ignore:
       - 'CHANGELOG.md'
       - 'LICENSE'
+      - '**/*.drawio'
+      - '**/*.jpg'
+      - '**/*.png'
       - '**/README.md'
 
 env:
@@ -22,12 +28,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - name: "xtensa-esp32-none-elf"
-            description: "QuinLED Dig Quad"
+        bin:
+          - description: "QuinLED Dig Quad"
+            target: "xtensa-esp32-none-elf"
             working-directory: "./quinled_dig_quad"
-          - name: "thumbv7em-none-eabihf"
-            description: "Micro:bit V2"
+          - description: "Micro:bit V2"
+            target: "thumbv7em-none-eabihf"
             working-directory: "./microbit_v2"
 
     steps:
@@ -40,20 +46,20 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - if: matrix.target.name == 'thumbv7em-none-eabihf'
-      name: Install ${{ matrix.target.name }} target
-      run: rustup target add ${{ matrix.target.name }}
+    - if: matrix.bin.target == 'thumbv7em-none-eabihf'
+      name: Install ${{ matrix.bin.target }} target
+      run: rustup target add ${{ matrix.bin.target }}
 
-    - if: matrix.target.name == 'xtensa-esp32-none-elf'
-      name: Install ${{ matrix.target.name }} toolchain and target
+    - if: matrix.bin.target == 'xtensa-esp32-none-elf'
+      name: Install ${{ matrix.bin.target }} toolchain and target
       uses: esp-rs/xtensa-toolchain@v1.5
       with:
         default: true
         buildtargets: esp32
         ldproxy: false
 
-    - name: Build for ${{ matrix.target.description }}
-      working-directory: ${{ matrix.target.working-directory }}
+    - name: Build for ${{ matrix.bin.description }}
+      working-directory: ${{ matrix.bin.working-directory }}
       run: cargo build
 
   clippy:
@@ -61,12 +67,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          - name: "xtensa-esp32-none-elf"
-            description: "QuinLED Dig Quad"
+        bin:
+          - description: "QuinLED Dig Quad"
+            target: "xtensa-esp32-none-elf"
             working-directory: "./quinled_dig_quad"
-          - name: "thumbv7em-none-eabihf"
-            description: "Micro:bit V2"
+          - description: "Micro:bit V2"
+            target: "thumbv7em-none-eabihf"
             working-directory: "./microbit_v2"
 
     steps:
@@ -79,20 +85,20 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - if: matrix.target.name == 'thumbv7em-none-eabihf'
-        name: Install ${{ matrix.target.name }} target
-        run: rustup target add ${{ matrix.target.name }}
+      - if: matrix.bin.target == 'thumbv7em-none-eabihf'
+        name: Install ${{ matrix.bin.target }} target
+        run: rustup target add ${{ matrix.bin.target }}
 
-      - if: matrix.target.name == 'xtensa-esp32-none-elf'
-        name: Install ${{ matrix.target.name }} toolchain and target
+      - if: matrix.bin.target == 'xtensa-esp32-none-elf'
+        name: Install ${{ matrix.bin.target }} toolchain and target
         uses: esp-rs/xtensa-toolchain@v1.5
         with:
           default: true
           buildtargets: esp32
           ldproxy: false
 
-      - name: Run cargo clippy for ${{ matrix.target.description }}
-        working-directory: ${{ matrix.target.working-directory }}
+      - name: Run cargo clippy for ${{ matrix.bin.description }}
+        working-directory: ${{ matrix.bin.working-directory }}
         run: cargo clippy --all-features -- -D warnings
 
   fmt:

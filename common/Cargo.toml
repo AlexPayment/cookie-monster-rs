@@ -10,9 +10,11 @@ publish = false
 
 [dependencies]
 defmt = { workspace = true }
-embedded-hal = { workspace = true }
+embassy-sync = "0.7.0"
+embassy-time = { workspace = true }
+embedded-hal = "1.0.0"
 embedded-hal-async = { workspace = true }
 rand = { workspace = true }
-smart-leds = { workspace = true }
-smart-leds-trait = { workspace = true }
+smart-leds = "0.4.0"
+smart-leds-trait = "0.3.1"
 ws2812-spi = { workspace = true }

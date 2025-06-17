@@ -6,38 +6,36 @@ use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
 use defmt::{debug, info};
+use embassy_nrf::gpio::AnyPin;
+use embassy_nrf::peripherals::{RNG, SPI2};
+use embassy_nrf::rng::Rng;
+use embassy_nrf::spim::{Config, Frequency, Spim};
+use embassy_nrf::{bind_interrupts, rng, spim};
 use embassy_time::Delay;
-use esp_hal::gpio::AnyPin;
-use esp_hal::peripherals::RNG;
-use esp_hal::rng::Rng;
-use esp_hal::spi::AnySpi;
-use esp_hal::spi::master::{Config as SpiConfig, Spi};
-use esp_hal::time::Rate;
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
 use ws2812_spi::prerendered::Ws2812;
 
-// According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
-// Though, in practice, it seems that the lower limit is really around 2.2 MHz on this board.
-const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
+bind_interrupts!(struct Irqs {
+    RNG => rng::InterruptHandler<RNG>;
+    SPI2 => spim::InterruptHandler<SPI2>;
+});
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG, spi: AnySpi, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
+    rng: RNG, spi: SPI2, sck: AnyPin, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
-    // TODO: Check if DMA is enabled by default (unlikely) or if it can be enabled and setup to offer better performance.
-    let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
-        .unwrap()
-        .with_mosi(led);
+    let mut config = Config::default();
+    config.frequency = Frequency::M4;
+    let spi = Spim::new_txonly(spi, Irqs, sck, led, config);
 
     let mut buffer = [0; NUM_LEDS * 12];
     let mut ws2812 = Ws2812::new(spi, &mut buffer);
 
     // Setup Pseudo Random Number Generator
-    let mut rng = Rng::new(rng);
-    let mut prng = SmallRng::seed_from_u64(rng.random() as u64);
+    let mut prng = setup_prng(rng).await;
 
     let data = create_data();
 
@@ -83,4 +81,12 @@ pub async fn led_task(
             .render(&mut ws2812, &mut delay, &settings)
             .await;
     }
+}
+
+async fn setup_prng(rng: RNG) -> SmallRng {
+    let mut rng = Rng::new(rng, Irqs);
+    let mut seed = [0; 8];
+    rng.fill_bytes(&mut seed).await;
+    let seed = u64::from_le_bytes(seed);
+    SmallRng::seed_from_u64(seed)
 }
