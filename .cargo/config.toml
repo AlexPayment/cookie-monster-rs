@@ -1,0 +1,18 @@
+[target.thumbv7em-none-eabihf]
+runner = "cargo embed"
+
+[target.xtensa-esp32-none-elf]
+runner = "espflash flash --monitor --chip esp32 --log-format defmt"
+rustflags = [
+  "-C", "link-arg=-nostartfiles",
+]
+
+[build]
+#target = "thumbv7em-none-eabihf"
+target = "xtensa-esp32-none-elf"
+
+[env]
+DEFMT_LOG="info"
+
+[unstable]
+build-std = ["core"]

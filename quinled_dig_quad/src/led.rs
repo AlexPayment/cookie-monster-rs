@@ -23,7 +23,8 @@ const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG, spi: AnySpi, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
+    rng: RNG<'static>, spi: AnySpi<'static>, led: AnyPin<'static>, default_analog_value: u16,
+    max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
