@@ -96,7 +96,7 @@ checksum = "9555578bc9e57714c812a1f84e4fc5b4d21fcb063490c624de019f7464c91268"
 
 [[package]]
 name = "cookie-monster-common"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "defmt 1.0.1",
  "embassy-sync 0.7.0",
@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "cookie-monster-microbit-v2"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "cookie-monster-common",
  "cortex-m",
@@ -129,7 +129,7 @@ dependencies = [
 
 [[package]]
 name = "cookie-monster-quinled-dig-quad"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "cookie-monster-common",
  "defmt 1.0.1",
