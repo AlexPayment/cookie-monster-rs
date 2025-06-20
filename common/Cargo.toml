@@ -18,3 +18,6 @@ rand = { workspace = true }
 smart-leds = "0.4.0"
 smart-leds-trait = "0.3.1"
 ws2812-spi = { workspace = true }
+
+[package.metadata.release]
+shared-version = true

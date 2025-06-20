@@ -21,3 +21,6 @@ esp-println = { version = "0.14.0", features = ["defmt-espflash", "esp32"] }
 nb = "1.1.0"
 rand = { workspace = true }
 ws2812-spi = { workspace = true }
+
+[package.metadata.release]
+shared-version = true

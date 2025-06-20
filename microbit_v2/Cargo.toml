@@ -21,3 +21,6 @@ embedded-hal-async = { workspace = true }
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 rand = { workspace = true }
 ws2812-spi = { workspace = true }
+
+[package.metadata.release]
+shared-version = true
