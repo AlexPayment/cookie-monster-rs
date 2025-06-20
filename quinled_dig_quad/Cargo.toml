@@ -15,8 +15,8 @@ embassy-executor = { workspace = true }
 embassy-time = { features = ["defmt", "defmt-timestamp-uptime", "generic-queue-8"], workspace = true }
 embedded-hal-async = { workspace = true }
 esp-backtrace = { version = "0.16.0", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
-esp-hal = { version = "<1.0.0-beta.1", features = ["defmt", "esp32", "unstable"] }
-esp-hal-embassy = { version = "0.7.0", features = ["esp32"] }
+esp-hal = { version = "1.0.0-beta.1", features = ["defmt", "esp32", "unstable"] }
+esp-hal-embassy = { version = "0.8.1", features = ["esp32"] }
 esp-println = { version = "0.14.0", features = ["defmt-espflash", "esp32"] }
 nb = "1.1.0"
 rand = { workspace = true }

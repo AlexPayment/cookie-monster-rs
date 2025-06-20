@@ -42,7 +42,7 @@ pub const COLORS: [RGB8; NUM_COLORS] = [
     PURPLE,
     INDIGO,
 ];
-pub const DEFAULT_COLOR_INDEX: usize = 9;
+pub const DEFAULT_COLOR_INDEX: usize = 1;
 pub const NUM_ANIMATIONS: usize = 14;
 pub const NUM_COLORS: usize = 11;
 

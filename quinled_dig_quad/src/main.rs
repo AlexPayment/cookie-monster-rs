@@ -75,16 +75,19 @@ async fn main(spawner: Spawner) {
 }
 
 /// Represents the pins used for both input and output.
-struct Pins {
-    animation: AnyPin,
-    brightness: BrightnessPin,
-    color: AnyPin,
-    delay: DelayPin,
-    led: AnyPin,
+struct Pins<'a> {
+    animation: AnyPin<'a>,
+    brightness: BrightnessPin<'a>,
+    color: AnyPin<'a>,
+    delay: DelayPin<'a>,
+    led: AnyPin<'a>,
 }
 
 /// Spawns all the tasks for the inputs and LEDs.
-fn spawn_all_tasks(spawner: &Spawner, adc: ADC2, rng: RNG, spi: AnySpi, pins: Pins) {
+fn spawn_all_tasks(
+    spawner: &Spawner, adc: ADC2<'static>, rng: RNG<'static>, spi: AnySpi<'static>,
+    pins: Pins<'static>,
+) {
     info!("Spawning all tasks...");
 
     // Spawn the animation button task
