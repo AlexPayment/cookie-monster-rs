@@ -9,9 +9,10 @@ use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
+use esp_hal::dma::{AnySpiDmaChannel, IntoAnySpiDmaChannel};
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::{ADC2, RNG};
-use esp_hal::spi::AnySpi;
+use esp_hal::spi::{AnySpi, IntoAnySpi};
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
@@ -63,7 +64,8 @@ async fn main(spawner: Spawner) {
         peripherals.RNG,
         // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
         // in many examples.
-        peripherals.SPI2.into(),
+        peripherals.SPI2.degrade(),
+        peripherals.DMA_SPI2.degrade(),
         pins,
     );
 
@@ -86,7 +88,7 @@ struct Pins<'a> {
 /// Spawns all the tasks for the inputs and LEDs.
 fn spawn_all_tasks(
     spawner: &Spawner, adc: ADC2<'static>, rng: RNG<'static>, spi: AnySpi<'static>,
-    pins: Pins<'static>,
+    dma_channel: AnySpiDmaChannel<'static>, pins: Pins<'static>,
 ) {
     info!("Spawning all tasks...");
 
@@ -103,6 +105,7 @@ fn spawn_all_tasks(
     unwrap!(spawner.spawn(led::led_task(
         rng,
         spi,
+        dma_channel,
         pins.led,
         DEFAULT_ANALOG_VALUE,
         ADC_MAX_VALUE

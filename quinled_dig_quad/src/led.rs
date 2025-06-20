@@ -7,6 +7,8 @@ use cookie_monster_common::signal::{
 };
 use defmt::{debug, info};
 use embassy_time::Delay;
+use esp_hal::dma::{AnySpiDmaChannel, DmaRxBuf, DmaTxBuf};
+use esp_hal::dma_buffers;
 use esp_hal::gpio::AnyPin;
 use esp_hal::peripherals::RNG;
 use esp_hal::rng::Rng;
@@ -23,15 +25,21 @@ const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG<'static>, spi: AnySpi<'static>, led: AnyPin<'static>, default_analog_value: u16,
-    max_analog_value: u16,
+    rng: RNG<'static>, spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>,
+    led: AnyPin<'static>, default_analog_value: u16, max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
-    // TODO: Check if DMA is enabled by default (unlikely) or if it can be enabled and setup to offer better performance.
+    #[allow(clippy::manual_div_ceil)]
+    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(NUM_LEDS * 12);
+    let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
+    let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
+
     let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
         .unwrap()
-        .with_mosi(led);
+        .with_mosi(led)
+        .with_dma(dma_channel)
+        .with_buffers(dma_rx_buf, dma_tx_buf);
 
     let mut buffer = [0; NUM_LEDS * 12];
     let mut ws2812 = Ws2812::new(spi, &mut buffer);
