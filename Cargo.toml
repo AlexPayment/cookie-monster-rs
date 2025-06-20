@@ -15,6 +15,14 @@ embedded-hal-async = "1.0.0"
 rand = { version = "0.9.1", default-features = false, features = ["small_rng"] }
 ws2812-spi = "0.5.1"
 
+[workspace.metadata.release]
+allow-branch = ["main"]
+pre-release-commit-message = "Release {{version}}"
+# Do not publish any of the workspace crates
+publish = false
+shared-version = true
+tag-prefix = ""
+
 [profile.dev]
 lto = true
 opt-level = 3
