@@ -1,6 +1,6 @@
 [package]
 name = "cookie-monster-microbit-v2"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Alex Payment <3332420+AlexPayment@users.noreply.github.com>"]
 edition = "2024"
 description = "Binary for Cookie Monster running on the micro:bit V2 (nRF52833, Cortex-M4 with FPU) with Embassy"

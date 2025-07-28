@@ -1,6 +1,6 @@
 [package]
 name = "cookie-monster-common"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Alex Payment <3332420+AlexPayment@users.noreply.github.com>"]
 edition = "2024"
 description = "Common code for Cookie Monster"
