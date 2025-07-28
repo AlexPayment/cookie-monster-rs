@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+## [1.0.1] - 2025-07-28
+
 ### Changed
 
 - Update `embassy-nrf` to version 0.5.0.
