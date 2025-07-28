@@ -15,7 +15,7 @@ cortex-m-rt = "0.7.5"
 defmt = { workspace = true }
 defmt-rtt = "1.0.0"
 embassy-executor = { features = ["arch-cortex-m", "executor-interrupt", "executor-thread"], workspace = true }
-embassy-nrf = { version = "0.3.1", features = ["defmt", "nrf52833", "time-driver-rtc1", "gpiote", "unstable-pac", "time"] }
+embassy-nrf = { version = "0.5.0", features = ["defmt", "nrf52833", "time-driver-rtc1", "gpiote", "unstable-pac", "time"] }
 embassy-time = { features = ["defmt", "defmt-timestamp-uptime"], workspace = true }
 embedded-hal-async = { workspace = true }
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }

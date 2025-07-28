@@ -9,10 +9,10 @@ use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
-use esp_hal::dma::{AnySpiDmaChannel, IntoAnySpiDmaChannel};
+use esp_hal::dma::AnySpiDmaChannel;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::{ADC2, RNG};
-use esp_hal::spi::{AnySpi, IntoAnySpi};
+use esp_hal::spi::master::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
 
@@ -21,6 +21,8 @@ const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
 // The default analog value is set to half of the maximum value, which is 2048.
 const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
+
+esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
@@ -64,8 +66,8 @@ async fn main(spawner: Spawner) {
         peripherals.RNG,
         // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
         // in many examples.
-        peripherals.SPI2.degrade(),
-        peripherals.DMA_SPI2.degrade(),
+        peripherals.SPI2.into(),
+        peripherals.DMA_SPI2.into(),
         pins,
     );
 

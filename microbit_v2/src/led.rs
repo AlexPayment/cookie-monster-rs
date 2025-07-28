@@ -10,7 +10,7 @@ use embassy_nrf::gpio::AnyPin;
 use embassy_nrf::peripherals::{RNG, SPI2};
 use embassy_nrf::rng::Rng;
 use embassy_nrf::spim::{Config, Frequency, Spim};
-use embassy_nrf::{bind_interrupts, rng, spim};
+use embassy_nrf::{Peri, bind_interrupts, rng, spim};
 use embassy_time::Delay;
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
@@ -23,7 +23,8 @@ bind_interrupts!(struct Irqs {
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG, spi: SPI2, sck: AnyPin, led: AnyPin, default_analog_value: u16, max_analog_value: u16,
+    rng: Peri<'static, RNG>, spi: Peri<'static, SPI2>, sck: Peri<'static, AnyPin>,
+    led: Peri<'static, AnyPin>, default_analog_value: u16, max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
@@ -83,7 +84,7 @@ pub async fn led_task(
     }
 }
 
-async fn setup_prng(rng: RNG) -> SmallRng {
+async fn setup_prng(rng: Peri<'static, RNG>) -> SmallRng {
     let mut rng = Rng::new(rng, Irqs);
     let mut seed = [0; 8];
     rng.fill_bytes(&mut seed).await;

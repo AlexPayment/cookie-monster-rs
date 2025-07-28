@@ -5,7 +5,7 @@ use defmt::{debug, info};
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embassy_nrf::peripherals::SAADC;
 use embassy_nrf::saadc::{AnyInput, ChannelConfig, Config, Saadc};
-use embassy_nrf::{bind_interrupts, saadc};
+use embassy_nrf::{Peri, bind_interrupts, saadc};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 
@@ -21,7 +21,9 @@ const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 /// All sensors are connected to SAADC, which has a 12-bit resolution. Unfortunately, embassy
 /// doesn't allow a task to be generic.
 #[embassy_executor::task]
-pub async fn analog_sensors_task(adc: SAADC, brightness_pin: AnyInput, delay_pin: AnyInput) {
+pub async fn analog_sensors_task(
+    adc: Peri<'static, SAADC>, brightness_pin: AnyInput<'static>, delay_pin: AnyInput<'static>,
+) {
     info!("Starting analog sensors task...");
 
     let mut saadc = configure_adc(adc, brightness_pin, delay_pin).await;
@@ -50,7 +52,7 @@ pub async fn analog_sensors_task(adc: SAADC, brightness_pin: AnyInput, delay_pin
 
 /// Task that waits for a button to be pressed to signal an animation change.
 #[embassy_executor::task]
-pub async fn animation_button_task(button: AnyPin) {
+pub async fn animation_button_task(button: Peri<'static, AnyPin>) {
     info!("Starting animation button task...");
 
     let mut button = Input::new(button, Pull::Up);
@@ -66,7 +68,7 @@ pub async fn animation_button_task(button: AnyPin) {
 
 /// Task that waits for a button to be pressed to signal a color change.
 #[embassy_executor::task]
-pub async fn color_button_task(button: AnyPin) {
+pub async fn color_button_task(button: Peri<'static, AnyPin>) {
     info!("Starting color button task...");
 
     let mut button = Input::new(button, Pull::Up);
@@ -81,7 +83,7 @@ pub async fn color_button_task(button: AnyPin) {
 }
 
 async fn configure_adc<'a>(
-    adc: SAADC, brightness_pin: AnyInput, delay_pin: AnyInput,
+    adc: Peri<'a, SAADC>, brightness_pin: AnyInput<'static>, delay_pin: AnyInput<'static>,
 ) -> Saadc<'a, 2> {
     info!("Configuring SAADC...");
 
