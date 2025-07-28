@@ -63,3 +63,9 @@ write permissions for the serial port without having to log out and back in agai
 ```sh
 cargo +esp build --target xtensa-esp32-none-elf
 ```
+
+### Flash
+
+```sh
+cargo run --release
+```

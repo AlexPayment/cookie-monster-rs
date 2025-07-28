@@ -4,8 +4,9 @@
 use crate::input::{analog_sensors_task, animation_button_task, color_button_task};
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
+use embassy_nrf::Peri;
 use embassy_nrf::config::Config;
-use embassy_nrf::gpio::{AnyPin, Pin};
+use embassy_nrf::gpio::AnyPin;
 use embassy_nrf::peripherals::{RNG, SAADC, SPI2};
 use embassy_nrf::saadc::{AnyInput, Input};
 use embassy_time::Delay;
@@ -28,7 +29,7 @@ async fn main(spawner: Spawner) {
         // GPIO port 0 pin 14 corresponds to pin 5 on the board, it's pull up. Which means a button
         // should be connected to a ground pin. This pin is normally used for button A on the
         // board.
-        animation: peripherals.P0_14.degrade(),
+        animation: peripherals.P0_14.into(),
 
         // GPIO port 0 pin 2 is an analog input corresponding to the big "0" connector or pin 0 on
         // the board.
@@ -37,17 +38,17 @@ async fn main(spawner: Spawner) {
         // GPIO port 0 pin 23 corresponds to pin 11 on the board, it's pull up. Which means a button
         // should be connected to a ground pin. This pin is normally used for button B on the
         // board.
-        color: peripherals.P0_23.degrade(),
+        color: peripherals.P0_23.into(),
 
         // GPIO port 0 pin 3 is an analog input corresponding to the big "1" connector or pin 1 on
         // the board.
         delay: peripherals.P0_03.degrade_saadc(),
 
         // GPIO port 0 pin 13 corresponds to pin 15 on the board.
-        led: peripherals.P0_13.degrade(),
+        led: peripherals.P0_13.into(),
 
         // GPIO port 0 pin 17 corresponds to pin 13 on the board.
-        sck: peripherals.P0_17.degrade(),
+        sck: peripherals.P0_17.into(),
     };
 
     spawn_all_tasks(
@@ -67,17 +68,20 @@ async fn main(spawner: Spawner) {
 }
 
 /// Represents the pins used for both input and output.
-struct Pins {
-    animation: AnyPin,
-    brightness: AnyInput,
-    color: AnyPin,
-    delay: AnyInput,
-    led: AnyPin,
-    sck: AnyPin,
+struct Pins<'a> {
+    animation: Peri<'a, AnyPin>,
+    brightness: AnyInput<'a>,
+    color: Peri<'a, AnyPin>,
+    delay: AnyInput<'a>,
+    led: Peri<'a, AnyPin>,
+    sck: Peri<'a, AnyPin>,
 }
 
 /// Spawns all the tasks for the inputs and LEDs.
-fn spawn_all_tasks(spawner: &Spawner, adc: SAADC, rng: RNG, spi: SPI2, pins: Pins) {
+fn spawn_all_tasks(
+    spawner: &Spawner, adc: Peri<'static, SAADC>, rng: Peri<'static, RNG>,
+    spi: Peri<'static, SPI2>, pins: Pins<'static>,
+) {
     info!("Spawning all tasks...");
 
     // Spawn the analog sensors task

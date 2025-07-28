@@ -7,6 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- Update `embassy-nrf` to version 0.5.0.
+- Update `esp-backtrace` to version 0.17.0.
+- Update `esp-hal` to version 1.0.0-rc.0.
+- Update `esp-hal-embassy` to version 0.9.0.
+- Update `esp-println` to version 0.15.0.
+- Update `rand` to version 0.9.2.
+- Set rust version for `qinled-dig-quad` to `1.88.0`.
+
 ## [1.0.0] - 2025-06-20
 
 ### Added
