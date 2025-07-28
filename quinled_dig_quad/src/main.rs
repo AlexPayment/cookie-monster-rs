@@ -9,7 +9,7 @@ use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
-use esp_hal::dma::{AnySpiDmaChannel};
+use esp_hal::dma::AnySpiDmaChannel;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::peripherals::{ADC2, RNG};
 use esp_hal::spi::master::AnySpi;
