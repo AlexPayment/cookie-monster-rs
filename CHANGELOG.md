@@ -9,11 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Update the CI workflow:
+  - Set the cache path to match the example provided on their repo.
+  - Split the caches by target and step.
+  - Make the `build` job depend on `clippy` to avoid cache race conditions.
 - Update the CI workflow to use:
+  - `actions/cache` version `6.*`.
   - `actions/checkout` version `7.*`.
   - `esp-rs/xtensa-toolchain` version `1.7.*`.
 - Update `rand` to version `0.10.1`.
 - Update `smart-leds-trait` to version `0.3.2`.
+
+### Removed
+
+- The cache from the CI workflow `fmt` job.
 
 ## [1.0.1] - 2025-07-28
 

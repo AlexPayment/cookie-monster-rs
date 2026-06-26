@@ -24,7 +24,7 @@ env:
 
 jobs:
   build:
-    needs: fmt
+    needs: clippy
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -38,13 +38,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
+        key: ${{ runner.os }}-${{ matrix.bin.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
         path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
 
     - if: matrix.bin.target == 'thumbv7em-none-eabihf'
       name: Install ${{ matrix.bin.target }} target
@@ -77,13 +79,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
+          key: ${{ runner.os }}-${{ matrix.bin.target }}-cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
 
       - if: matrix.bin.target == 'thumbv7em-none-eabihf'
         name: Install ${{ matrix.bin.target }} target
@@ -105,13 +109,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
