@@ -26,7 +26,7 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 #[esp_hal_embassy::main]
 async fn main(spawner: Spawner) {
-    // TODO: Check if the CPU clock could lowered to save power
+    // TODO: Check if the CPU clock could be lowered to save power
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 

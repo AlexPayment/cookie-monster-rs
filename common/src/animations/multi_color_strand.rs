@@ -3,7 +3,7 @@ use crate::animations::{LedData, NUM_LEDS, Settings, time_function};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
