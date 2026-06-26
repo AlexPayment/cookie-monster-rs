@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `actions/cache` version `6.*`.
   - `actions/checkout` version `7.*`.
   - `esp-rs/xtensa-toolchain` version `1.7.*`.
+- Update `defmt` to version `1.1.0`.
 - Update `rand` to version `0.10.1`.
 - Update `smart-leds-trait` to version `0.3.2`.
 
