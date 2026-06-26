@@ -24,7 +24,7 @@ env:
 
 jobs:
   build:
-    needs: clippy
+    needs: fmt
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -46,6 +46,7 @@ jobs:
           ~/.cargo/registry/index/
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
+          ~/.rustup/toolchains/esp
           target/
 
     - if: matrix.bin.target == 'thumbv7em-none-eabihf'
@@ -87,6 +88,7 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
+            ~/.rustup/toolchains/esp
             target/
 
       - if: matrix.bin.target == 'thumbv7em-none-eabihf'

@@ -12,7 +12,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Update the CI workflow:
   - Set the cache path to match the example provided on their repo.
   - Split the caches by target and step.
-  - Make the `build` job depend on `clippy` to avoid cache race conditions.
 - Update the CI workflow to use:
   - `actions/cache` version `6.*`.
   - `actions/checkout` version `7.*`.
