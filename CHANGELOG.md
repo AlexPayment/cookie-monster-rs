@@ -9,7 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Update CI workflow to use `actions/checkout` version `7.*`.
+- Update the CI workflow to use:
+  - `actions/checkout` version `7.*`.
+  - `esp-rs/xtensa-toolchain` version `1.*`.
 - Update `rand` to version `0.10.1`.
 - Update `smart-leds-trait` to version `0.3.2`.
 
