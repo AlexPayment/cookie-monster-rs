@@ -45,7 +45,7 @@ pub async fn led_task(
 
     // Setup Pseudo Random Number Generator
     let mut rng = Rng::new(rng);
-    let mut prng = SmallRng::seed_from_u64(rng.random() as u64);
+    let mut prng = SmallRng::seed_from_u64(u64::from(rng.random()));
 
     let data = create_data();
 

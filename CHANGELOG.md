@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Update `rand` to version `0.10.1`.
 - Update `smart-leds-trait` to version `0.3.2`.
 
+### Fixed
+
+- Address some clippy lints.
+
 ### Removed
 
 - The cache from the CI workflow `fmt` job.
