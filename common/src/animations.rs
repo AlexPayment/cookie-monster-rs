@@ -436,47 +436,47 @@ impl Animation<'_> {
         match self {
             Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings).await,
             Animation::DoubleCarrousel(double_carrousel) => {
-                double_carrousel.render(ws2812, delay, settings).await
+                double_carrousel.render(ws2812, delay, settings).await;
             }
             Animation::ForwardWave(forward_wave) => {
-                forward_wave.render(ws2812, delay, settings).await
+                forward_wave.render(ws2812, delay, settings).await;
             }
             Animation::MultiColorFadeIn(multi_color_fade_in) => {
-                multi_color_fade_in.render(ws2812, delay, settings).await
+                multi_color_fade_in.render(ws2812, delay, settings).await;
             }
             Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
-                multi_color_heartbeat.render(ws2812, delay, settings).await
+                multi_color_heartbeat.render(ws2812, delay, settings).await;
             }
             Animation::MultiColorSolid(multi_color_solid) => {
-                multi_color_solid.render(ws2812, delay, settings).await
+                multi_color_solid.render(ws2812, delay, settings).await;
             }
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
                 multi_color_solid_random
                     .render(ws2812, delay, settings)
-                    .await
+                    .await;
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => {
-                multi_color_sparkle.render(ws2812, delay, settings).await
+                multi_color_sparkle.render(ws2812, delay, settings).await;
             }
             Animation::MultiColorStrand(multi_color_strand) => {
-                multi_color_strand.render(ws2812, delay, settings).await
+                multi_color_strand.render(ws2812, delay, settings).await;
             }
             Animation::UniColorFadeIn(uni_color_fade_in) => {
-                uni_color_fade_in.render(ws2812, delay, settings).await
+                uni_color_fade_in.render(ws2812, delay, settings).await;
             }
             Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
                 uni_color_front_to_back_wave
                     .render(ws2812, delay, settings)
-                    .await
+                    .await;
             }
             Animation::UniColorHeartbeat(uni_color_heartbeat) => {
-                uni_color_heartbeat.render(ws2812, delay, settings).await
+                uni_color_heartbeat.render(ws2812, delay, settings).await;
             }
             Animation::UniColorSolid(uni_color_solid) => {
-                uni_color_solid.render(ws2812, delay, settings).await
+                uni_color_solid.render(ws2812, delay, settings).await;
             }
             Animation::UniColorSparkle(uni_color_sparkle) => {
-                uni_color_sparkle.render(ws2812, delay, settings).await
+                uni_color_sparkle.render(ws2812, delay, settings).await;
             }
         }
     }
@@ -491,13 +491,13 @@ impl Animation<'_> {
             Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.reset(),
             Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.reset(),
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.reset()
+                multi_color_solid_random.reset();
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => multi_color_sparkle.reset(),
             Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.reset(),
             Animation::UniColorFadeIn(uni_color_fade_in) => uni_color_fade_in.reset(),
             Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
-                uni_color_front_to_back_wave.reset()
+                uni_color_front_to_back_wave.reset();
             }
             Animation::UniColorHeartbeat(uni_color_heartbeat) => uni_color_heartbeat.reset(),
             Animation::UniColorSolid(uni_color_solid) => uni_color_solid.reset(),
@@ -515,10 +515,10 @@ impl Animation<'_> {
             Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.update(),
             Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.update(),
             Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.update()
+                multi_color_solid_random.update();
             }
             Animation::MultiColorSparkle(multi_color_sparkle) => {
-                multi_color_sparkle.update(settings)
+                multi_color_sparkle.update(settings);
             }
             Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.update(),
             Animation::UniColorFadeIn(uni_color_fade_in) => uni_color_fade_in.update(settings),
@@ -526,7 +526,7 @@ impl Animation<'_> {
                 uni_color_front_to_back_wave.update(settings)
             }
             Animation::UniColorHeartbeat(uni_color_heartbeat) => {
-                uni_color_heartbeat.update(settings)
+                uni_color_heartbeat.update(settings);
             }
             Animation::UniColorSolid(uni_color_solid) => uni_color_solid.update(settings),
             Animation::UniColorSparkle(uni_color_sparkle) => uni_color_sparkle.update(settings),
@@ -605,20 +605,23 @@ impl Settings {
 /// Correct the RGB8 color based on the brightness value.
 ///
 /// [`gamma_correct`] should be called before this function to apply gamma correction properly.
+#[must_use]
 pub fn brightness_correct(color: RGB8, brightness: u8) -> RGB8 {
     RGB8 {
-        r: (color.r as u16 * (brightness as u16 + 1) / 256) as u8,
-        g: (color.g as u16 * (brightness as u16 + 1) / 256) as u8,
-        b: (color.b as u16 * (brightness as u16 + 1) / 256) as u8,
+        r: (u16::from(color.r) * (u16::from(brightness) + 1) / 256) as u8,
+        g: (u16::from(color.g) * (u16::from(brightness) + 1) / 256) as u8,
+        b: (u16::from(color.b) * (u16::from(brightness) + 1) / 256) as u8,
     }
 }
 
+#[must_use]
 pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
     let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
     cmp::min(index, num_values - 1)
 }
 
 /// Create a new [`LedData`] structure initialized with default colors.
+#[must_use]
 pub fn create_data() -> LedData {
     RefCell::new([RGB8::default(); NUM_LEDS])
 }

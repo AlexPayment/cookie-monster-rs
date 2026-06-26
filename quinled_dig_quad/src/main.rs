@@ -74,7 +74,7 @@ async fn main(spawner: Spawner) {
     let mut delay = Delay;
 
     loop {
-        delay.delay_ms(1_000).await
+        delay.delay_ms(1_000).await;
     }
 }
 
