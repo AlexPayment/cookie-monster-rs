@@ -6,7 +6,7 @@ use core::cmp;
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 

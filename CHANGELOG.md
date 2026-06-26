@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+- Update `rand` to version `0.10.1`.
+- Update `smart-leds-trait` to version `0.3.2`.
+
 ## [1.0.1] - 2025-07-28
 
 ### Changed

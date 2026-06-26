@@ -18,7 +18,7 @@ use defmt::{Format, info, trace};
 use embassy_time::Instant;
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
-use rand::Rng;
+use rand::RngExt;
 use rand::rngs::SmallRng;
 use smart_leds::RGB8;
 use smart_leds::colors::{
