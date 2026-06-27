@@ -13,7 +13,7 @@ publish = false
 cookie-monster-common = { workspace = true }
 defmt = { workspace = true }
 embassy-executor = { workspace = true }
-embassy-time = { features = ["defmt", "defmt-timestamp-uptime", "generic-queue-8"], workspace = true }
+embassy-time = { workspace = true, features = ["defmt", "defmt-timestamp-uptime", "generic-queue-8"] }
 embedded-hal-async = { workspace = true }
 esp-backtrace = { version = "0.17.0", features = ["defmt", "esp32", "exception-handler", "panic-handler"] }
 esp-bootloader-esp-idf = { version = "0.2.0", features = ["defmt", "esp32"] }
