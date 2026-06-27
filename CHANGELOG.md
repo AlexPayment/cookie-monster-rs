@@ -18,9 +18,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `esp-rs/xtensa-toolchain` version `1.7.*`.
 - Update `defmt` to version `1.1.0`.
 - Update `defmt-rtt` to version `1.2.0`.
+- Update `embassy-executor` to version `0.10.0`.
+- Update `embassy-nrf` to version `0.7.0`.
 - Update `embassy-sync` to version `0.8.0`.
+- Update `embassy-time` to version `0.5.1`.
 - Update `esp-backtrace` to version `0.19.0`.
 - Update `esp-bootloader-esp-idf` to version `0.5.0`.
+- Update `esp-hal` to version `1.1.1`.
 - Update `esp-println` to version `0.17.0`.
 - Update `rand` to version `0.10.1`.
 - Update `smart-leds-trait` to version `0.3.2`.

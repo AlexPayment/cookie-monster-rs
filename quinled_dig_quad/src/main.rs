@@ -11,7 +11,8 @@ use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
 use esp_hal::dma::AnySpiDmaChannel;
 use esp_hal::gpio::{AnyPin, Pin};
-use esp_hal::peripherals::{ADC2, RNG};
+use esp_hal::interrupt::software::SoftwareInterruptControl;
+use esp_hal::peripherals::ADC2;
 use esp_hal::spi::master::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
@@ -24,14 +25,15 @@ const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-#[esp_hal_embassy::main]
+#[esp_rtos::main]
 async fn main(spawner: Spawner) {
     // TODO: Check if the CPU clock could be lowered to save power
     let config = esp_hal::Config::default().with_cpu_clock(CpuClock::max());
     let peripherals = esp_hal::init(config);
 
     let timer0 = TimerGroup::new(peripherals.TIMG1);
-    esp_hal_embassy::init(timer0.timer0);
+    let software_interrupt = SoftwareInterruptControl::new(peripherals.SW_INTERRUPT);
+    esp_rtos::start(timer0.timer0, software_interrupt.software_interrupt0);
 
     info!("Embassy initialized!");
 
@@ -63,7 +65,6 @@ async fn main(spawner: Spawner) {
     spawn_all_tasks(
         &spawner,
         peripherals.ADC2,
-        peripherals.RNG,
         // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
         // in many examples.
         peripherals.SPI2.into(),
@@ -89,23 +90,26 @@ struct Pins<'a> {
 
 /// Spawns all the tasks for the inputs and LEDs.
 fn spawn_all_tasks(
-    spawner: &Spawner, adc: ADC2<'static>, rng: RNG<'static>, spi: AnySpi<'static>,
+    spawner: &Spawner, adc: ADC2<'static>, spi: AnySpi<'static>,
     dma_channel: AnySpiDmaChannel<'static>, pins: Pins<'static>,
 ) {
     info!("Spawning all tasks...");
 
     // Spawn the animation button task
-    unwrap!(spawner.spawn(animation_button_task(pins.animation)));
+    spawner.spawn(unwrap!(animation_button_task(pins.animation)));
 
     // Spawn the color button task
-    unwrap!(spawner.spawn(color_button_task(pins.color)));
+    spawner.spawn(unwrap!(color_button_task(pins.color)));
 
     // Spawn the analog sensors task
-    unwrap!(spawner.spawn(analog_sensors_task(adc, pins.brightness, pins.delay)));
+    spawner.spawn(unwrap!(analog_sensors_task(
+        adc,
+        pins.brightness,
+        pins.delay
+    )));
 
     // Spawn the LED task
-    unwrap!(spawner.spawn(led::led_task(
-        rng,
+    spawner.spawn(unwrap!(led::led_task(
         spi,
         dma_channel,
         pins.led,

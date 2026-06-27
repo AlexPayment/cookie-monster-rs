@@ -85,16 +85,20 @@ fn spawn_all_tasks(
     info!("Spawning all tasks...");
 
     // Spawn the analog sensors task
-    unwrap!(spawner.spawn(analog_sensors_task(adc, pins.brightness, pins.delay)));
+    spawner.spawn(unwrap!(analog_sensors_task(
+        adc,
+        pins.brightness,
+        pins.delay
+    )));
 
     // Spawn the animation button task
-    unwrap!(spawner.spawn(animation_button_task(pins.animation)));
+    spawner.spawn(unwrap!(animation_button_task(pins.animation)));
 
     // Spawn the color button task
-    unwrap!(spawner.spawn(color_button_task(pins.color)));
+    spawner.spawn(unwrap!(color_button_task(pins.color)));
 
     // Spawn the LED task
-    unwrap!(spawner.spawn(led::led_task(
+    spawner.spawn(unwrap!(led::led_task(
         rng,
         spi,
         pins.sck,
