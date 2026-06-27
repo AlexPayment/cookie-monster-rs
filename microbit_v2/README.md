@@ -22,7 +22,7 @@ rustup component add llvm-tools-preview
 cargo install cargo-binutils
 
 cargo size --version
-cargo-size 0.3.6
+cargo-size 0.4.0
 ```
 
 #### `probe-rs` & `cargo-embed`
@@ -39,7 +39,7 @@ Then install `probe-rs` with the following command or with the latest instructio
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/probe-rs/probe-rs/releases/latest/download/probe-rs-tools-installer.sh | sh
 
 cargo embed --version
-cargo-embed 0.28.0
+cargo-embed 0.31.0
 ```
 
 #### Rust Toolchain Target
