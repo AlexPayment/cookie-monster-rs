@@ -13,7 +13,7 @@ cookie-monster-common = { workspace = true }
 cortex-m = { version = "0.7.7", features = ["inline-asm", "critical-section-single-core"] }
 cortex-m-rt = "0.7.5"
 defmt = { workspace = true }
-defmt-rtt = "1.0.0"
+defmt-rtt = "1.2.0"
 embassy-executor = { features = ["arch-cortex-m", "executor-interrupt", "executor-thread"], workspace = true }
 embassy-nrf = { version = "0.5.0", features = ["defmt", "nrf52833", "time-driver-rtc1", "gpiote", "unstable-pac", "time"] }
 embassy-time = { features = ["defmt", "defmt-timestamp-uptime"], workspace = true }
