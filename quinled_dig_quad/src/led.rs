@@ -10,7 +10,6 @@ use embassy_time::Delay;
 use esp_hal::dma::{AnySpiDmaChannel, DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::gpio::AnyPin;
-use esp_hal::peripherals::RNG;
 use esp_hal::rng::Rng;
 use esp_hal::spi::master::{AnySpi, Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
@@ -24,8 +23,8 @@ const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: RNG<'static>, spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>,
-    led: AnyPin<'static>, default_analog_value: u16, max_analog_value: u16,
+    spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>, led: AnyPin<'static>,
+    default_analog_value: u16, max_analog_value: u16,
 ) {
     info!("Starting LED task...");
 
@@ -44,7 +43,7 @@ pub async fn led_task(
     let mut ws2812 = Ws2812::new(spi, &mut buffer);
 
     // Setup Pseudo Random Number Generator
-    let mut rng = Rng::new(rng);
+    let rng = Rng::new();
     let mut prng = SmallRng::seed_from_u64(u64::from(rng.random()));
 
     let data = create_data();

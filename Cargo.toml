@@ -9,8 +9,8 @@ members = [
 [workspace.dependencies]
 cookie-monster-common = { path = "./common" }
 defmt = "1.1.0"
-embassy-executor = { version = "0.7.0", features = ["defmt", "task-arena-size-65536"] }
-embassy-time = "0.4.0"
+embassy-executor = { version = "0.10.0", features = ["defmt"] }
+embassy-time = { version = "0.5.1", features = ["defmt", "defmt-timestamp-uptime", "generic-queue-8"] }
 embedded-hal-async = "1.0.0"
 rand = { version = "0.10.1", default-features = false }
 ws2812-spi = "0.5.1"
