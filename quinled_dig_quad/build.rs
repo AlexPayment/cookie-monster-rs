@@ -1,11 +1,13 @@
-fn main() {
-    linker_be_nice();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    linker_be_nice()?;
     println!("cargo:rustc-link-arg=-Tdefmt.x");
     // make sure linkall.x is the last linker script (otherwise might cause problems with flip-link)
     println!("cargo:rustc-link-arg=-Tlinkall.x");
+
+    Ok(())
 }
 
-fn linker_be_nice() {
+fn linker_be_nice() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 {
         let kind = &args[1];
@@ -38,6 +40,8 @@ fn linker_be_nice() {
 
     println!(
         "cargo:rustc-link-arg=-Wl,--error-handling-script={}",
-        std::env::current_exe().unwrap().display()
+        std::env::current_exe()?.display()
     );
+
+    Ok(())
 }

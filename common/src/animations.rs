@@ -673,9 +673,9 @@ pub fn reset_data(data: &LedData) {
 /// Apply gamma correction to the provided RGB8 color.
 pub(crate) fn gamma_correct(color: RGB8) -> RGB8 {
     RGB8 {
-        r: GAMMA8[color.r as usize],
-        g: GAMMA8[color.g as usize],
-        b: GAMMA8[color.b as usize],
+        r: GAMMA8[usize::from(color.r)],
+        g: GAMMA8[usize::from(color.g)],
+        b: GAMMA8[usize::from(color.b)],
     }
 }
 

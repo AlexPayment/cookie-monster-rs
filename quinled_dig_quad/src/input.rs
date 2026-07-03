@@ -1,7 +1,7 @@
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
-use defmt::{debug, info};
+use defmt::{debug, error, info};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
@@ -40,13 +40,22 @@ pub async fn analog_sensors_task(
 
     loop {
         // Read the brightness and delay values from the potentiometers.
-        let brightness_value: u16 = block!(adc.read_oneshot(&mut brightness_pin)).unwrap();
-        let delay_value: u16 = block!(adc.read_oneshot(&mut delay_pin)).unwrap();
+        let brightness_result = block!(adc.read_oneshot(&mut brightness_pin));
+        let delay_result = block!(adc.read_oneshot(&mut delay_pin));
 
-        BRIGHTNESS_READ_SIGNAL.signal(brightness_value);
-        DELAY_READ_SIGNAL.signal(delay_value);
+        if let Ok(brightness) = brightness_result {
+            BRIGHTNESS_READ_SIGNAL.signal(brightness);
+            info!("Brightness: {}", brightness);
+        } else {
+            error!("Failed to read brightness value");
+        }
 
-        info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
+        if let Ok(delay) = delay_result {
+            DELAY_READ_SIGNAL.signal(delay);
+            info!("Delay: {}", delay);
+        } else {
+            error!("Failed to read delay value");
+        }
 
         // Wait for a short period before reading again.
         delay
