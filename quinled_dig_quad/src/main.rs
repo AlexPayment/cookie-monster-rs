@@ -4,14 +4,17 @@
 use crate::input::{
     BrightnessPin, DelayPin, analog_sensors_task, animation_button_task, color_button_task,
 };
-use defmt::{info, unwrap};
+use cookie_monster_common::animations::brightness_correct;
+use defmt::{debug, info, unwrap};
 use embassy_executor::Spawner;
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::clock::CpuClock;
 use esp_hal::dma::AnySpiDmaChannel;
-use esp_hal::gpio::{AnyPin, Pin};
+use esp_hal::gpio::{AnyPin, Input, InputConfig, Pin, Pull};
 use esp_hal::interrupt::software::SoftwareInterruptControl;
+use esp_hal::pcnt::Pcnt;
+use esp_hal::pcnt::channel::{CtrlMode, EdgeMode};
 use esp_hal::peripherals::ADC2;
 use esp_hal::spi::master::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
@@ -46,21 +49,64 @@ async fn main(spawner: Spawner) {
         // GPIO15 is the Q1 pin on the board, it's pull low. Which means a button should be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
         // than 3.3 V. This pin is on ADC2 channel 3.
-        brightness: peripherals.GPIO15,
+        // brightness: peripherals.GPIO15,
 
-        // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button also be
+        // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button should be
         // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
         // 3.3 V. This pin is on ADC1 channel 4.
         color: peripherals.GPIO32.degrade(),
 
-        // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button also be
+        // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button should be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
         // than 3.3 V. This pin is on ADC2 channel 5.
-        delay: peripherals.GPIO12,
+        // delay: peripherals.GPIO12,
 
         // Pin that's labeled LED1 on the board.
         led: peripherals.GPIO16.degrade(),
     };
+
+    let pulse_counter = Pcnt::new(peripherals.PCNT);
+    let brightness_unit = pulse_counter.unit0;
+    brightness_unit
+        .set_filter(Some(1023))
+        .expect("Set to a static value that is known to work");
+    brightness_unit.clear();
+
+    let input_config = InputConfig::default().with_pull(Pull::Down);
+    let pin_a = Input::new(peripherals.GPIO15, input_config);
+    let pin_b = Input::new(peripherals.GPIO12, input_config);
+    let input_a = pin_a.peripheral_input();
+    let input_b = pin_b.peripheral_input();
+
+    brightness_unit.channel0.set_ctrl_signal(input_a.clone());
+    brightness_unit.channel0.set_edge_signal(input_b.clone());
+    brightness_unit
+        .channel0
+        .set_ctrl_mode(CtrlMode::Reverse, CtrlMode::Keep);
+    brightness_unit
+        .channel0
+        .set_input_mode(EdgeMode::Decrement, EdgeMode::Increment);
+
+    brightness_unit.channel1.set_ctrl_signal(input_b);
+    brightness_unit.channel1.set_edge_signal(input_a);
+    brightness_unit
+        .channel1
+        .set_ctrl_mode(CtrlMode::Reverse, CtrlMode::Keep);
+    brightness_unit
+        .channel1
+        .set_input_mode(EdgeMode::Increment, EdgeMode::Decrement);
+
+    brightness_unit.resume();
+
+    let mut last_value = 0;
+    loop {
+        let value = brightness_unit.value();
+        if value != last_value {
+            debug!("New brightness value: {}", value);
+            last_value = value;
+        }
+        brightness_unit.clear();
+    }
 
     spawn_all_tasks(
         &spawner,
@@ -82,9 +128,9 @@ async fn main(spawner: Spawner) {
 /// Represents the pins used for both input and output.
 struct Pins<'a> {
     animation: AnyPin<'a>,
-    brightness: BrightnessPin<'a>,
+    // brightness: BrightnessPin<'a>,
     color: AnyPin<'a>,
-    delay: DelayPin<'a>,
+    // delay: DelayPin<'a>,
     led: AnyPin<'a>,
 }
 
@@ -102,11 +148,11 @@ fn spawn_all_tasks(
     spawner.spawn(unwrap!(color_button_task(pins.color)));
 
     // Spawn the analog sensors task
-    spawner.spawn(unwrap!(analog_sensors_task(
-        adc,
-        pins.brightness,
-        pins.delay
-    )));
+    // spawner.spawn(unwrap!(analog_sensors_task(
+    //     adc,
+    //     pins.brightness,
+    //     pins.delay
+    // )));
 
     // Spawn the LED task
     spawner.spawn(unwrap!(led::led_task(
