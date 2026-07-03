@@ -54,7 +54,7 @@ async fn main(spawner: Spawner) {
         // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button should be
         // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
         // 3.3 V. This pin is on ADC1 channel 4.
-        color: peripherals.GPIO32.degrade(),
+        color: peripherals.GPIO12.degrade(),
 
         // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button should be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
@@ -74,7 +74,7 @@ async fn main(spawner: Spawner) {
 
     let input_config = InputConfig::default().with_pull(Pull::Down);
     let pin_a = Input::new(peripherals.GPIO15, input_config);
-    let pin_b = Input::new(peripherals.GPIO12, input_config);
+    let pin_b = Input::new(peripherals.GPIO36, input_config);
     let input_a = pin_a.peripheral_input();
     let input_b = pin_b.peripheral_input();
 
@@ -85,7 +85,7 @@ async fn main(spawner: Spawner) {
         .set_ctrl_mode(CtrlMode::Reverse, CtrlMode::Keep);
     brightness_unit
         .channel0
-        .set_input_mode(EdgeMode::Decrement, EdgeMode::Increment);
+        .set_input_mode(EdgeMode::Increment, EdgeMode::Decrement);
 
     brightness_unit.channel1.set_ctrl_signal(input_b);
     brightness_unit.channel1.set_edge_signal(input_a);
@@ -94,7 +94,7 @@ async fn main(spawner: Spawner) {
         .set_ctrl_mode(CtrlMode::Reverse, CtrlMode::Keep);
     brightness_unit
         .channel1
-        .set_input_mode(EdgeMode::Increment, EdgeMode::Decrement);
+        .set_input_mode(EdgeMode::Decrement, EdgeMode::Increment);
 
     brightness_unit.resume();
 
