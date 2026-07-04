@@ -10,6 +10,7 @@ use esp_hal::gpio::{AnyPin, Input, InputConfig};
 use esp_hal::peripherals::{ADC2, GPIO12, GPIO15};
 use nb::block;
 
+const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = 30;
 const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
@@ -38,21 +39,32 @@ pub async fn analog_sensors_task(
 
     let mut delay = Delay;
 
-    loop {
-        // Read the brightness and delay values from the potentiometers.
-        let brightness_result = block!(adc.read_oneshot(&mut brightness_pin));
-        let delay_result = block!(adc.read_oneshot(&mut delay_pin));
+    let mut last_brightness = 0;
+    let mut last_delay = 0;
 
-        if let Ok(brightness) = brightness_result {
-            BRIGHTNESS_READ_SIGNAL.signal(brightness);
-            info!("Brightness: {}", brightness);
+    loop {
+        // Read the brightness value from the potentiometer.
+        let brightness_reading = block!(adc.read_oneshot(&mut brightness_pin));
+
+        if let Ok(raw_brightness) = brightness_reading {
+            if raw_brightness.abs_diff(last_brightness) > ANALOG_SENSORS_JITTER_THRESHOLD {
+                last_brightness = raw_brightness;
+                BRIGHTNESS_READ_SIGNAL.signal(raw_brightness);
+                info!("Brightness: {}", raw_brightness);
+            }
         } else {
             error!("Failed to read brightness value");
         }
 
-        if let Ok(delay) = delay_result {
-            DELAY_READ_SIGNAL.signal(delay);
-            info!("Delay: {}", delay);
+        // Read the delay values from the potentiometer.
+        let delay_reading = block!(adc.read_oneshot(&mut delay_pin));
+
+        if let Ok(raw_delay) = delay_reading {
+            if raw_delay.abs_diff(last_delay) > ANALOG_SENSORS_JITTER_THRESHOLD {
+                last_delay = raw_delay;
+                DELAY_READ_SIGNAL.signal(raw_delay);
+                info!("Delay: {}", raw_delay);
+            }
         } else {
             error!("Failed to read delay value");
         }
