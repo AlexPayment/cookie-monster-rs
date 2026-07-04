@@ -1,7 +1,6 @@
-use cookie_monster_common::signal::{
-    ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
-};
-use defmt::{debug, error, info};
+use cookie_monster_common::input::process_analog_sensors;
+use cookie_monster_common::signal::{ANIMATION_CHANGED_SIGNAL, COLOR_CHANGED_SIGNAL};
+use defmt::{debug, info};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
@@ -10,7 +9,10 @@ use esp_hal::gpio::{AnyPin, Input, InputConfig};
 use esp_hal::peripherals::{ADC2, GPIO12, GPIO15};
 use nb::block;
 
-const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = 30;
+const ADC_MAXIMUM_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
+const ADC_RESOLUTION: u32 = 12;
+// This represents 0.5% of the maximum ADC value.
+const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = ADC_MAXIMUM_VALUE / 200;
 const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
@@ -39,34 +41,23 @@ pub async fn analog_sensors_task(
 
     let mut delay = Delay;
 
-    let mut last_brightness = 0;
-    let mut last_delay = 0;
+    let mut last_brightness: u16 = 0;
+    let mut last_delay: u16 = 0;
 
     loop {
-        // Read the brightness value from the potentiometer.
-        let brightness_reading = block!(adc.read_oneshot(&mut brightness_pin));
+        let (updated_brightness, updated_delay) = process_analog_sensors(
+            block!(adc.read_oneshot(&mut brightness_pin)),
+            block!(adc.read_oneshot(&mut delay_pin)),
+            last_brightness,
+            last_delay,
+            ANALOG_SENSORS_JITTER_THRESHOLD,
+        );
 
-        if let Ok(raw_brightness) = brightness_reading {
-            if raw_brightness.abs_diff(last_brightness) > ANALOG_SENSORS_JITTER_THRESHOLD {
-                last_brightness = raw_brightness;
-                BRIGHTNESS_READ_SIGNAL.signal(raw_brightness);
-                info!("Brightness: {}", raw_brightness);
-            }
-        } else {
-            error!("Failed to read brightness value");
+        if let Some(updated_brightness) = updated_brightness {
+            last_brightness = updated_brightness;
         }
-
-        // Read the delay values from the potentiometer.
-        let delay_reading = block!(adc.read_oneshot(&mut delay_pin));
-
-        if let Ok(raw_delay) = delay_reading {
-            if raw_delay.abs_diff(last_delay) > ANALOG_SENSORS_JITTER_THRESHOLD {
-                last_delay = raw_delay;
-                DELAY_READ_SIGNAL.signal(raw_delay);
-                info!("Delay: {}", raw_delay);
-            }
-        } else {
-            error!("Failed to read delay value");
+        if let Some(updated_delay) = updated_delay {
+            last_delay = updated_delay;
         }
 
         // Wait for a short period before reading again.
