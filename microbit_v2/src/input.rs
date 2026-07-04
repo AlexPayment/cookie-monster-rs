@@ -1,7 +1,7 @@
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
-use defmt::{debug, info};
+use defmt::{debug, error, info};
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embassy_nrf::peripherals::SAADC;
 use embassy_nrf::saadc::{AnyInput, ChannelConfig, Config, Saadc};
@@ -13,6 +13,7 @@ bind_interrupts!(struct Irqs {
     SAADC => saadc::InterruptHandler;
 });
 
+const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = 30;
 const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
@@ -31,17 +32,32 @@ pub async fn analog_sensors_task(
     let mut buffer = [0; 2];
     let mut delay = Delay;
 
+    let mut last_brightness = 0;
+    let mut last_delay = 0;
+
     loop {
         // Read the brightness and delay values from the potentiometers.
         saadc.sample(&mut buffer).await;
 
-        let brightness_value = u16::try_from(buffer[0]).unwrap_or_default();
-        let delay_value = u16::try_from(buffer[1]).unwrap_or_default();
+        if let Ok(raw_brightness) = u16::try_from(buffer[0]) {
+            if raw_brightness.abs_diff(last_brightness) > ANALOG_SENSORS_JITTER_THRESHOLD {
+                last_brightness = raw_brightness;
+                BRIGHTNESS_READ_SIGNAL.signal(raw_brightness);
+                info!("Brightness: {}", raw_brightness);
+            }
+        } else {
+            error!("Failed to read brightness value");
+        }
 
-        BRIGHTNESS_READ_SIGNAL.signal(brightness_value);
-        DELAY_READ_SIGNAL.signal(delay_value);
-
-        info!("Brightness: {}, Delay: {}", brightness_value, delay_value);
+        if let Ok(raw_delay) = u16::try_from(buffer[1]) {
+            if raw_delay.abs_diff(last_delay) > ANALOG_SENSORS_JITTER_THRESHOLD {
+                last_delay = raw_delay;
+                DELAY_READ_SIGNAL.signal(raw_delay);
+                info!("Delay: {}", raw_delay);
+            }
+        } else {
+            error!("Failed to read delay value");
+        }
 
         // Wait for a short period before reading again.
         delay
