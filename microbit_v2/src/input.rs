@@ -1,6 +1,5 @@
-use cookie_monster_common::signal::{
-    ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
-};
+use cookie_monster_common::input::process_analog_sensors;
+use cookie_monster_common::signal::{ANIMATION_CHANGED_SIGNAL, COLOR_CHANGED_SIGNAL};
 use defmt::{debug, error, info};
 use embassy_nrf::gpio::{AnyPin, Input, Pull};
 use embassy_nrf::peripherals::SAADC;
@@ -13,7 +12,10 @@ bind_interrupts!(struct Irqs {
     SAADC => saadc::InterruptHandler;
 });
 
-const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = 30;
+const ADC_MAXIMUM_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
+const ADC_RESOLUTION: u32 = 12;
+// This represents 0.5% of the maximum ADC value.
+const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = ADC_MAXIMUM_VALUE / 200;
 const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
@@ -39,24 +41,29 @@ pub async fn analog_sensors_task(
         // Read the brightness and delay values from the potentiometers.
         saadc.sample(&mut buffer).await;
 
-        if let Ok(raw_brightness) = u16::try_from(buffer[0]) {
-            if raw_brightness.abs_diff(last_brightness) > ANALOG_SENSORS_JITTER_THRESHOLD {
-                last_brightness = raw_brightness;
-                BRIGHTNESS_READ_SIGNAL.signal(raw_brightness);
-                info!("Brightness: {}", raw_brightness);
-            }
-        } else {
-            error!("Failed to read brightness value");
-        }
+        let (updated_brightness, updated_delay) = process_analog_sensors(
+            u16::try_from(buffer[0]).map_err(|e| {
+                error!(
+                    "Cannot convert the value read from the brightness potentiometer: {}",
+                    e
+                );
+            }),
+            u16::try_from(buffer[1]).map_err(|e| {
+                error!(
+                    "Cannot convert the value read from the delay potentiometer: {}",
+                    e
+                );
+            }),
+            last_brightness,
+            last_delay,
+            ANALOG_SENSORS_JITTER_THRESHOLD,
+        );
 
-        if let Ok(raw_delay) = u16::try_from(buffer[1]) {
-            if raw_delay.abs_diff(last_delay) > ANALOG_SENSORS_JITTER_THRESHOLD {
-                last_delay = raw_delay;
-                DELAY_READ_SIGNAL.signal(raw_delay);
-                info!("Delay: {}", raw_delay);
-            }
-        } else {
-            error!("Failed to read delay value");
+        if let Some(updated_brightness) = updated_brightness {
+            last_brightness = updated_brightness;
+        }
+        if let Some(updated_delay) = updated_delay {
+            last_delay = updated_delay;
         }
 
         // Wait for a short period before reading again.

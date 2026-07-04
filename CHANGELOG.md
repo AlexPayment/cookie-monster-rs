@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
-- Handle jitter and errors when reading the potentiometer values for the QuinLED.
+- Handle jitter and errors when reading the potentiometer values.
 - Update the CI workflow:
   - Set the cache path to match the example provided on their repo.
   - Split the caches by target and step.
