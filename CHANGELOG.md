@@ -17,8 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `actions/cache` version `6.*`.
   - `actions/checkout` version `7.*`.
   - `esp-rs/xtensa-toolchain` version `1.7.*`.
-- Update `defmt` to version `1.1.0`.
-- Update `defmt-rtt` to version `1.2.0`.
+- Update `defmt` to version `1.1.1`.
+- Update `defmt-rtt` to version `1.3.0`.
 - Update `embassy-executor` to version `0.10.0`.
 - Update `embassy-nrf` to version `0.7.0`.
 - Update `embassy-sync` to version `0.8.0`.
@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Removed
 
 - The cache from the CI workflow `fmt` job.
+- Rust version for `qinled-dig-quad`.
 
 ## [1.0.1] - 2025-07-28
 
