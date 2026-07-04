@@ -41,7 +41,7 @@ pub async fn analog_sensors_task(
 
     let mut last_brightness = 0;
     let mut last_delay = 0;
-    
+
     loop {
         // Read the brightness value from the potentiometer.
         let brightness_reading = block!(adc.read_oneshot(&mut brightness_pin));
