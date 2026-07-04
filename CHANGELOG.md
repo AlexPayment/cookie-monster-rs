@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+## [1.1.0] - 2026-07-04
+
 ### Changed
 
 - Handle jitter and errors when reading the potentiometer values.
