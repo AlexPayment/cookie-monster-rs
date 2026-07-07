@@ -2,7 +2,8 @@
 #![no_main]
 
 use crate::input::{
-    BrightnessPin, DelayPin, analog_sensors_task, animation_button_task, color_button_task,
+    ANALOG_DEFAULT_VALUE, ANALOG_MAXIMUM_VALUE, BrightnessPin, DelayPin, analog_sensors_task,
+    animation_button_task, color_button_task,
 };
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
@@ -12,16 +13,10 @@ use esp_hal::clock::CpuClock;
 use esp_hal::dma::AnySpiDmaChannel;
 use esp_hal::gpio::{AnyPin, Pin};
 use esp_hal::interrupt::software::SoftwareInterruptControl;
-use esp_hal::peripherals::ADC2;
+use esp_hal::peripherals::{ADC2, RMT};
 use esp_hal::spi::master::AnySpi;
 use esp_hal::timer::timg::TimerGroup;
 use {esp_backtrace as _, esp_println as _};
-
-// The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
-const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
-const ADC_RESOLUTION: u32 = 12;
-// The default analog value is set to half of the maximum value, which is 2048.
-const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -48,27 +43,37 @@ async fn main(spawner: Spawner) {
         // than 3.3 V. This pin is on ADC2 channel 3.
         brightness: peripherals.GPIO15,
 
-        // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button also be
+        // GPIO32 is the Q4 pin on the board, it's pull high. Which means a button should be
         // connected to a ground pin. A potentiometer shouldn't be connected to anything higher than
         // 3.3 V. This pin is on ADC1 channel 4.
         color: peripherals.GPIO32.degrade(),
 
-        // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button also be
+        // GPIO12 is the Q2 pin on the board, it's pull low. Which means a button should be
         // connected to a 3.3 or 5 V pin. A potentiometer shouldn't be connected to anything higher
         // than 3.3 V. This pin is on ADC2 channel 5.
         delay: peripherals.GPIO12,
 
         // Pin that's labeled LED1 on the board.
-        led: peripherals.GPIO16.degrade(),
+        led1: peripherals.GPIO16.degrade(),
+
+        // Pin that's labeled LED2 on the board.
+        led2: peripherals.GPIO3.degrade(),
+
+        // Pin that's labeled LED2 on the board.
+        led3: peripherals.GPIO1.degrade(),
+
+        // Pin that's labeled LED2 on the board.
+        led4: peripherals.GPIO4.degrade(),
     };
 
     spawn_all_tasks(
         &spawner,
         peripherals.ADC2,
-        // It's unclear why SPI2 is used instead of another SPI peripheral, but this is the one seen
-        // in many examples.
+        // On ESP32 there are four SPIs, but SPI0 and SPI1 are internally reserved for SPI flash
+        // memory. That only leaves SPI2 and SPI3 available.
         peripherals.SPI2.into(),
         peripherals.DMA_SPI2.into(),
+        peripherals.RMT,
         pins,
     );
 
@@ -85,13 +90,16 @@ struct Pins<'a> {
     brightness: BrightnessPin<'a>,
     color: AnyPin<'a>,
     delay: DelayPin<'a>,
-    led: AnyPin<'a>,
+    led1: AnyPin<'a>,
+    led2: AnyPin<'a>,
+    led3: AnyPin<'a>,
+    led4: AnyPin<'a>,
 }
 
 /// Spawns all the tasks for the inputs and LEDs.
 fn spawn_all_tasks(
     spawner: &Spawner, adc: ADC2<'static>, spi: AnySpi<'static>,
-    dma_channel: AnySpiDmaChannel<'static>, pins: Pins<'static>,
+    dma_channel: AnySpiDmaChannel<'static>, rmt: RMT<'static>, pins: Pins<'static>,
 ) {
     info!("Spawning all tasks...");
 
@@ -112,9 +120,10 @@ fn spawn_all_tasks(
     spawner.spawn(unwrap!(led::led_task(
         spi,
         dma_channel,
-        pins.led,
-        DEFAULT_ANALOG_VALUE,
-        ADC_MAX_VALUE
+        rmt,
+        pins.led1,
+        ANALOG_DEFAULT_VALUE,
+        ANALOG_MAXIMUM_VALUE
     )));
 }
 

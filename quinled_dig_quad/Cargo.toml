@@ -17,10 +17,12 @@ embedded-hal-async = { workspace = true }
 esp-backtrace = { version = "0.19.0", features = ["defmt", "esp32", "panic-handler"] }
 esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32"] }
 esp-hal = { version = "1.1.1", features = ["defmt", "esp32", "unstable"] }
+esp-hal-smartled2 = { version = "0.28.2", features = ["esp32"] }
 esp-println = { version = "0.17.0", features = ["defmt-espflash", "esp32"] }
 esp-rtos = { version = "0.3.0", features = ["embassy", "esp32"] }
 nb = "1.1.0"
 rand = { workspace = true }
+rgb = { version = "0.8.53", default-features = false }
 ws2812-spi = { workspace = true }
 
 [package.metadata.release]

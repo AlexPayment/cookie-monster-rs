@@ -698,7 +698,7 @@ fn calculate_brightness(value: u16, max_value: u16) -> u8 {
 
 /// Calculate the delay in milliseconds based on the value of the potentiometer reading.
 ///
-/// The delay is calculated as a fraction of the maximum analog value times one thousand. The
+/// The delay is calculated as a fraction of the maximum analog value timed one thousand. The
 /// resulting value is then clamped to a minimum of 1.
 fn calculate_delay(value: u16, max_value: u16) -> u32 {
     cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)

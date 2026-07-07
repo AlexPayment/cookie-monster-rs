@@ -152,10 +152,12 @@ dependencies = [
  "esp-backtrace",
  "esp-bootloader-esp-idf",
  "esp-hal",
+ "esp-hal-smartled2",
  "esp-println",
  "esp-rtos",
  "nb 1.1.0",
  "rand",
+ "rgb",
  "ws2812-spi",
 ]
 
@@ -873,6 +875,17 @@ dependencies = [
  "quote",
  "syn",
  "termcolor",
+]
+
+[[package]]
+name = "esp-hal-smartled2"
+version = "0.28.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "619280768f24529fada045ec05b0ba0f9b116c29d8839cff1bb9c41c57a00a49"
+dependencies = [
+ "esp-hal",
+ "num-traits",
+ "smart-leds-trait",
 ]
 
 [[package]]

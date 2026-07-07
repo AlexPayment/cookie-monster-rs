@@ -10,11 +10,15 @@ use embassy_time::Delay;
 use esp_hal::dma::{AnySpiDmaChannel, DmaRxBuf, DmaTxBuf};
 use esp_hal::dma_buffers;
 use esp_hal::gpio::AnyPin;
+use esp_hal::peripherals::RMT;
+use esp_hal::rmt::Rmt;
 use esp_hal::rng::Rng;
 use esp_hal::spi::master::{AnySpi, Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
+use esp_hal_smartled::{RmtSmartLeds, Ws2812bTiming, buffer_size, color_order};
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
+use rgb::RGB8;
 use ws2812_spi::prerendered::Ws2812;
 
 // According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
@@ -23,8 +27,8 @@ const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
 
 #[embassy_executor::task]
 pub async fn led_task(
-    spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>, led: AnyPin<'static>,
-    default_analog_value: u16, max_analog_value: u16,
+    spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>, rmt: RMT<'static>,
+    led1: AnyPin<'static>, analog_default_value: u16, analog_maximum_value: u16,
 ) {
     info!("Starting LED task...");
 
@@ -35,12 +39,24 @@ pub async fn led_task(
 
     let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
         .unwrap()
-        .with_mosi(led)
+        .with_mosi(led1)
         .with_dma(dma_channel)
         .with_buffers(dma_rx_buf, dma_tx_buf);
 
     let mut buffer = [0; NUM_LEDS * 12];
     let mut ws2812 = Ws2812::new(spi, &mut buffer);
+
+    info!("Configuring RMT");
+    let rmt = Rmt::new(rmt, 80.MHz()).expect("Configuring RMT at its maximum frequency 80 MHz");
+
+    let mut led1 = RmtSmartLeds::<
+        { buffer_size::<RGB8>(NUM_LEDS) },
+        _,
+        RGB8,
+        color_order::Grb,
+        Ws2812bTiming,
+    >::new(rmt.channel0, led1)
+    .unwrap();
 
     // Setup Pseudo Random Number Generator
     let rng = Rng::new();
@@ -54,9 +70,9 @@ pub async fn led_task(
     info!("Creating default animation settings");
     let mut settings = Settings::new(
         DEFAULT_COLOR_INDEX,
-        default_analog_value,
-        default_analog_value,
-        max_analog_value,
+        analog_default_value,
+        analog_default_value,
+        analog_maximum_value,
         NUM_COLORS,
     );
 
