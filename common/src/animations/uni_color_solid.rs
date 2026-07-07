@@ -1,6 +1,6 @@
 use crate::animations;
 use crate::animations::{COLORS, LedData, Settings};
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
@@ -15,11 +15,10 @@ impl<'a> UniColorSolid<'a> {
     }
 
     pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = E>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) where
-        E: SpiError,
+        E: Debug,
     {
         ws2812
             .write(brightness(

@@ -1,6 +1,6 @@
 use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -30,11 +30,10 @@ impl<'a> MultiColorFadeIn<'a> {
     }
 
     pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = E>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) where
-        E: SpiError,
+        E: Debug,
     {
         let brightness = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
             / f32::from(STEP)) as u8;

@@ -883,6 +883,7 @@ version = "0.28.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "619280768f24529fada045ec05b0ba0f9b116c29d8839cff1bb9c41c57a00a49"
 dependencies = [
+ "defmt 1.1.1",
  "esp-hal",
  "num-traits",
  "smart-leds-trait",
@@ -939,6 +940,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "551f90766e1527edaa0c91e8d559e9e2a60397b545e93357ac61fb31845e5712"
 dependencies = [
  "cfg-if",
+ "defmt 1.1.1",
  "document-features",
  "embassy-executor",
  "embassy-sync 0.8.0",

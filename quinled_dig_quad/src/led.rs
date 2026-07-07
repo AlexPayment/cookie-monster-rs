@@ -32,23 +32,25 @@ pub async fn led_task(
 ) {
     info!("Starting LED task...");
 
-    #[allow(clippy::manual_div_ceil)]
-    let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(NUM_LEDS * 12);
-    let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
-    let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
-
-    let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
-        .unwrap()
-        .with_mosi(led1)
-        .with_dma(dma_channel)
-        .with_buffers(dma_rx_buf, dma_tx_buf);
-
-    let mut buffer = [0; NUM_LEDS * 12];
-    let mut ws2812 = Ws2812::new(spi, &mut buffer);
+    // #[allow(clippy::manual_div_ceil)]
+    // let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(NUM_LEDS * 12);
+    // let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
+    // let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
+    //
+    // let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
+    //     .unwrap()
+    //     .with_mosi(led1)
+    //     .with_dma(dma_channel)
+    //     .with_buffers(dma_rx_buf, dma_tx_buf);
+    //
+    // let mut buffer = [0; NUM_LEDS * 12];
+    // let mut ws2812 = Ws2812::new(spi, &mut buffer);
 
     info!("Configuring RMT");
-    let rmt = Rmt::new(rmt, 80.MHz()).expect("Configuring RMT at its maximum frequency 80 MHz");
+    let rmt =
+        Rmt::new(rmt, Rate::from_mhz(80)).expect("Configuring RMT at its maximum frequency 80 MHz");
 
+    debug!("Configuring RMT Smart LED 1");
     let mut led1 = RmtSmartLeds::<
         { buffer_size::<RGB8>(NUM_LEDS) },
         _,
@@ -62,6 +64,7 @@ pub async fn led_task(
     let rng = Rng::new();
     let mut prng = SmallRng::seed_from_u64(u64::from(rng.random()));
 
+    debug!("Creating LED data");
     let data = create_data();
 
     let mut animation_index = 0;
@@ -103,7 +106,7 @@ pub async fn led_task(
 
         debug!("Rendering animation");
         animations[animation_index]
-            .render(&mut ws2812, &mut delay, &settings)
+            .render(&mut led1, &mut delay, &settings)
             .await;
     }
 }

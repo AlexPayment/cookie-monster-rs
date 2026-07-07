@@ -1,6 +1,6 @@
 use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_LEDS, Settings, brightness_correct, gamma_correct};
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
@@ -24,11 +24,10 @@ impl<'a> ForwardWave<'a> {
     }
 
     pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = E>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) where
-        E: SpiError,
+        E: Debug,
     {
         // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
         // not all LEDs have the same brightness.

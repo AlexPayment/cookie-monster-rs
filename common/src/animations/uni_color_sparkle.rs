@@ -3,7 +3,7 @@ use crate::animations::{
     COLORS, LedData, NUM_LEDS, SHORTEST_DELAY, Settings, brightness_correct, gamma_correct,
 };
 use core::cmp;
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -24,11 +24,10 @@ impl<'a> UniColorSparkle<'a> {
     }
 
     pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = E>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) where
-        E: SpiError,
+        E: Debug,
     {
         let random_delay = self
             .prng
