@@ -5,64 +5,168 @@ use cookie_monster_common::animations::{
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
+use core::mem::MaybeUninit;
 use defmt::{debug, info};
 use embassy_time::Delay;
-use esp_hal::dma::{AnySpiDmaChannel, DmaRxBuf, DmaTxBuf};
-use esp_hal::dma_buffers;
-use esp_hal::gpio::AnyPin;
+use esp_hal::clock::Clocks;
+use esp_hal::gpio::{AnyPin, Level};
 use esp_hal::peripherals::RMT;
-use esp_hal::rmt::Rmt;
+use esp_hal::rmt::{PulseCode, Rmt, TxChannelConfig, TxChannelCreator, TxTransaction};
 use esp_hal::rng::Rng;
-use esp_hal::spi::master::{AnySpi, Config as SpiConfig, Spi};
 use esp_hal::time::Rate;
-use esp_hal_smartled::{RmtSmartLeds, Ws2812bTiming, buffer_size, color_order};
 use rand::SeedableRng;
 use rand::rngs::SmallRng;
 use rgb::RGB8;
-use ws2812_spi::prerendered::Ws2812;
+use smart_leds_trait::SmartLedsWrite;
 
-// According to the ws2812_spi documentation, the SPI frequency must be between 2 and 3.8 MHz.
-// Though, in practice, it seems that the lower limit is really around 2.2 MHz on this board.
-const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
+const BUFFER_SIZE: usize = NUM_LEDS * 24 + 1;
+static mut PULSE_BUFFER: [MaybeUninit<PulseCode>; BUFFER_SIZE] =
+    [MaybeUninit::uninit(); BUFFER_SIZE];
+
+pub struct Ws2812Rmt<'d, 'a> {
+    channel: Option<esp_hal::rmt::Channel<'d, esp_hal::Blocking, esp_hal::rmt::Tx>>,
+    transaction: Option<TxTransaction<'d, 'static>>,
+    pulses: (PulseCode, PulseCode),
+    buffer: &'a mut [MaybeUninit<PulseCode>],
+}
+
+impl<'d, 'a> Ws2812Rmt<'d, 'a> {
+    pub fn new<Ch, P>(channel: Ch, pin: P, buffer: &'a mut [MaybeUninit<PulseCode>]) -> Self
+    where
+        Ch: TxChannelCreator<'d, esp_hal::Blocking>,
+        P: esp_hal::gpio::interconnect::PeripheralOutput<'d>,
+    {
+        let config = TxChannelConfig::default()
+            .with_clk_divider(1)
+            .with_idle_output_level(Level::Low)
+            .with_memsize(1)
+            .with_carrier_modulation(false)
+            .with_idle_output(true);
+
+        let channel = channel.configure_tx(&config).unwrap().with_pin(pin);
+
+        let clocks = Clocks::get();
+        let src_clock = clocks.apb_clock.as_hz() / 1_000_000;
+
+        let zero = PulseCode::new(
+            Level::High,
+            ((350 * src_clock) / 1000) as u16,
+            Level::Low,
+            ((900 * src_clock) / 1000) as u16,
+        );
+        let one = PulseCode::new(
+            Level::High,
+            ((900 * src_clock) / 1000) as u16,
+            Level::Low,
+            ((350 * src_clock) / 1000) as u16,
+        );
+
+        Self {
+            channel: Some(channel),
+            transaction: None,
+            pulses: (zero, one),
+            buffer,
+        }
+    }
+}
+
+impl<'d, 'a> SmartLedsWrite for Ws2812Rmt<'d, 'a> {
+    type Error = ();
+    type Color = RGB8;
+
+    fn write<T, I>(&mut self, iterator: T) -> Result<(), <Self as SmartLedsWrite>::Error>
+    where
+        T: IntoIterator<Item = I>,
+        I: Into<Self::Color>,
+    {
+        if let Some(tx) = self.transaction.take() {
+            match tx.wait() {
+                Ok(chan) => {
+                    self.channel = Some(chan);
+                }
+                Err((_err, chan)) => {
+                    self.channel = Some(chan);
+                    return Err(());
+                }
+            }
+        }
+
+        let mut index = 0;
+        let zero = self.pulses.0;
+        let one = self.pulses.1;
+
+        for item in iterator {
+            let color: RGB8 = item.into();
+            let g = color.g;
+            let r = color.r;
+            let b = color.b;
+
+            for &val in &[g, r, b] {
+                for bit in (0..8).rev() {
+                    let is_one = (val & (1 << bit)) != 0;
+                    if index < self.buffer.len() - 1 {
+                        self.buffer[index].write(if is_one { one } else { zero });
+                        index += 1;
+                    } else {
+                        return Err(());
+                    }
+                }
+            }
+        }
+        if index < self.buffer.len() {
+            self.buffer[index].write(PulseCode::end_marker());
+        } else {
+            return Err(());
+        }
+
+        let slice: &[PulseCode] = unsafe {
+            core::slice::from_raw_parts(self.buffer.as_ptr() as *const PulseCode, index + 1)
+        };
+
+        let channel = self.channel.take().unwrap();
+        match channel.transmit(slice) {
+            Ok(transaction) => {
+                self.transaction = Some(transaction);
+                Ok(())
+            }
+            Err((_err, chan)) => {
+                self.channel = Some(chan);
+                Err(())
+            }
+        }
+    }
+}
+
+static mut LED_DRIVER: Option<Ws2812Rmt<'static, 'static>> = None;
 
 #[embassy_executor::task]
 pub async fn led_task(
-    spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>, rmt: RMT<'static>,
+    _spi: esp_hal::spi::master::AnySpi<'static>,
+    _dma_channel: esp_hal::dma::AnySpiDmaChannel<'static>, rmt: RMT<'static>,
     led1: AnyPin<'static>, analog_default_value: u16, analog_maximum_value: u16,
 ) {
     info!("Starting LED task...");
-
-    // #[allow(clippy::manual_div_ceil)]
-    // let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(NUM_LEDS * 12);
-    // let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
-    // let dma_tx_buf = DmaTxBuf::new(tx_descriptors, tx_buffer).unwrap();
-    //
-    // let spi = Spi::new(spi, SpiConfig::default().with_frequency(SPI_FREQUENCY))
-    //     .unwrap()
-    //     .with_mosi(led1)
-    //     .with_dma(dma_channel)
-    //     .with_buffers(dma_rx_buf, dma_tx_buf);
-    //
-    // let mut buffer = [0; NUM_LEDS * 12];
-    // let mut ws2812 = Ws2812::new(spi, &mut buffer);
 
     info!("Configuring RMT");
     let rmt =
         Rmt::new(rmt, Rate::from_mhz(80)).expect("Configuring RMT at its maximum frequency 80 MHz");
 
     debug!("Configuring RMT Smart LED 1");
-    let mut led1 = RmtSmartLeds::<
-        { buffer_size::<RGB8>(NUM_LEDS) },
-        _,
-        RGB8,
-        color_order::Grb,
-        Ws2812bTiming,
-    >::new(rmt.channel0, led1)
-    .unwrap();
+    let led1 = unsafe {
+        let ptr = &raw mut LED_DRIVER;
+        let buf_ref = &mut *(&raw mut PULSE_BUFFER);
+        *ptr = Some(Ws2812Rmt::new(rmt.channel0, led1, buf_ref));
+        (*ptr).as_mut().unwrap()
+    };
+    debug!("RMT Smart LED 1 configured successfully!");
 
     // Setup Pseudo Random Number Generator
+    debug!("Initializing hardware RNG...");
     let rng = Rng::new();
-    let mut prng = SmallRng::seed_from_u64(u64::from(rng.random()));
+    debug!("Hardware RNG initialized! Getting random seed...");
+    let random_value = rng.random();
+    debug!("Random seed received: {}", random_value);
+    let mut prng = SmallRng::seed_from_u64(u64::from(random_value));
 
     debug!("Creating LED data");
     let data = create_data();
@@ -106,7 +210,7 @@ pub async fn led_task(
 
         debug!("Rendering animation");
         animations[animation_index]
-            .render(&mut led1, &mut delay, &settings)
+            .render(led1, &mut delay, &settings)
             .await;
     }
 }

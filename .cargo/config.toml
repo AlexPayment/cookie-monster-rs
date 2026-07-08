@@ -5,6 +5,7 @@ runner = "cargo embed"
 runner = "espflash flash --monitor --chip esp32 --log-format defmt"
 rustflags = [
     "-C", "link-arg=-nostartfiles",
+    "-C", "link-arg=-defsym=_stack_size=0x8000",
 ]
 
 [build]

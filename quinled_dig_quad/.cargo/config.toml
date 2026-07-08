@@ -2,13 +2,14 @@
 runner = "espflash flash --monitor --chip esp32 --log-format defmt"
 rustflags = [
     "-C", "link-arg=-nostartfiles",
+    "-C", "link-arg=-defsym=_stack_size=0x8000",
 ]
 
 [build]
 target = "xtensa-esp32-none-elf"
 
 [env]
-DEFMT_LOG = "debug,cookie_monster_common=trace"
+DEFMT_LOG = "info,cookie_monster_common=trace"
 
 [unstable]
 build-std = ["core"]

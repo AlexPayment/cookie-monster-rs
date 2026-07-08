@@ -23,6 +23,7 @@ esp-rtos = { version = "0.3.0", features = ["defmt", "embassy", "esp32"] }
 nb = "1.1.0"
 rand = { workspace = true }
 rgb = { version = "0.8.53", default-features = false }
+smart-leds-trait = "0.3.2"
 ws2812-spi = { workspace = true }
 
 [package.metadata.release]
