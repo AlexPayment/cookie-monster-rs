@@ -31,11 +31,6 @@ impl<'a> UniColorFrontToBackWave<'a> {
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-        self.position = 0;
-    }
-
     pub(crate) fn update(&mut self, settings: &Settings) {
         animations::reset_data(self.data);
 

@@ -1,4 +1,3 @@
-use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -32,10 +31,6 @@ impl<'a> MultiColorSolid<'a> {
         // Delay from the settings doesn't really matter for the solid animations. So just using a
         // 1-second delay.
         delay.delay_ms(1_000u32).await;
-    }
-
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
     }
 
     pub(crate) fn update(&mut self) {
