@@ -41,14 +41,10 @@ impl<'a> UniColorSparkle<'a> {
         delay.delay_ms(random_delay).await;
     }
 
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-    }
-
     pub(crate) fn update(&mut self, settings: &Settings) {
         animations::reset_data(self.data);
 
-        // The amount of sparkles, up to 10% of the total number of LEDs
+        // The number of sparkles, up to 10% of the total number of LEDs
         let sparkle_amount = self.prng.random_range(0..(NUM_LEDS / 10));
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..NUM_LEDS);

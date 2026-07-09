@@ -1,4 +1,3 @@
-use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -41,11 +40,6 @@ impl<'a> Carrousel<'a> {
             .unwrap();
 
         delay.delay_ms(settings.delay()).await;
-    }
-
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-        self.position = 0;
     }
 
     pub(crate) fn update(&mut self) {

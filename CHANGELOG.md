@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Avoid a copy of the vertical slices on the stack.
+- Stop initializing all the animations when the application starts. Instead, initialize them only when they are needed.
 
 ### Removed
 

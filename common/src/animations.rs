@@ -14,7 +14,7 @@ use crate::animations::uni_color_solid::UniColorSolid;
 use crate::animations::uni_color_sparkle::UniColorSparkle;
 use core::cell::RefCell;
 use core::cmp;
-use defmt::{Format, info, trace};
+use defmt::{Format, trace};
 use embassy_time::Instant;
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -460,11 +460,6 @@ impl Animation<'_> {
         delegate!(self, a => a.render(ws2812, delay, settings).await);
     }
 
-    /// Resets the animation to its initial state.
-    pub fn reset(&mut self) {
-        delegate!(self, a => a.reset());
-    }
-
     /// Updates the state of the animation based on the settings.
     pub fn update(&mut self, settings: &Settings) {
         match self {
@@ -578,43 +573,29 @@ pub fn create_data() -> LedData {
     RefCell::new([RGB8::default(); NUM_LEDS])
 }
 
-/// Initialize the animations with the provided LED data and a pseudo-random number generator.
-pub fn initialize_animations<'a>(
-    led_data: &'a LedData, prng: &mut SmallRng,
-) -> [Animation<'a>; NUM_ANIMATIONS] {
-    info!("Initialize animations...");
-
-    let carrousel = Carrousel::new(led_data, prng.random());
-    let double_carrousel = DoubleCarrousel::new(led_data, prng.random());
-    let forward_wave = ForwardWave::new(led_data);
-    let multi_color_fade_in = MultiColorFadeIn::new(led_data, prng.random());
-    let multi_color_heartbeat = MultiColorHeartbeat::new(led_data, prng.random());
-    let multi_color_solid = MultiColorSolid::new(led_data);
-    let multi_color_solid_random = MultiColorSolidRandom::new(led_data, prng.random());
-    let multi_color_sparkle = MultiColorSparkle::new(led_data, prng.random());
-    let multi_color_strand = MultiColorStrand::new(led_data, prng.random());
-    let uni_color_fade_in = UniColorFadeIn::new(led_data);
-    let uni_color_front_to_back_wave = UniColorFrontToBackWave::new(led_data);
-    let uni_color_heartbeat = UniColorHeartbeat::new(led_data);
-    let uni_color_solid = UniColorSolid::new(led_data);
-    let uni_color_sparkle = UniColorSparkle::new(led_data, prng.random());
-
-    [
-        Animation::MultiColorStrand(multi_color_strand),
-        Animation::Carrousel(carrousel),
-        Animation::DoubleCarrousel(double_carrousel),
-        Animation::UniColorSparkle(uni_color_sparkle),
-        Animation::MultiColorSparkle(multi_color_sparkle),
-        Animation::ForwardWave(forward_wave),
-        Animation::UniColorFadeIn(uni_color_fade_in),
-        Animation::MultiColorFadeIn(multi_color_fade_in),
-        Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave),
-        Animation::MultiColorSolid(multi_color_solid),
-        Animation::MultiColorSolidRandom(multi_color_solid_random),
-        Animation::UniColorSolid(uni_color_solid),
-        Animation::UniColorHeartbeat(uni_color_heartbeat),
-        Animation::MultiColorHeartbeat(multi_color_heartbeat),
-    ]
+impl<'a> Animation<'a> {
+    pub fn new(index: usize, led_data: &'a LedData, prng: &mut SmallRng) -> Self {
+        match index {
+            0 => Animation::MultiColorStrand(MultiColorStrand::new(led_data, prng.random())),
+            1 => Animation::Carrousel(Carrousel::new(led_data, prng.random())),
+            2 => Animation::DoubleCarrousel(DoubleCarrousel::new(led_data, prng.random())),
+            3 => Animation::UniColorSparkle(UniColorSparkle::new(led_data, prng.random())),
+            4 => Animation::MultiColorSparkle(MultiColorSparkle::new(led_data, prng.random())),
+            5 => Animation::ForwardWave(ForwardWave::new(led_data)),
+            6 => Animation::UniColorFadeIn(UniColorFadeIn::new(led_data)),
+            7 => Animation::MultiColorFadeIn(MultiColorFadeIn::new(led_data, prng.random())),
+            8 => Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new(led_data)),
+            9 => Animation::MultiColorSolid(MultiColorSolid::new(led_data)),
+            10 => Animation::MultiColorSolidRandom(MultiColorSolidRandom::new(
+                led_data,
+                prng.random(),
+            )),
+            11 => Animation::UniColorSolid(UniColorSolid::new(led_data)),
+            12 => Animation::UniColorHeartbeat(UniColorHeartbeat::new(led_data)),
+            13 => Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(led_data, prng.random())),
+            _ => panic!("Invalid animation index"),
+        }
+    }
 }
 
 /// Resets the LEDs data to its default state.

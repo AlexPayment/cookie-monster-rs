@@ -42,12 +42,6 @@ impl<'a> UniColorFadeIn<'a> {
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-        self.ascending = true;
-        self.current_step = 0;
-    }
-
     pub(crate) fn update(&mut self, settings: &Settings) {
         animations::reset_data(self.data);
 

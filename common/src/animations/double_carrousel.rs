@@ -1,4 +1,3 @@
-use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -48,14 +47,6 @@ impl<'a> DoubleCarrousel<'a> {
             .unwrap();
 
         delay.delay_ms(settings.delay()).await;
-    }
-
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-        self.color_index_1 = self.prng.random_range(0..NUM_COLORS);
-        self.color_index_2 = self.prng.random_range(0..NUM_COLORS);
-        self.position_1 = 0;
-        self.position_2 = NUM_LEDS - 1;
     }
 
     pub(crate) fn update(&mut self) {

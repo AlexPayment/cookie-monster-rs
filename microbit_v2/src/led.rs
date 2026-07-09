@@ -1,6 +1,5 @@
 use cookie_monster_common::animations::{
-    DEFAULT_COLOR_INDEX, NUM_ANIMATIONS, NUM_COLORS, NUM_LEDS, Settings, create_data,
-    initialize_animations,
+    Animation, DEFAULT_COLOR_INDEX, NUM_ANIMATIONS, NUM_COLORS, NUM_LEDS, Settings, create_data,
 };
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
@@ -41,7 +40,7 @@ pub async fn led_task(
     let data = create_data();
 
     let mut animation_index = 0;
-    let mut animations = initialize_animations(&data, &mut prng);
+    let mut active_animation = Animation::new(animation_index, &data, &mut prng);
 
     info!("Creating default animation settings");
     let mut settings = Settings::new(
@@ -58,7 +57,7 @@ pub async fn led_task(
         if let Some(()) = ANIMATION_CHANGED_SIGNAL.try_take() {
             info!("Animation changed signal received");
             animation_index = (animation_index + 1) % NUM_ANIMATIONS;
-            animations[animation_index].reset();
+            active_animation = Animation::new(animation_index, &data, &mut prng);
         }
 
         if let Some(brightness) = BRIGHTNESS_READ_SIGNAL.try_take() {
@@ -75,10 +74,10 @@ pub async fn led_task(
         }
 
         debug!("Updating animation data");
-        animations[animation_index].update(&settings);
+        active_animation.update(&settings);
 
         debug!("Rendering animation");
-        animations[animation_index]
+        active_animation
             .render(&mut ws2812, &mut delay, &settings)
             .await;
     }

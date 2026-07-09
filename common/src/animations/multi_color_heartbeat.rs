@@ -1,4 +1,3 @@
-use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
 use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
@@ -50,12 +49,6 @@ impl<'a> MultiColorHeartbeat<'a> {
             3 => delay.delay_ms(settings.delay() * 25).await,
             _ => delay.delay_ms(settings.delay()).await,
         }
-    }
-
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-        self.current_step = 0;
-        self.sequence = 0;
     }
 
     pub(crate) fn update(&mut self) {

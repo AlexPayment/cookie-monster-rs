@@ -21,7 +21,6 @@ const NUM_STRANDS: usize = NUM_LEDS / 7;
 
 pub struct MultiColorStrand<'a> {
     data: &'a LedData,
-    prng: SmallRng,
     strands: [Strand; NUM_STRANDS],
 }
 
@@ -41,11 +40,7 @@ impl<'a> MultiColorStrand<'a> {
             strand.position = strand.start;
         }
 
-        Self {
-            data,
-            prng,
-            strands,
-        }
+        Self { data, strands }
     }
 
     pub(crate) async fn render<E>(
@@ -65,20 +60,6 @@ impl<'a> MultiColorStrand<'a> {
         });
 
         delay.delay_ms(settings.delay()).await;
-    }
-
-    pub(crate) fn reset(&mut self) {
-        animations::reset_data(self.data);
-
-        for strand in &mut self.strands {
-            strand.color_index = self.prng.random_range(0..COLORS.len()) as u8;
-            strand.start = self.prng.random_range(0..NUM_LEDS) as u16;
-            strand.end = self.prng.random_range(0..NUM_LEDS) as u16;
-            while strand.start.abs_diff(strand.end) < 5 {
-                strand.end = self.prng.random_range(0..NUM_LEDS) as u16;
-            }
-            strand.position = strand.start;
-        }
     }
 
     pub(crate) fn update(&mut self) {
