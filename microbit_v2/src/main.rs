@@ -1,7 +1,10 @@
 #![no_std]
 #![no_main]
 
-use crate::input::{analog_sensors_task, animation_button_task, color_button_task};
+use crate::input::{
+    ANALOG_DEFAULT_VALUE, ANALOG_MAXIMUM_VALUE, analog_sensors_task, animation_button_task,
+    color_button_task,
+};
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_nrf::Peri;
@@ -12,12 +15,6 @@ use embassy_nrf::saadc::{AnyInput, Input};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
 use {defmt_rtt as _, panic_probe as _};
-
-// The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
-const ADC_MAX_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
-const ADC_RESOLUTION: u32 = 12;
-// The default analog value is set to half of the maximum value, which is 2048.
-const DEFAULT_ANALOG_VALUE: u16 = ADC_MAX_VALUE / 2;
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
@@ -103,8 +100,8 @@ fn spawn_all_tasks(
         spi,
         pins.sck,
         pins.led,
-        DEFAULT_ANALOG_VALUE,
-        ADC_MAX_VALUE
+        ANALOG_DEFAULT_VALUE,
+        ANALOG_MAXIMUM_VALUE
     )));
 }
 

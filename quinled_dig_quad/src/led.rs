@@ -24,7 +24,7 @@ const SPI_FREQUENCY: Rate = Rate::from_khz(3_800);
 #[embassy_executor::task]
 pub async fn led_task(
     spi: AnySpi<'static>, dma_channel: AnySpiDmaChannel<'static>, led: AnyPin<'static>,
-    default_analog_value: u16, max_analog_value: u16,
+    analog_default_value: u16, analog_maximum_value: u16,
 ) {
     info!("Starting LED task...");
 
@@ -54,9 +54,9 @@ pub async fn led_task(
     info!("Creating default animation settings");
     let mut settings = Settings::new(
         DEFAULT_COLOR_INDEX,
-        default_analog_value,
-        default_analog_value,
-        max_analog_value,
+        analog_default_value,
+        analog_default_value,
+        analog_maximum_value,
         NUM_COLORS,
     );
 

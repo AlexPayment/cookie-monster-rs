@@ -52,7 +52,7 @@ cargo install espflash
 
 #### Serial Port Permissions
 When using any of the `espflash` commands that requires using a serial port, the current user may not have access to
-serial ports and a "Permission Denied" or "Port doesn’t exist" errors may appear.
+serial ports and a "Permission Denied" or "Port doesn’t exist" error may appear.
 
 On most Linux distributions, the solution is to add the user to the dialout group (check e.g., `ls -l /dev/ttyUSB0` to
 find the group) with a command like `sudo usermod -a -G dialout $USER`. You can call `su - $USER` to enable read and
