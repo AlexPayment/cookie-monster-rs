@@ -50,6 +50,9 @@ pub const NUM_LEDS: usize = 96 * 10;
 
 pub const SHORTEST_DELAY: u32 = 5;
 
+/// This maps each LED to a single vertical slice.
+///
+/// There are 16 slices and each slice has a maximum of 152 LEDs.
 #[rustfmt::skip]
 pub const VERTICAL_SLICES: [[Option<u16>; 152]; 16] = [
     // Slice 1
