@@ -406,6 +406,27 @@ const GAMMA8: [u8; 256] = [
     223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255,
 ];
 
+macro_rules! delegate {
+    ($self:expr, $var:ident => $body:expr) => {
+        match $self {
+            Animation::Carrousel($var) => $body,
+            Animation::DoubleCarrousel($var) => $body,
+            Animation::ForwardWave($var) => $body,
+            Animation::MultiColorFadeIn($var) => $body,
+            Animation::MultiColorHeartbeat($var) => $body,
+            Animation::MultiColorSolid($var) => $body,
+            Animation::MultiColorSolidRandom($var) => $body,
+            Animation::MultiColorSparkle($var) => $body,
+            Animation::MultiColorStrand($var) => $body,
+            Animation::UniColorFadeIn($var) => $body,
+            Animation::UniColorFrontToBackWave($var) => $body,
+            Animation::UniColorHeartbeat($var) => $body,
+            Animation::UniColorSolid($var) => $body,
+            Animation::UniColorSparkle($var) => $body,
+        }
+    };
+}
+
 #[allow(clippy::large_enum_variant)]
 pub enum Animation<'a> {
     Carrousel(Carrousel<'a>),
@@ -433,42 +454,12 @@ impl Animation<'_> {
     ) where
         E: SpiError,
     {
-        match self {
-            Animation::Carrousel(a) => a.render(ws2812, delay, settings).await,
-            Animation::DoubleCarrousel(a) => a.render(ws2812, delay, settings).await,
-            Animation::ForwardWave(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorFadeIn(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorHeartbeat(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorSolid(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorSolidRandom(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorSparkle(a) => a.render(ws2812, delay, settings).await,
-            Animation::MultiColorStrand(a) => a.render(ws2812, delay, settings).await,
-            Animation::UniColorFadeIn(a) => a.render(ws2812, delay, settings).await,
-            Animation::UniColorFrontToBackWave(a) => a.render(ws2812, delay, settings).await,
-            Animation::UniColorHeartbeat(a) => a.render(ws2812, delay, settings).await,
-            Animation::UniColorSolid(a) => a.render(ws2812, delay, settings).await,
-            Animation::UniColorSparkle(a) => a.render(ws2812, delay, settings).await,
-        }
+        delegate!(self, a => a.render(ws2812, delay, settings).await);
     }
 
     /// Resets the animation to its initial state.
     pub fn reset(&mut self) {
-        match self {
-            Animation::Carrousel(a) => a.reset(),
-            Animation::DoubleCarrousel(a) => a.reset(),
-            Animation::ForwardWave(a) => a.reset(),
-            Animation::MultiColorFadeIn(a) => a.reset(),
-            Animation::MultiColorHeartbeat(a) => a.reset(),
-            Animation::MultiColorSolid(a) => a.reset(),
-            Animation::MultiColorSolidRandom(a) => a.reset(),
-            Animation::MultiColorSparkle(a) => a.reset(),
-            Animation::MultiColorStrand(a) => a.reset(),
-            Animation::UniColorFadeIn(a) => a.reset(),
-            Animation::UniColorFrontToBackWave(a) => a.reset(),
-            Animation::UniColorHeartbeat(a) => a.reset(),
-            Animation::UniColorSolid(a) => a.reset(),
-            Animation::UniColorSparkle(a) => a.reset(),
-        }
+        delegate!(self, a => a.reset());
     }
 
     /// Updates the state of the animation based on the settings.

@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+- `delegate!` macro to reduce code duplication in the `Animation` enum implementation.
+
 ### Removed
 
 - Duplicated constants for the potentiometer values.
