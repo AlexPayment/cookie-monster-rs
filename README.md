@@ -1,5 +1,5 @@
 # cookie-monster-rs
-Embedded Rust project to drive a LED strip with a microcontroller.
+An embedded Rust project to drive a LED strip with a microcontroller.
 
 [![CI](https://github.com/AlexPayment/cookie-monster-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexPayment/cookie-monster-rs/actions/workflows/ci.yml)
 

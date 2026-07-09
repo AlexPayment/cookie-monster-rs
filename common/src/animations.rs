@@ -434,102 +434,60 @@ impl Animation<'_> {
         E: SpiError,
     {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.render(ws2812, delay, settings).await,
-            Animation::DoubleCarrousel(double_carrousel) => {
-                double_carrousel.render(ws2812, delay, settings).await;
-            }
-            Animation::ForwardWave(forward_wave) => {
-                forward_wave.render(ws2812, delay, settings).await;
-            }
-            Animation::MultiColorFadeIn(multi_color_fade_in) => {
-                multi_color_fade_in.render(ws2812, delay, settings).await;
-            }
-            Animation::MultiColorHeartbeat(multi_color_heartbeat) => {
-                multi_color_heartbeat.render(ws2812, delay, settings).await;
-            }
-            Animation::MultiColorSolid(multi_color_solid) => {
-                multi_color_solid.render(ws2812, delay, settings).await;
-            }
-            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random
-                    .render(ws2812, delay, settings)
-                    .await;
-            }
-            Animation::MultiColorSparkle(multi_color_sparkle) => {
-                multi_color_sparkle.render(ws2812, delay, settings).await;
-            }
-            Animation::MultiColorStrand(multi_color_strand) => {
-                multi_color_strand.render(ws2812, delay, settings).await;
-            }
-            Animation::UniColorFadeIn(uni_color_fade_in) => {
-                uni_color_fade_in.render(ws2812, delay, settings).await;
-            }
-            Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
-                uni_color_front_to_back_wave
-                    .render(ws2812, delay, settings)
-                    .await;
-            }
-            Animation::UniColorHeartbeat(uni_color_heartbeat) => {
-                uni_color_heartbeat.render(ws2812, delay, settings).await;
-            }
-            Animation::UniColorSolid(uni_color_solid) => {
-                uni_color_solid.render(ws2812, delay, settings).await;
-            }
-            Animation::UniColorSparkle(uni_color_sparkle) => {
-                uni_color_sparkle.render(ws2812, delay, settings).await;
-            }
+            Animation::Carrousel(a) => a.render(ws2812, delay, settings).await,
+            Animation::DoubleCarrousel(a) => a.render(ws2812, delay, settings).await,
+            Animation::ForwardWave(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorFadeIn(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorHeartbeat(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorSolid(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorSolidRandom(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorSparkle(a) => a.render(ws2812, delay, settings).await,
+            Animation::MultiColorStrand(a) => a.render(ws2812, delay, settings).await,
+            Animation::UniColorFadeIn(a) => a.render(ws2812, delay, settings).await,
+            Animation::UniColorFrontToBackWave(a) => a.render(ws2812, delay, settings).await,
+            Animation::UniColorHeartbeat(a) => a.render(ws2812, delay, settings).await,
+            Animation::UniColorSolid(a) => a.render(ws2812, delay, settings).await,
+            Animation::UniColorSparkle(a) => a.render(ws2812, delay, settings).await,
         }
     }
 
     /// Resets the animation to its initial state.
     pub fn reset(&mut self) {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.reset(),
-            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.reset(),
-            Animation::ForwardWave(forward_wave) => forward_wave.reset(),
-            Animation::MultiColorFadeIn(multi_color_fade_in) => multi_color_fade_in.reset(),
-            Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.reset(),
-            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.reset(),
-            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.reset();
-            }
-            Animation::MultiColorSparkle(multi_color_sparkle) => multi_color_sparkle.reset(),
-            Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.reset(),
-            Animation::UniColorFadeIn(uni_color_fade_in) => uni_color_fade_in.reset(),
-            Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
-                uni_color_front_to_back_wave.reset();
-            }
-            Animation::UniColorHeartbeat(uni_color_heartbeat) => uni_color_heartbeat.reset(),
-            Animation::UniColorSolid(uni_color_solid) => uni_color_solid.reset(),
-            Animation::UniColorSparkle(uni_color_sparkle) => uni_color_sparkle.reset(),
+            Animation::Carrousel(a) => a.reset(),
+            Animation::DoubleCarrousel(a) => a.reset(),
+            Animation::ForwardWave(a) => a.reset(),
+            Animation::MultiColorFadeIn(a) => a.reset(),
+            Animation::MultiColorHeartbeat(a) => a.reset(),
+            Animation::MultiColorSolid(a) => a.reset(),
+            Animation::MultiColorSolidRandom(a) => a.reset(),
+            Animation::MultiColorSparkle(a) => a.reset(),
+            Animation::MultiColorStrand(a) => a.reset(),
+            Animation::UniColorFadeIn(a) => a.reset(),
+            Animation::UniColorFrontToBackWave(a) => a.reset(),
+            Animation::UniColorHeartbeat(a) => a.reset(),
+            Animation::UniColorSolid(a) => a.reset(),
+            Animation::UniColorSparkle(a) => a.reset(),
         }
     }
 
     /// Updates the state of the animation based on the settings.
     pub fn update(&mut self, settings: &Settings) {
         match self {
-            Animation::Carrousel(carrousel) => carrousel.update(),
-            Animation::DoubleCarrousel(double_carrousel) => double_carrousel.update(),
-            Animation::ForwardWave(forward_wave) => forward_wave.update(settings),
-            Animation::MultiColorFadeIn(multi_color_fade_in) => multi_color_fade_in.update(),
-            Animation::MultiColorHeartbeat(multi_color_heartbeat) => multi_color_heartbeat.update(),
-            Animation::MultiColorSolid(multi_color_solid) => multi_color_solid.update(),
-            Animation::MultiColorSolidRandom(multi_color_solid_random) => {
-                multi_color_solid_random.update();
-            }
-            Animation::MultiColorSparkle(multi_color_sparkle) => {
-                multi_color_sparkle.update(settings);
-            }
-            Animation::MultiColorStrand(multi_color_strand) => multi_color_strand.update(),
-            Animation::UniColorFadeIn(uni_color_fade_in) => uni_color_fade_in.update(settings),
-            Animation::UniColorFrontToBackWave(uni_color_front_to_back_wave) => {
-                uni_color_front_to_back_wave.update(settings)
-            }
-            Animation::UniColorHeartbeat(uni_color_heartbeat) => {
-                uni_color_heartbeat.update(settings);
-            }
-            Animation::UniColorSolid(uni_color_solid) => uni_color_solid.update(settings),
-            Animation::UniColorSparkle(uni_color_sparkle) => uni_color_sparkle.update(settings),
+            Animation::Carrousel(a) => a.update(),
+            Animation::DoubleCarrousel(a) => a.update(),
+            Animation::ForwardWave(a) => a.update(settings),
+            Animation::MultiColorFadeIn(a) => a.update(),
+            Animation::MultiColorHeartbeat(a) => a.update(),
+            Animation::MultiColorSolid(a) => a.update(),
+            Animation::MultiColorSolidRandom(a) => a.update(),
+            Animation::MultiColorSparkle(a) => a.update(settings),
+            Animation::MultiColorStrand(a) => a.update(),
+            Animation::UniColorFadeIn(a) => a.update(settings),
+            Animation::UniColorFrontToBackWave(a) => a.update(settings),
+            Animation::UniColorHeartbeat(a) => a.update(settings),
+            Animation::UniColorSolid(a) => a.update(settings),
+            Animation::UniColorSparkle(a) => a.update(settings),
         }
     }
 }
@@ -549,7 +507,7 @@ pub struct Settings {
     delay: u32,
 
     /// Maximum value of the analog sensors (potentiometers).
-    max_analog_value: u16,
+    analog_max_value: u16,
 
     /// Number of colors available for the animations.
     num_colors: usize,
@@ -558,13 +516,13 @@ pub struct Settings {
 impl Settings {
     #[must_use]
     pub fn new(
-        color_index: usize, brightness: u16, delay: u16, max_analog_value: u16, num_colors: usize,
+        color_index: usize, brightness: u16, delay: u16, analog_max_value: u16, num_colors: usize,
     ) -> Self {
         Self {
-            brightness: calculate_brightness(brightness, max_analog_value),
+            brightness: calculate_brightness(brightness, analog_max_value),
             color_index,
-            delay: calculate_delay(delay, max_analog_value),
-            max_analog_value,
+            delay: calculate_delay(delay, analog_max_value),
+            analog_max_value,
             num_colors,
         }
     }
@@ -590,7 +548,7 @@ impl Settings {
     }
 
     pub fn set_brightness(&mut self, brightness: u16) {
-        self.brightness = calculate_brightness(brightness, self.max_analog_value);
+        self.brightness = calculate_brightness(brightness, self.analog_max_value);
     }
 
     pub fn set_color_index(&mut self, color_index: usize) {
@@ -598,7 +556,7 @@ impl Settings {
     }
 
     pub fn set_delay(&mut self, delay: u16) {
-        self.delay = calculate_delay(delay, self.max_analog_value);
+        self.delay = calculate_delay(delay, self.analog_max_value);
     }
 }
 
@@ -698,7 +656,7 @@ fn calculate_brightness(value: u16, max_value: u16) -> u8 {
 
 /// Calculate the delay in milliseconds based on the value of the potentiometer reading.
 ///
-/// The delay is calculated as a fraction of the maximum analog value times one thousand. The
+/// The delay is calculated as a fraction of the maximum analog value timed one thousand. The
 /// resulting value is then clamped to a minimum of 1.
 fn calculate_delay(value: u16, max_value: u16) -> u32 {
     cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)

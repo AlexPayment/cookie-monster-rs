@@ -24,7 +24,7 @@ bind_interrupts!(struct Irqs {
 #[embassy_executor::task]
 pub async fn led_task(
     rng: Peri<'static, RNG>, spi: Peri<'static, SPI2>, sck: Peri<'static, AnyPin>,
-    led: Peri<'static, AnyPin>, default_analog_value: u16, max_analog_value: u16,
+    led: Peri<'static, AnyPin>, analog_default_value: u16, analog_maximum_value: u16,
 ) {
     info!("Starting LED task...");
 
@@ -46,9 +46,9 @@ pub async fn led_task(
     info!("Creating default animation settings");
     let mut settings = Settings::new(
         DEFAULT_COLOR_INDEX,
-        default_analog_value,
-        default_analog_value,
-        max_analog_value,
+        analog_default_value,
+        analog_default_value,
+        analog_maximum_value,
         NUM_COLORS,
     );
 

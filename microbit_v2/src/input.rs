@@ -12,11 +12,14 @@ bind_interrupts!(struct Irqs {
     SAADC => saadc::InterruptHandler;
 });
 
-const ADC_MAXIMUM_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
+// The default analog value is set to half of the maximum value, which is 2048.
+pub(crate) const ANALOG_DEFAULT_VALUE: u16 = ANALOG_MAXIMUM_VALUE / 2;
+// The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
+pub(crate) const ANALOG_MAXIMUM_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
 // This represents 0.5% of the maximum ADC value.
-const ANALOG_SENSORS_JITTER_THRESHOLD: u16 = ADC_MAXIMUM_VALUE / 200;
-const ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS: u32 = 500;
+const ANALOG_JITTER_THRESHOLD: u16 = ANALOG_MAXIMUM_VALUE / 200;
+const ANALOG_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
 /// Task that reads analog sensors (potentiometers) to signal the brightness and delay values.
@@ -56,7 +59,7 @@ pub async fn analog_sensors_task(
             }),
             last_brightness,
             last_delay,
-            ANALOG_SENSORS_JITTER_THRESHOLD,
+            ANALOG_JITTER_THRESHOLD,
         );
 
         if let Some(updated_brightness) = updated_brightness {
@@ -67,9 +70,7 @@ pub async fn analog_sensors_task(
         }
 
         // Wait for a short period before reading again.
-        delay
-            .delay_ms(ANALOG_SENSORS_READ_FREQUENCY_MILLISECONDS)
-            .await;
+        delay.delay_ms(ANALOG_READ_FREQUENCY_MILLISECONDS).await;
     }
 }
 
