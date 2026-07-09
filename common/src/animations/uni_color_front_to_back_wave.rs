@@ -39,11 +39,11 @@ impl<'a> UniColorFrontToBackWave<'a> {
     pub(crate) fn update(&mut self, settings: &Settings) {
         animations::reset_data(self.data);
 
-        let slice = VERTICAL_SLICES[self.position];
+        let slice = &VERTICAL_SLICES[self.position];
 
-        for led in &slice {
+        for led in slice {
             led.map(|l| {
-                self.data.borrow_mut()[l as usize] = COLORS[settings.color_index()];
+                self.data.borrow_mut()[usize::from(l)] = COLORS[settings.color_index()];
             });
         }
 
