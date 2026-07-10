@@ -43,7 +43,6 @@ pub const COLORS: [RGB8; NUM_COLORS] = [
     INDIGO,
 ];
 pub const DEFAULT_COLOR_INDEX: usize = 1;
-pub const NUM_ANIMATIONS: usize = 14;
 pub const NUM_COLORS: usize = 11;
 
 pub const NUM_LEDS: usize = 96 * 10;
@@ -573,27 +572,87 @@ pub fn create_data() -> LedData {
     RefCell::new([RGB8::default(); NUM_LEDS])
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Format)]
+pub enum AnimationKind {
+    MultiColorStrand,
+    Carrousel,
+    DoubleCarrousel,
+    UniColorSparkle,
+    MultiColorSparkle,
+    ForwardWave,
+    UniColorFadeIn,
+    MultiColorFadeIn,
+    UniColorFrontToBackWave,
+    MultiColorSolid,
+    MultiColorSolidRandom,
+    UniColorSolid,
+    UniColorHeartbeat,
+    MultiColorHeartbeat,
+}
+
+impl AnimationKind {
+    /// Returns the next animation in the sequence.
+    pub fn next(self) -> Self {
+        match self {
+            AnimationKind::MultiColorStrand => AnimationKind::Carrousel,
+            AnimationKind::Carrousel => AnimationKind::DoubleCarrousel,
+            AnimationKind::DoubleCarrousel => AnimationKind::UniColorSparkle,
+            AnimationKind::UniColorSparkle => AnimationKind::MultiColorSparkle,
+            AnimationKind::MultiColorSparkle => AnimationKind::ForwardWave,
+            AnimationKind::ForwardWave => AnimationKind::UniColorFadeIn,
+            AnimationKind::UniColorFadeIn => AnimationKind::MultiColorFadeIn,
+            AnimationKind::MultiColorFadeIn => AnimationKind::UniColorFrontToBackWave,
+            AnimationKind::UniColorFrontToBackWave => AnimationKind::MultiColorSolid,
+            AnimationKind::MultiColorSolid => AnimationKind::MultiColorSolidRandom,
+            AnimationKind::MultiColorSolidRandom => AnimationKind::UniColorSolid,
+            AnimationKind::UniColorSolid => AnimationKind::UniColorHeartbeat,
+            AnimationKind::UniColorHeartbeat => AnimationKind::MultiColorHeartbeat,
+            AnimationKind::MultiColorHeartbeat => AnimationKind::MultiColorStrand,
+        }
+    }
+}
+
 impl<'a> Animation<'a> {
-    pub fn new(index: usize, led_data: &'a LedData, prng: &mut SmallRng) -> Self {
-        match index {
-            0 => Animation::MultiColorStrand(MultiColorStrand::new(led_data, prng.random())),
-            1 => Animation::Carrousel(Carrousel::new(led_data, prng.random())),
-            2 => Animation::DoubleCarrousel(DoubleCarrousel::new(led_data, prng.random())),
-            3 => Animation::UniColorSparkle(UniColorSparkle::new(led_data, prng.random())),
-            4 => Animation::MultiColorSparkle(MultiColorSparkle::new(led_data, prng.random())),
-            5 => Animation::ForwardWave(ForwardWave::new(led_data)),
-            6 => Animation::UniColorFadeIn(UniColorFadeIn::new(led_data)),
-            7 => Animation::MultiColorFadeIn(MultiColorFadeIn::new(led_data, prng.random())),
-            8 => Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new(led_data)),
-            9 => Animation::MultiColorSolid(MultiColorSolid::new(led_data)),
-            10 => Animation::MultiColorSolidRandom(MultiColorSolidRandom::new(
-                led_data,
-                prng.random(),
-            )),
-            11 => Animation::UniColorSolid(UniColorSolid::new(led_data)),
-            12 => Animation::UniColorHeartbeat(UniColorHeartbeat::new(led_data)),
-            13 => Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(led_data, prng.random())),
-            _ => panic!("Invalid animation index"),
+    pub fn new(kind: AnimationKind, led_data: &'a LedData, prng: &mut SmallRng) -> Self {
+        match kind {
+            AnimationKind::MultiColorStrand => {
+                Animation::MultiColorStrand(MultiColorStrand::new(led_data, prng.random()))
+            }
+            AnimationKind::Carrousel => {
+                Animation::Carrousel(Carrousel::new(led_data, prng.random()))
+            }
+            AnimationKind::DoubleCarrousel => {
+                Animation::DoubleCarrousel(DoubleCarrousel::new(led_data, prng.random()))
+            }
+            AnimationKind::UniColorSparkle => {
+                Animation::UniColorSparkle(UniColorSparkle::new(led_data, prng.random()))
+            }
+            AnimationKind::MultiColorSparkle => {
+                Animation::MultiColorSparkle(MultiColorSparkle::new(led_data, prng.random()))
+            }
+            AnimationKind::ForwardWave => Animation::ForwardWave(ForwardWave::new(led_data)),
+            AnimationKind::UniColorFadeIn => {
+                Animation::UniColorFadeIn(UniColorFadeIn::new(led_data))
+            }
+            AnimationKind::MultiColorFadeIn => {
+                Animation::MultiColorFadeIn(MultiColorFadeIn::new(led_data, prng.random()))
+            }
+            AnimationKind::UniColorFrontToBackWave => {
+                Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new(led_data))
+            }
+            AnimationKind::MultiColorSolid => {
+                Animation::MultiColorSolid(MultiColorSolid::new(led_data))
+            }
+            AnimationKind::MultiColorSolidRandom => Animation::MultiColorSolidRandom(
+                MultiColorSolidRandom::new(led_data, prng.random()),
+            ),
+            AnimationKind::UniColorSolid => Animation::UniColorSolid(UniColorSolid::new(led_data)),
+            AnimationKind::UniColorHeartbeat => {
+                Animation::UniColorHeartbeat(UniColorHeartbeat::new(led_data))
+            }
+            AnimationKind::MultiColorHeartbeat => {
+                Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(led_data, prng.random()))
+            }
         }
     }
 }
