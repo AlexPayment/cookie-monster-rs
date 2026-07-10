@@ -1,5 +1,5 @@
 use crate::animations::{LedData, NUM_LEDS, Settings};
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -32,13 +32,10 @@ impl<'a> MultiColorSolidRandom<'a> {
         animation
     }
 
-    pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+    pub(crate) async fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) where
-        E: SpiError,
-    {
+    ) {
         ws2812
             .write(brightness(
                 gamma(self.data.borrow().iter().copied()),

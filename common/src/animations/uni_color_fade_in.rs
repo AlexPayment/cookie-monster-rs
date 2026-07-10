@@ -1,6 +1,6 @@
 use crate::animations;
 use crate::animations::{COLORS, LedData, NUM_LEDS, Settings};
-use embedded_hal::spi::Error as SpiError;
+use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, gamma};
 use smart_leds_trait::SmartLedsWrite;
@@ -22,13 +22,10 @@ impl<'a> UniColorFadeIn<'a> {
         }
     }
 
-    pub(crate) async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+    pub(crate) async fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) where
-        E: SpiError,
-    {
+    ) {
         let brightness: u8 = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
             / f32::from(STEP)) as u8;
 

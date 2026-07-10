@@ -114,12 +114,10 @@ dependencies = [
  "defmt 1.1.1",
  "embassy-sync 0.8.0",
  "embassy-time",
- "embedded-hal 1.0.0",
  "embedded-hal-async",
  "rand",
  "smart-leds",
  "smart-leds-trait",
- "ws2812-spi",
 ]
 
 [[package]]

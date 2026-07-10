@@ -14,9 +14,9 @@ use crate::animations::uni_color_solid::UniColorSolid;
 use crate::animations::uni_color_sparkle::UniColorSparkle;
 use core::cell::RefCell;
 use core::cmp;
+use core::fmt::Debug;
 use defmt::{Format, trace};
 use embassy_time::Instant;
-use embedded_hal::spi::Error as SpiError;
 use embedded_hal_async::delay::DelayNs;
 use rand::RngExt;
 use rand::rngs::SmallRng;
@@ -449,13 +449,10 @@ pub enum Animation<'a> {
 
 impl Animation<'_> {
     /// Renders the animation.
-    pub async fn render<E>(
-        &mut self,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = ws2812_spi::prerendered::Error<E>>,
+    pub async fn render(
+        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
-    ) where
-        E: SpiError,
-    {
+    ) {
         delegate!(self, a => a.render(ws2812, delay, settings).await);
     }
 
