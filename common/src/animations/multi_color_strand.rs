@@ -19,13 +19,12 @@ const COLORS: [RGB8; 7] = [
 ];
 const NUM_STRANDS: usize = NUM_LEDS / 7;
 
-pub struct MultiColorStrand<'a> {
-    data: &'a LedData,
+pub struct MultiColorStrand {
     strands: [Strand; NUM_STRANDS],
 }
 
-impl<'a> MultiColorStrand<'a> {
-    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
+impl MultiColorStrand {
+    pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
 
         let mut strands = [Strand::default(); NUM_STRANDS];
@@ -40,17 +39,18 @@ impl<'a> MultiColorStrand<'a> {
             strand.position = strand.start;
         }
 
-        Self { data, strands }
+        Self { strands }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         time_function(|| {
             ws2812
                 .write(brightness(
-                    gamma(self.data.borrow().iter().copied()),
+                    gamma(data.iter().copied()),
                     self.brightness(settings),
                 ))
                 .unwrap();
@@ -59,12 +59,12 @@ impl<'a> MultiColorStrand<'a> {
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn update(&mut self) {
-        animations::reset_data(self.data);
+    pub(crate) fn update(&mut self, data: &mut LedData) {
+        animations::reset_data(data);
 
         for strand in &mut self.strands {
             strand.update();
-            self.data.borrow_mut()[strand.position as usize] = COLORS[strand.color_index as usize];
+            data[strand.position as usize] = COLORS[strand.color_index as usize];
         }
     }
 

@@ -1,5 +1,6 @@
 use cookie_monster_common::animations::{
     Animation, AnimationKind, DEFAULT_COLOR_INDEX, NUM_COLORS, NUM_LEDS, Settings, create_data,
+    reset_data,
 };
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
@@ -27,6 +28,8 @@ pub async fn led_task(
 ) {
     info!("Starting LED task...");
 
+    // 12 is calculated by knowing that we're using 8 bits per color (3 bytes total), and that
+    // ws2812_spi converts each color byte to 4 SPI bytes.
     #[allow(clippy::manual_div_ceil)]
     let (rx_buffer, rx_descriptors, tx_buffer, tx_descriptors) = dma_buffers!(NUM_LEDS * 12);
     let dma_rx_buf = DmaRxBuf::new(rx_descriptors, rx_buffer).unwrap();
@@ -45,10 +48,10 @@ pub async fn led_task(
     let rng = Rng::new();
     let mut prng = SmallRng::seed_from_u64(u64::from(rng.random()));
 
-    let data = create_data();
+    let mut data = create_data();
 
     let mut active_kind = AnimationKind::MultiColorStrand;
-    let mut active_animation = Animation::new(active_kind, &data, &mut prng);
+    let mut active_animation = Animation::new(active_kind, &mut prng);
 
     info!("Creating default animation settings");
     let mut settings = Settings::new(
@@ -65,7 +68,8 @@ pub async fn led_task(
         if let Some(()) = ANIMATION_CHANGED_SIGNAL.try_take() {
             info!("Animation changed signal received");
             active_kind = active_kind.next();
-            active_animation = Animation::new(active_kind, &data, &mut prng);
+            active_animation = Animation::new(active_kind, &mut prng);
+            reset_data(&mut data);
         }
 
         if let Some(brightness) = BRIGHTNESS_READ_SIGNAL.try_take() {
@@ -82,11 +86,11 @@ pub async fn led_task(
         }
 
         debug!("Updating animation data");
-        active_animation.update(&settings);
+        active_animation.update(&mut data, &settings);
 
         debug!("Rendering animation");
         active_animation
-            .render(&mut ws2812, &mut delay, &settings)
+            .render(&data, &mut ws2812, &mut delay, &settings)
             .await;
     }
 }

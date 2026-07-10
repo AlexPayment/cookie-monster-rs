@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- `delegate!` macro to reduce code duplication in the `Animation` enum implementation.
 - AnimationKind enum to track the state transitions between animations.
 
 ### Changed
@@ -21,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Removed
 
 - Duplicated constants for the potentiometer values.
+- Reference to the LedData in every animation struct. Instead, pass to the methods a reference or a mutable reference to
+  the LedData. This removes the need of RefCell and lifetimes.
 
 ## [1.1.0] - 2026-07-04
 

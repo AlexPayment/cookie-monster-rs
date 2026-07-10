@@ -1,4 +1,4 @@
-use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{COLORS, LedData, NUM_COLORS, Settings};
 use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
@@ -8,19 +8,17 @@ use smart_leds_trait::SmartLedsWrite;
 
 const STEP: u8 = 10;
 
-pub struct MultiColorHeartbeat<'a> {
-    data: &'a LedData,
+pub struct MultiColorHeartbeat {
     color_index: usize,
     prng: SmallRng,
     current_step: u8,
     sequence: u8,
 }
 
-impl<'a> MultiColorHeartbeat<'a> {
-    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
+impl MultiColorHeartbeat {
+    pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
-            data,
             color_index: prng.random_range(0..NUM_COLORS),
             prng,
             current_step: 0,
@@ -29,7 +27,8 @@ impl<'a> MultiColorHeartbeat<'a> {
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         let brightness = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
@@ -37,7 +36,7 @@ impl<'a> MultiColorHeartbeat<'a> {
 
         ws2812
             .write(smart_leds::brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 brightness,
             ))
             .unwrap();
@@ -48,9 +47,9 @@ impl<'a> MultiColorHeartbeat<'a> {
         }
     }
 
-    pub(crate) fn update(&mut self) {
-        for i in 0..NUM_LEDS {
-            self.data.borrow_mut()[i] = COLORS[self.color_index];
+    pub(crate) fn update(&mut self, data: &mut LedData) {
+        for led in data {
+            *led = COLORS[self.color_index];
         }
 
         match self.sequence {
