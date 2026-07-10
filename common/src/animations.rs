@@ -12,7 +12,6 @@ use crate::animations::uni_color_front_to_back_wave::UniColorFrontToBackWave;
 use crate::animations::uni_color_heartbeat::UniColorHeartbeat;
 use crate::animations::uni_color_solid::UniColorSolid;
 use crate::animations::uni_color_sparkle::UniColorSparkle;
-use core::cell::RefCell;
 use core::cmp;
 use core::fmt::Debug;
 use defmt::{Format, trace};
@@ -27,7 +26,7 @@ use smart_leds::colors::{
 };
 use smart_leds_trait::SmartLedsWrite;
 
-pub type LedData = RefCell<[RGB8; NUM_LEDS]>;
+pub type LedData = [RGB8; NUM_LEDS];
 
 pub const COLORS: [RGB8; NUM_COLORS] = [
     WHITE,
@@ -408,71 +407,103 @@ const GAMMA8: [u8; 256] = [
     223, 225, 228, 231, 233, 236, 239, 241, 244, 247, 249, 252, 255,
 ];
 
-macro_rules! delegate {
-    ($self:expr, $var:ident => $body:expr) => {
-        match $self {
-            Animation::Carrousel($var) => $body,
-            Animation::DoubleCarrousel($var) => $body,
-            Animation::ForwardWave($var) => $body,
-            Animation::MultiColorFadeIn($var) => $body,
-            Animation::MultiColorHeartbeat($var) => $body,
-            Animation::MultiColorSolid($var) => $body,
-            Animation::MultiColorSolidRandom($var) => $body,
-            Animation::MultiColorSparkle($var) => $body,
-            Animation::MultiColorStrand($var) => $body,
-            Animation::UniColorFadeIn($var) => $body,
-            Animation::UniColorFrontToBackWave($var) => $body,
-            Animation::UniColorHeartbeat($var) => $body,
-            Animation::UniColorSolid($var) => $body,
-            Animation::UniColorSparkle($var) => $body,
-        }
-    };
-}
-
 #[allow(clippy::large_enum_variant)]
-pub enum Animation<'a> {
-    Carrousel(Carrousel<'a>),
-    DoubleCarrousel(DoubleCarrousel<'a>),
-    ForwardWave(ForwardWave<'a>),
-    MultiColorFadeIn(MultiColorFadeIn<'a>),
-    MultiColorHeartbeat(MultiColorHeartbeat<'a>),
-    MultiColorSolid(MultiColorSolid<'a>),
-    MultiColorSolidRandom(MultiColorSolidRandom<'a>),
-    MultiColorSparkle(MultiColorSparkle<'a>),
-    MultiColorStrand(MultiColorStrand<'a>),
-    UniColorFadeIn(UniColorFadeIn<'a>),
-    UniColorFrontToBackWave(UniColorFrontToBackWave<'a>),
-    UniColorHeartbeat(UniColorHeartbeat<'a>),
-    UniColorSolid(UniColorSolid<'a>),
-    UniColorSparkle(UniColorSparkle<'a>),
+pub enum Animation {
+    Carrousel(Carrousel),
+    DoubleCarrousel(DoubleCarrousel),
+    ForwardWave(ForwardWave),
+    MultiColorFadeIn(MultiColorFadeIn),
+    MultiColorHeartbeat(MultiColorHeartbeat),
+    MultiColorSolid(MultiColorSolid),
+    MultiColorSolidRandom(MultiColorSolidRandom),
+    MultiColorSparkle(MultiColorSparkle),
+    MultiColorStrand(MultiColorStrand),
+    UniColorFadeIn(UniColorFadeIn),
+    UniColorFrontToBackWave(UniColorFrontToBackWave),
+    UniColorHeartbeat(UniColorHeartbeat),
+    UniColorSolid(UniColorSolid),
+    UniColorSparkle(UniColorSparkle),
 }
 
-impl Animation<'_> {
+impl Animation {
+    pub fn new(kind: AnimationKind, prng: &mut SmallRng) -> Self {
+        match kind {
+            AnimationKind::MultiColorStrand => {
+                Animation::MultiColorStrand(MultiColorStrand::new(prng.random()))
+            }
+            AnimationKind::Carrousel => Animation::Carrousel(Carrousel::new(prng.random())),
+            AnimationKind::DoubleCarrousel => {
+                Animation::DoubleCarrousel(DoubleCarrousel::new(prng.random()))
+            }
+            AnimationKind::UniColorSparkle => {
+                Animation::UniColorSparkle(UniColorSparkle::new(prng.random()))
+            }
+            AnimationKind::MultiColorSparkle => {
+                Animation::MultiColorSparkle(MultiColorSparkle::new(prng.random()))
+            }
+            AnimationKind::ForwardWave => Animation::ForwardWave(ForwardWave::new()),
+            AnimationKind::UniColorFadeIn => Animation::UniColorFadeIn(UniColorFadeIn::new()),
+            AnimationKind::MultiColorFadeIn => {
+                Animation::MultiColorFadeIn(MultiColorFadeIn::new(prng.random()))
+            }
+            AnimationKind::UniColorFrontToBackWave => {
+                Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new())
+            }
+            AnimationKind::MultiColorSolid => Animation::MultiColorSolid(MultiColorSolid::new()),
+            AnimationKind::MultiColorSolidRandom => {
+                Animation::MultiColorSolidRandom(MultiColorSolidRandom::new(prng.random()))
+            }
+            AnimationKind::UniColorSolid => Animation::UniColorSolid(UniColorSolid::new()),
+            AnimationKind::UniColorHeartbeat => {
+                Animation::UniColorHeartbeat(UniColorHeartbeat::new())
+            }
+            AnimationKind::MultiColorHeartbeat => {
+                Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(prng.random()))
+            }
+        }
+    }
+
     /// Renders the animation.
     pub async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        delegate!(self, a => a.render(ws2812, delay, settings).await);
+        match self {
+            Animation::Carrousel(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::DoubleCarrousel(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::ForwardWave(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorFadeIn(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorHeartbeat(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorSolid(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorSolidRandom(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorSparkle(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::MultiColorStrand(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::UniColorFadeIn(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::UniColorFrontToBackWave(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::UniColorHeartbeat(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::UniColorSolid(a) => a.render(data, ws2812, delay, settings).await,
+            Animation::UniColorSparkle(a) => a.render(data, ws2812, delay, settings).await,
+        }
     }
 
     /// Updates the state of the animation based on the settings.
-    pub fn update(&mut self, settings: &Settings) {
+    pub fn update(&mut self, data: &mut LedData, settings: &Settings) {
         match self {
-            Animation::Carrousel(a) => a.update(),
-            Animation::DoubleCarrousel(a) => a.update(),
-            Animation::ForwardWave(a) => a.update(settings),
-            Animation::MultiColorFadeIn(a) => a.update(),
-            Animation::MultiColorHeartbeat(a) => a.update(),
-            Animation::MultiColorSolid(a) => a.update(),
-            Animation::MultiColorSolidRandom(a) => a.update(),
-            Animation::MultiColorSparkle(a) => a.update(settings),
-            Animation::MultiColorStrand(a) => a.update(),
-            Animation::UniColorFadeIn(a) => a.update(settings),
-            Animation::UniColorFrontToBackWave(a) => a.update(settings),
-            Animation::UniColorHeartbeat(a) => a.update(settings),
-            Animation::UniColorSolid(a) => a.update(settings),
-            Animation::UniColorSparkle(a) => a.update(settings),
+            Animation::Carrousel(a) => a.update(data),
+            Animation::DoubleCarrousel(a) => a.update(data),
+            Animation::ForwardWave(a) => a.update(data, settings),
+            Animation::MultiColorFadeIn(a) => a.update(data),
+            Animation::MultiColorHeartbeat(a) => a.update(data),
+            Animation::MultiColorSolid(a) => a.update(data),
+            Animation::MultiColorSolidRandom(a) => a.update(data),
+            Animation::MultiColorSparkle(a) => a.update(data, settings),
+            Animation::MultiColorStrand(a) => a.update(data),
+            Animation::UniColorFadeIn(a) => a.update(data, settings),
+            Animation::UniColorFrontToBackWave(a) => a.update(data, settings),
+            Animation::UniColorHeartbeat(a) => a.update(data, settings),
+            Animation::UniColorSolid(a) => a.update(data, settings),
+            Animation::UniColorSparkle(a) => a.update(data, settings),
         }
     }
 }
@@ -566,10 +597,10 @@ pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
 /// Create a new [`LedData`] structure initialized with default colors.
 #[must_use]
 pub fn create_data() -> LedData {
-    RefCell::new([RGB8::default(); NUM_LEDS])
+    [RGB8::default(); NUM_LEDS]
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Format)]
+#[derive(Copy, Clone)]
 pub enum AnimationKind {
     MultiColorStrand,
     Carrousel,
@@ -609,54 +640,9 @@ impl AnimationKind {
     }
 }
 
-impl<'a> Animation<'a> {
-    pub fn new(kind: AnimationKind, led_data: &'a LedData, prng: &mut SmallRng) -> Self {
-        match kind {
-            AnimationKind::MultiColorStrand => {
-                Animation::MultiColorStrand(MultiColorStrand::new(led_data, prng.random()))
-            }
-            AnimationKind::Carrousel => {
-                Animation::Carrousel(Carrousel::new(led_data, prng.random()))
-            }
-            AnimationKind::DoubleCarrousel => {
-                Animation::DoubleCarrousel(DoubleCarrousel::new(led_data, prng.random()))
-            }
-            AnimationKind::UniColorSparkle => {
-                Animation::UniColorSparkle(UniColorSparkle::new(led_data, prng.random()))
-            }
-            AnimationKind::MultiColorSparkle => {
-                Animation::MultiColorSparkle(MultiColorSparkle::new(led_data, prng.random()))
-            }
-            AnimationKind::ForwardWave => Animation::ForwardWave(ForwardWave::new(led_data)),
-            AnimationKind::UniColorFadeIn => {
-                Animation::UniColorFadeIn(UniColorFadeIn::new(led_data))
-            }
-            AnimationKind::MultiColorFadeIn => {
-                Animation::MultiColorFadeIn(MultiColorFadeIn::new(led_data, prng.random()))
-            }
-            AnimationKind::UniColorFrontToBackWave => {
-                Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new(led_data))
-            }
-            AnimationKind::MultiColorSolid => {
-                Animation::MultiColorSolid(MultiColorSolid::new(led_data))
-            }
-            AnimationKind::MultiColorSolidRandom => Animation::MultiColorSolidRandom(
-                MultiColorSolidRandom::new(led_data, prng.random()),
-            ),
-            AnimationKind::UniColorSolid => Animation::UniColorSolid(UniColorSolid::new(led_data)),
-            AnimationKind::UniColorHeartbeat => {
-                Animation::UniColorHeartbeat(UniColorHeartbeat::new(led_data))
-            }
-            AnimationKind::MultiColorHeartbeat => {
-                Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(led_data, prng.random()))
-            }
-        }
-    }
-}
-
 /// Resets the LEDs data to its default state.
-pub fn reset_data(data: &LedData) {
-    *data.borrow_mut() = [RGB8::default(); NUM_LEDS];
+pub fn reset_data(data: &mut LedData) {
+    *data = [RGB8::default(); NUM_LEDS];
 }
 
 /// Apply gamma correction to the provided RGB8 color.

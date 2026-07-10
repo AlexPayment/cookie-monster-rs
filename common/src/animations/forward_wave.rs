@@ -8,34 +8,33 @@ use smart_leds_trait::SmartLedsWrite;
 const WAVE_LENGTH: usize = 15;
 const WAVE_SECTION_LENGTH: usize = WAVE_LENGTH / 5;
 
-pub struct ForwardWave<'a> {
-    data: &'a LedData,
+pub struct ForwardWave {
     position: usize,
     wrapped: bool,
 }
 
-impl<'a> ForwardWave<'a> {
-    pub(crate) fn new(data: &'a LedData) -> Self {
+impl ForwardWave {
+    pub(crate) fn new() -> Self {
         Self {
-            data,
             position: 0,
             wrapped: false,
         }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
         // not all LEDs have the same brightness.
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        ws2812.write(data.iter().copied()).unwrap();
 
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        animations::reset_data(self.data);
+    pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
+        animations::reset_data(data);
 
         let wave = self.get_wave(settings);
 
@@ -43,14 +42,14 @@ impl<'a> ForwardWave<'a> {
             let led_index = self.position as isize - i as isize;
             if self.wrapped {
                 if led_index < 0 {
-                    self.data.borrow_mut()[(NUM_LEDS as isize + led_index) as usize] =
+                    data[(NUM_LEDS as isize + led_index) as usize] =
                         brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
                 } else {
-                    self.data.borrow_mut()[led_index as usize] =
+                    data[led_index as usize] =
                         brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
                 }
             } else if led_index >= 0 {
-                self.data.borrow_mut()[led_index as usize] =
+                data[led_index as usize] =
                     brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
             }
         }

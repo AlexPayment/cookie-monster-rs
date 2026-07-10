@@ -5,37 +5,37 @@ use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-pub struct UniColorFrontToBackWave<'a> {
-    data: &'a LedData,
+pub struct UniColorFrontToBackWave {
     position: usize,
 }
 
-impl<'a> UniColorFrontToBackWave<'a> {
-    pub(crate) fn new(data: &'a LedData) -> Self {
-        Self { data, position: 0 }
+impl UniColorFrontToBackWave {
+    pub(crate) fn new() -> Self {
+        Self { position: 0 }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812
             .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 self.brightness(settings),
             ))
             .unwrap();
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        animations::reset_data(self.data);
+    pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
+        animations::reset_data(data);
 
         let slice = &VERTICAL_SLICES[self.position];
 
         for led in slice {
             led.map(|l| {
-                self.data.borrow_mut()[usize::from(l)] = COLORS[settings.color_index()];
+                data[usize::from(l)] = COLORS[settings.color_index()];
             });
         }
 

@@ -4,22 +4,21 @@ use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-pub struct UniColorSolid<'a> {
-    data: &'a LedData,
-}
+pub struct UniColorSolid {}
 
-impl<'a> UniColorSolid<'a> {
-    pub(crate) fn new(data: &'a LedData) -> Self {
-        Self { data }
+impl UniColorSolid {
+    pub(crate) fn new() -> Self {
+        Self {}
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812
             .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 self.brightness(settings),
             ))
             .unwrap();
@@ -29,8 +28,8 @@ impl<'a> UniColorSolid<'a> {
         delay.delay_ms(1_000u32).await;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        self.data.borrow_mut().iter_mut().for_each(|e| {
+    pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
+        data.iter_mut().for_each(|e| {
             *e = COLORS[settings.color_index()];
         });
     }

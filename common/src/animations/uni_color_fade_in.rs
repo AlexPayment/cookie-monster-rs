@@ -1,5 +1,5 @@
 use crate::animations;
-use crate::animations::{COLORS, LedData, NUM_LEDS, Settings};
+use crate::animations::{COLORS, LedData, Settings};
 use core::fmt::Debug;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, gamma};
@@ -7,23 +7,22 @@ use smart_leds_trait::SmartLedsWrite;
 
 const STEP: u8 = 23;
 
-pub struct UniColorFadeIn<'a> {
-    data: &'a LedData,
+pub struct UniColorFadeIn {
     ascending: bool,
     current_step: u8,
 }
 
-impl<'a> UniColorFadeIn<'a> {
-    pub(crate) fn new(data: &'a LedData) -> Self {
+impl UniColorFadeIn {
+    pub(crate) fn new() -> Self {
         Self {
-            data,
             ascending: true,
             current_step: 0,
         }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         let brightness: u8 = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
@@ -31,7 +30,7 @@ impl<'a> UniColorFadeIn<'a> {
 
         ws2812
             .write(smart_leds::brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 brightness,
             ))
             .unwrap();
@@ -39,11 +38,11 @@ impl<'a> UniColorFadeIn<'a> {
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        animations::reset_data(self.data);
+    pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
+        animations::reset_data(data);
 
-        for i in 0..NUM_LEDS {
-            self.data.borrow_mut()[i] = COLORS[settings.color_index()];
+        for led in data {
+            *led = COLORS[settings.color_index()];
         }
 
         if self.ascending {

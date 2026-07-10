@@ -10,21 +10,20 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
 
-pub struct MultiColorSparkle<'a> {
-    data: &'a LedData,
+pub struct MultiColorSparkle {
     prng: SmallRng,
 }
 
-impl<'a> MultiColorSparkle<'a> {
-    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
+impl MultiColorSparkle {
+    pub(crate) fn new(random_seed: u64) -> Self {
         Self {
-            data,
             prng: SmallRng::seed_from_u64(random_seed),
         }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         let random_delay = self
@@ -33,13 +32,13 @@ impl<'a> MultiColorSparkle<'a> {
 
         // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
         // not all LEDs have the same brightness.
-        ws2812.write(self.data.borrow().iter().copied()).unwrap();
+        ws2812.write(data.iter().copied()).unwrap();
 
         delay.delay_ms(random_delay).await;
     }
 
-    pub(crate) fn update(&mut self, settings: &Settings) {
-        animations::reset_data(self.data);
+    pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
+        animations::reset_data(data);
 
         // The number of sparkles, up to 10% of the total number of LEDs
         let sparkle_amount = self.prng.random_range(0..(NUM_LEDS / 10));
@@ -52,8 +51,7 @@ impl<'a> MultiColorSparkle<'a> {
                 self.prng.random_range(0..255),
                 self.prng.random_range(0..255),
             );
-            self.data.borrow_mut()[index] =
-                brightness_correct(gamma_correct(random_color), brightness);
+            data[index] = brightness_correct(gamma_correct(random_color), brightness);
         }
     }
 

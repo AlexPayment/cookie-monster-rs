@@ -6,32 +6,31 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-pub struct Carrousel<'a> {
+pub struct Carrousel {
     color_index: usize,
-    data: &'a LedData,
     position: usize,
     prng: SmallRng,
 }
 
-impl<'a> Carrousel<'a> {
-    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
+impl Carrousel {
+    pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         let color_index = prng.random_range(0..NUM_COLORS);
         Self {
             color_index,
-            data,
             position: 0,
             prng,
         }
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812
             .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 self.brightness(settings),
             ))
             .unwrap();
@@ -39,8 +38,8 @@ impl<'a> Carrousel<'a> {
         delay.delay_ms(settings.delay()).await;
     }
 
-    pub(crate) fn update(&mut self) {
-        self.data.borrow_mut()[self.position] = COLORS[self.color_index];
+    pub(crate) fn update(&mut self, data: &mut LedData) {
+        data[self.position] = COLORS[self.color_index];
 
         self.position += 1;
         if self.position >= NUM_LEDS {

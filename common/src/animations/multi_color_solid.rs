@@ -6,22 +6,21 @@ use smart_leds_trait::SmartLedsWrite;
 
 const LEDS_PER_COLOR: usize = NUM_LEDS / NUM_COLORS;
 
-pub struct MultiColorSolid<'a> {
-    data: &'a LedData,
-}
+pub struct MultiColorSolid {}
 
-impl<'a> MultiColorSolid<'a> {
-    pub(crate) fn new(data: &'a LedData) -> Self {
-        Self { data }
+impl MultiColorSolid {
+    pub(crate) fn new() -> Self {
+        Self {}
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812
             .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 self.brightness(settings),
             ))
             .unwrap();
@@ -30,14 +29,14 @@ impl<'a> MultiColorSolid<'a> {
         delay.delay_ms(1_000u32).await;
     }
 
-    pub(crate) fn update(&mut self) {
+    pub(crate) fn update(&mut self, data: &mut LedData) {
         let mut color_index = 0;
 
-        for i in 0..NUM_LEDS {
+        for (i, led) in data.iter_mut().enumerate() {
             if i % LEDS_PER_COLOR == 0 {
                 color_index += 1;
             }
-            self.data.borrow_mut()[i] = COLORS[color_index % NUM_COLORS];
+            *led = COLORS[color_index % NUM_COLORS];
         }
     }
 

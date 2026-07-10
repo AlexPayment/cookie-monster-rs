@@ -6,16 +6,14 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-pub struct MultiColorSolidRandom<'a> {
-    data: &'a LedData,
+pub struct MultiColorSolidRandom {
     prng: SmallRng,
     rendered_data: [RGB8; NUM_LEDS],
 }
 
-impl<'a> MultiColorSolidRandom<'a> {
-    pub(crate) fn new(data: &'a LedData, random_seed: u64) -> Self {
+impl MultiColorSolidRandom {
+    pub(crate) fn new(random_seed: u64) -> Self {
         let mut animation = Self {
-            data,
             prng: SmallRng::seed_from_u64(random_seed),
             rendered_data: [RGB8::default(); NUM_LEDS],
         };
@@ -33,12 +31,13 @@ impl<'a> MultiColorSolidRandom<'a> {
     }
 
     pub(crate) async fn render(
-        &mut self, ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        &mut self, data: &LedData,
+        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         ws2812
             .write(brightness(
-                gamma(self.data.borrow().iter().copied()),
+                gamma(data.iter().copied()),
                 self.brightness(settings),
             ))
             .unwrap();
@@ -48,10 +47,8 @@ impl<'a> MultiColorSolidRandom<'a> {
         delay.delay_ms(1_000u32).await;
     }
 
-    pub(crate) fn update(&mut self) {
-        for i in 0..NUM_LEDS {
-            self.data.borrow_mut()[i] = self.rendered_data[i];
-        }
+    pub(crate) fn update(&mut self, data: &mut LedData) {
+        data.copy_from_slice(&self.rendered_data);
     }
 
     fn brightness(&self, settings: &Settings) -> u8 {
