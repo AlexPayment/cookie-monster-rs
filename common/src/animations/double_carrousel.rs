@@ -1,12 +1,15 @@
-use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{
+    COLORS, COLORS_TOTAL, LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings,
+};
 use core::fmt::Debug;
+use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-const LEDS_PER_CARROUSEL: usize = NUM_LEDS / 2;
+const LEDS_PER_CARROUSEL: usize = LEDS_TOTAL / 2;
 
 pub struct DoubleCarrousel {
     color_index_1: usize,
@@ -19,28 +22,42 @@ pub struct DoubleCarrousel {
 impl DoubleCarrousel {
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
-        let color_index_1 = prng.random_range(0..NUM_COLORS);
-        let color_index_2 = prng.random_range(0..NUM_COLORS);
+        let color_index_1 = prng.random_range(0..COLORS_TOTAL);
+        let color_index_2 = prng.random_range(0..COLORS_TOTAL);
         Self {
             color_index_1,
             color_index_2,
             position_1: 0,
-            position_2: NUM_LEDS - 1,
+            position_2: LEDS_TOTAL - 1,
             prng,
         }
     }
 
     pub(crate) async fn render(
         &mut self, data: &LedData,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        ws2812
-            .write(brightness(
-                gamma(data.iter().copied()),
-                self.brightness(settings),
-            ))
-            .unwrap();
+        let leds_section_1_future = async {
+            leds_section_1
+                .write(brightness(
+                    gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
+                    self.brightness(settings),
+                ))
+                .unwrap();
+        };
+
+        let leds_section_2_future = async {
+            leds_section_2
+                .write(brightness(
+                    gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
+                    self.brightness(settings),
+                ))
+                .unwrap();
+        };
+
+        join(leds_section_1_future, leds_section_2_future).await;
 
         delay.delay_ms(settings.delay()).await;
     }
@@ -52,21 +69,21 @@ impl DoubleCarrousel {
         self.position_1 += 1;
         if self.position_1 >= LEDS_PER_CARROUSEL {
             self.position_1 = 0;
-            let mut new_color = self.prng.random_range(0..NUM_COLORS);
+            let mut new_color = self.prng.random_range(0..COLORS_TOTAL);
             while self.color_index_1 == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.random_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..COLORS_TOTAL);
             }
             self.color_index_1 = new_color;
         }
 
         self.position_2 -= 1;
         if self.position_2 <= LEDS_PER_CARROUSEL {
-            self.position_2 = NUM_LEDS - 1;
-            let mut new_color = self.prng.random_range(0..NUM_COLORS);
+            self.position_2 = LEDS_TOTAL - 1;
+            let mut new_color = self.prng.random_range(0..COLORS_TOTAL);
             while self.color_index_2 == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.random_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..COLORS_TOTAL);
             }
             self.color_index_2 = new_color;
         }

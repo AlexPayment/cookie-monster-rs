@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 defmt = { workspace = true }
+embassy-futures = { version = "0.1.2", features = ["defmt"] }
 embassy-sync = "0.8.0"
 embassy-time = { workspace = true }
 embedded-hal-async = { workspace = true }

@@ -1,15 +1,15 @@
 use cookie_monster_common::animations::{
-    Animation, AnimationKind, DEFAULT_COLOR_INDEX, NUM_COLORS, NUM_LEDS, Settings, create_data,
-    reset_data,
+    Animation, AnimationKind, COLORS_INDEX_DEFAULT, COLORS_TOTAL, LEDS_FIRST_SECTION,
+    LEDS_SECOND_SECTION, Settings, create_data, reset_data,
 };
 use cookie_monster_common::signal::{
     ANIMATION_CHANGED_SIGNAL, BRIGHTNESS_READ_SIGNAL, COLOR_CHANGED_SIGNAL, DELAY_READ_SIGNAL,
 };
 use defmt::{debug, info};
 use embassy_nrf::gpio::AnyPin;
-use embassy_nrf::peripherals::{RNG, SPI2};
+use embassy_nrf::peripherals::{RNG, SPI2, SPI3};
 use embassy_nrf::rng::Rng;
-use embassy_nrf::spim::{Config, Frequency, Spim};
+use embassy_nrf::spim::{Config, Frequency, Instance, Spim};
 use embassy_nrf::{Peri, bind_interrupts, rng, spim};
 use embassy_time::Delay;
 use rand::SeedableRng;
@@ -19,21 +19,54 @@ use ws2812_spi::prerendered::Ws2812;
 bind_interrupts!(struct Irqs {
     RNG => rng::InterruptHandler<RNG>;
     SPI2 => spim::InterruptHandler<SPI2>;
+    SPIM3 => spim::InterruptHandler<SPI3>;
 });
+
+// 12 is calculated by knowing that we're using 8 bits per color (3 bytes total), and that
+// ws2812_spi converts each color byte to 4 SPI bytes.
+const FIRST_SECTION_BUFFERS_SIZE: usize = LEDS_FIRST_SECTION * 12;
+
+// 12 is calculated by knowing that we're using 8 bits per color (3 bytes total), and that
+// ws2812_spi converts each color byte to 4 SPI bytes.
+const SECOND_SECTION_BUFFERS_SIZE: usize = LEDS_SECOND_SECTION * 12;
+
+pub(crate) struct SpiConfig<'a, T: Instance> {
+    pub spim: Peri<'a, T>,
+    pub sck: Peri<'a, AnyPin>,
+    pub led_pin: Peri<'a, AnyPin>,
+}
 
 #[embassy_executor::task]
 pub async fn led_task(
-    rng: Peri<'static, RNG>, spi: Peri<'static, SPI2>, sck: Peri<'static, AnyPin>,
-    led: Peri<'static, AnyPin>, analog_default_value: u16, analog_maximum_value: u16,
+    rng: Peri<'static, RNG>, spi_config_1: SpiConfig<'static, SPI2>,
+    spi_config_2: SpiConfig<'static, SPI3>, analog_default_value: u16, analog_maximum_value: u16,
 ) {
     info!("Starting LED task...");
 
     let mut config = Config::default();
     config.frequency = Frequency::M4;
-    let spi = Spim::new_txonly(spi, Irqs, sck, led, config);
 
-    let mut buffer = [0; NUM_LEDS * 12];
-    let mut ws2812 = Ws2812::new(spi, &mut buffer);
+    let spi_1 = Spim::new_txonly(
+        spi_config_1.spim,
+        Irqs,
+        spi_config_1.sck,
+        spi_config_1.led_pin,
+        config.clone(),
+    );
+
+    let mut buffer_1 = [0; FIRST_SECTION_BUFFERS_SIZE];
+    let mut ws2812_1 = Ws2812::new(spi_1, &mut buffer_1);
+
+    let spi_2 = Spim::new_txonly(
+        spi_config_2.spim,
+        Irqs,
+        spi_config_2.sck,
+        spi_config_2.led_pin,
+        config,
+    );
+
+    let mut buffer_2 = [0; SECOND_SECTION_BUFFERS_SIZE];
+    let mut ws2812_2 = Ws2812::new(spi_2, &mut buffer_2);
 
     // Setup Pseudo Random Number Generator
     let mut prng = setup_prng(rng).await;
@@ -45,11 +78,11 @@ pub async fn led_task(
 
     info!("Creating default animation settings");
     let mut settings = Settings::new(
-        DEFAULT_COLOR_INDEX,
+        COLORS_INDEX_DEFAULT,
         analog_default_value,
         analog_default_value,
         analog_maximum_value,
-        NUM_COLORS,
+        COLORS_TOTAL,
     );
 
     let mut delay = Delay;
@@ -68,7 +101,7 @@ pub async fn led_task(
 
         if let Some(()) = COLOR_CHANGED_SIGNAL.try_take() {
             info!("Color changed signal received");
-            settings.set_color_index((settings.color_index() + 1) % NUM_COLORS);
+            settings.set_color_index((settings.color_index() + 1) % COLORS_TOTAL);
         }
 
         if let Some(delay) = DELAY_READ_SIGNAL.try_take() {
@@ -80,7 +113,7 @@ pub async fn led_task(
 
         debug!("Rendering animation");
         active_animation
-            .render(&data, &mut ws2812, &mut delay, &settings)
+            .render(&data, &mut ws2812_1, &mut ws2812_2, &mut delay, &settings)
             .await;
     }
 }

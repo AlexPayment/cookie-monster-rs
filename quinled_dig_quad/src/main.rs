@@ -5,6 +5,7 @@ use crate::input::{
     ANALOG_DEFAULT_VALUE, ANALOG_MAXIMUM_VALUE, BrightnessPin, DelayPin, analog_sensors_task,
     animation_button_task, color_button_task,
 };
+use crate::led::SpiConfig;
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_time::Delay;
@@ -54,7 +55,10 @@ async fn main(spawner: Spawner) {
         delay: peripherals.GPIO12,
 
         // Pin that's labeled LED1 on the board.
-        led: peripherals.GPIO16.degrade(),
+        led_1: peripherals.GPIO16.degrade(),
+
+        // Pin that's labeled LED2 on the board.
+        led_2: peripherals.GPIO3.degrade(),
     };
 
     spawn_all_tasks(
@@ -64,6 +68,8 @@ async fn main(spawner: Spawner) {
         // memory. That leaves only SPI2 and SPI3 available.
         peripherals.SPI2.into(),
         peripherals.DMA_SPI2.into(),
+        peripherals.SPI3.into(),
+        peripherals.DMA_SPI3.into(),
         pins,
     );
 
@@ -80,13 +86,15 @@ struct Pins<'a> {
     brightness: BrightnessPin<'a>,
     color: AnyPin<'a>,
     delay: DelayPin<'a>,
-    led: AnyPin<'a>,
+    led_1: AnyPin<'a>,
+    led_2: AnyPin<'a>,
 }
 
 /// Spawns all the tasks for the inputs and LEDs.
 fn spawn_all_tasks(
-    spawner: &Spawner, adc: ADC2<'static>, spi: AnySpi<'static>,
-    dma_channel: AnySpiDmaChannel<'static>, pins: Pins<'static>,
+    spawner: &Spawner, adc: ADC2<'static>, spi_1: AnySpi<'static>,
+    dma_channel_1: AnySpiDmaChannel<'static>, spi_2: AnySpi<'static>,
+    dma_channel_2: AnySpiDmaChannel<'static>, pins: Pins<'static>,
 ) {
     info!("Spawning all tasks...");
 
@@ -105,9 +113,16 @@ fn spawn_all_tasks(
 
     // Spawn the LED task
     spawner.spawn(unwrap!(led::led_task(
-        spi,
-        dma_channel,
-        pins.led,
+        SpiConfig {
+            spi: spi_1,
+            dma_channel: dma_channel_1,
+            led_pin: pins.led_1,
+        },
+        SpiConfig {
+            spi: spi_2,
+            dma_channel: dma_channel_2,
+            led_pin: pins.led_2,
+        },
         ANALOG_DEFAULT_VALUE,
         ANALOG_MAXIMUM_VALUE
     )));

@@ -1,5 +1,8 @@
-use crate::animations::{COLORS, LedData, NUM_COLORS, NUM_LEDS, Settings};
+use crate::animations::{
+    COLORS, COLORS_TOTAL, LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings,
+};
 use core::fmt::Debug;
+use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -15,7 +18,7 @@ pub struct Carrousel {
 impl Carrousel {
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
-        let color_index = prng.random_range(0..NUM_COLORS);
+        let color_index = prng.random_range(0..COLORS_TOTAL);
         Self {
             color_index,
             position: 0,
@@ -25,15 +28,29 @@ impl Carrousel {
 
     pub(crate) async fn render(
         &mut self, data: &LedData,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        ws2812
-            .write(brightness(
-                gamma(data.iter().copied()),
-                self.brightness(settings),
-            ))
-            .unwrap();
+        let leds_section_1_future = async {
+            leds_section_1
+                .write(brightness(
+                    gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
+                    self.brightness(settings),
+                ))
+                .unwrap();
+        };
+
+        let leds_section_2_future = async {
+            leds_section_2
+                .write(brightness(
+                    gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
+                    self.brightness(settings),
+                ))
+                .unwrap();
+        };
+
+        join(leds_section_1_future, leds_section_2_future).await;
 
         delay.delay_ms(settings.delay()).await;
     }
@@ -42,12 +59,12 @@ impl Carrousel {
         data[self.position] = COLORS[self.color_index];
 
         self.position += 1;
-        if self.position >= NUM_LEDS {
+        if self.position >= LEDS_TOTAL {
             self.position = 0;
-            let mut new_color = self.prng.random_range(0..NUM_COLORS);
+            let mut new_color = self.prng.random_range(0..COLORS_TOTAL);
             while self.color_index == new_color {
                 // Make sure the new color is different from the current color
-                new_color = self.prng.random_range(0..NUM_COLORS);
+                new_color = self.prng.random_range(0..COLORS_TOTAL);
             }
             self.color_index = new_color;
         }

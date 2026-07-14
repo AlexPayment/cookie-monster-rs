@@ -17,8 +17,6 @@ pub(crate) const ANALOG_DEFAULT_VALUE: u16 = ANALOG_MAXIMUM_VALUE / 2;
 // The ADC resolution is 12 bits, which means the maximum value is 4095 (2^12 - 1).
 pub(crate) const ANALOG_MAXIMUM_VALUE: u16 = 2u16.pow(ADC_RESOLUTION) - 1;
 const ADC_RESOLUTION: u32 = 12;
-// This represents 0.5% of the maximum ADC value.
-const ANALOG_JITTER_THRESHOLD: u16 = ANALOG_MAXIMUM_VALUE / 200;
 const ANALOG_READ_FREQUENCY_MILLISECONDS: u32 = 500;
 const DEBOUNCE_PERIOD_MILLISECONDS: u32 = 50;
 
@@ -37,14 +35,11 @@ pub async fn analog_sensors_task(
     let mut buffer = [0; 2];
     let mut delay = Delay;
 
-    let mut last_brightness = 0;
-    let mut last_delay = 0;
-
     loop {
         // Read the brightness and delay values from the potentiometers.
         saadc.sample(&mut buffer).await;
 
-        let (updated_brightness, updated_delay) = process_analog_sensors(
+        process_analog_sensors(
             u16::try_from(buffer[0]).map_err(|e| {
                 error!(
                     "Cannot convert the value read from the brightness potentiometer: {}",
@@ -57,17 +52,7 @@ pub async fn analog_sensors_task(
                     e
                 );
             }),
-            last_brightness,
-            last_delay,
-            ANALOG_JITTER_THRESHOLD,
         );
-
-        if let Some(updated_brightness) = updated_brightness {
-            last_brightness = updated_brightness;
-        }
-        if let Some(updated_delay) = updated_delay {
-            last_delay = updated_delay;
-        }
 
         // Wait for a short period before reading again.
         delay.delay_ms(ANALOG_READ_FREQUENCY_MILLISECONDS).await;

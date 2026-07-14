@@ -1,6 +1,10 @@
 use crate::animations;
-use crate::animations::{COLORS, LedData, NUM_LEDS, Settings, brightness_correct, gamma_correct};
+use crate::animations::{
+    COLORS, LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings,
+    brightness_correct, gamma_correct,
+};
 use core::fmt::Debug;
+use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
 use smart_leds::RGB8;
 use smart_leds_trait::SmartLedsWrite;
@@ -23,12 +27,27 @@ impl ForwardWave {
 
     pub(crate) async fn render(
         &mut self, data: &LedData,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        // We're not using the smart_leds::brightness and smart_leds::gamma functions here because
-        // not all LEDs have the same brightness.
-        ws2812.write(data.iter().copied()).unwrap();
+        let leds_section_1_future = async {
+            // We're not using the smart_leds::brightness and smart_leds::gamma functions here
+            // because not all LEDs have the same brightness.
+            leds_section_1
+                .write(data[LEDS_SECTION_1_RANGE].iter().copied())
+                .unwrap();
+        };
+
+        let leds_section_2_future = async {
+            // We're not using the smart_leds::brightness and smart_leds::gamma functions here
+            // because not all LEDs have the same brightness.
+            leds_section_2
+                .write(data[LEDS_SECTION_2_RANGE].iter().copied())
+                .unwrap();
+        };
+
+        join(leds_section_1_future, leds_section_2_future).await;
 
         delay.delay_ms(settings.delay()).await;
     }
@@ -42,7 +61,7 @@ impl ForwardWave {
             let led_index = self.position as isize - i as isize;
             if self.wrapped {
                 if led_index < 0 {
-                    data[(NUM_LEDS as isize + led_index) as usize] =
+                    data[(LEDS_TOTAL as isize + led_index) as usize] =
                         brightness_correct(gamma_correct(COLORS[settings.color_index()]), *item);
                 } else {
                     data[led_index as usize] =
@@ -55,7 +74,7 @@ impl ForwardWave {
         }
 
         self.position += 1;
-        if self.position >= NUM_LEDS {
+        if self.position >= LEDS_TOTAL {
             self.position = 0;
             self.wrapped = true;
         }
