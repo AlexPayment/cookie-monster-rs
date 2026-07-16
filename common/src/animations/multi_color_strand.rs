@@ -1,6 +1,9 @@
 use crate::animations;
-use crate::animations::{LedData, NUM_LEDS, Settings, time_function};
+use crate::animations::{
+    LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings, time_function,
+};
 use core::fmt::Debug;
+use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -17,7 +20,7 @@ const COLORS: [RGB8; 7] = [
     PURPLE,
     INDIGO,
 ];
-const NUM_STRANDS: usize = NUM_LEDS / 7;
+const NUM_STRANDS: usize = LEDS_TOTAL / 7;
 
 pub struct MultiColorStrand {
     strands: [Strand; NUM_STRANDS],
@@ -31,10 +34,11 @@ impl MultiColorStrand {
 
         for strand in &mut strands {
             strand.color_index = prng.random_range(0..COLORS.len()) as u8;
-            strand.start = prng.random_range(0..NUM_LEDS) as u16;
-            strand.end = prng.random_range(0..NUM_LEDS) as u16;
-            while strand.start.abs_diff(strand.end) < (NUM_LEDS / 100) as u16 {
-                strand.end = prng.random_range(0..NUM_LEDS) as u16;
+            strand.start = prng.random_range(0..LEDS_TOTAL) as u16;
+            strand.end = prng.random_range(0..LEDS_TOTAL) as u16;
+            // Let's make sure the strands are not too short.
+            while strand.start.abs_diff(strand.end) < (LEDS_TOTAL / 100) as u16 {
+                strand.end = prng.random_range(0..LEDS_TOTAL) as u16;
             }
             strand.position = strand.start;
         }
@@ -44,17 +48,39 @@ impl MultiColorStrand {
 
     pub(crate) async fn render(
         &mut self, data: &LedData,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        time_function(|| {
-            ws2812
-                .write(brightness(
-                    gamma(data.iter().copied()),
-                    self.brightness(settings),
-                ))
-                .unwrap();
-        });
+        let leds_section_1_future = async {
+            time_function(
+                || {
+                    leds_section_1
+                        .write(brightness(
+                            gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
+                            self.brightness(settings),
+                        ))
+                        .unwrap();
+                },
+                "Time taken to write data for section 1",
+            );
+        };
+
+        let leds_section_2_future = async {
+            time_function(
+                || {
+                    leds_section_2
+                        .write(brightness(
+                            gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
+                            self.brightness(settings),
+                        ))
+                        .unwrap();
+                },
+                "Time taken to write data for section 2",
+            );
+        };
+
+        join(leds_section_1_future, leds_section_2_future).await;
 
         delay.delay_ms(settings.delay()).await;
     }
@@ -64,7 +90,7 @@ impl MultiColorStrand {
 
         for strand in &mut self.strands {
             strand.update();
-            data[strand.position as usize] = COLORS[strand.color_index as usize];
+            data[usize::from(strand.position)] = COLORS[usize::from(strand.color_index)];
         }
     }
 
@@ -94,14 +120,14 @@ impl Strand {
         if self.start > self.end {
             self.position -= 1;
             if self.position == 0 {
-                self.position = (NUM_LEDS - 1) as u16;
+                self.position = (LEDS_TOTAL - 1) as u16;
             }
             if self.position == self.end {
                 self.position = self.start;
             }
         } else {
             self.position += 1;
-            if self.position >= NUM_LEDS as u16 {
+            if self.position >= LEDS_TOTAL as u16 {
                 self.position = 0;
             }
             if self.position == self.end {

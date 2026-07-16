@@ -1,5 +1,8 @@
-use crate::animations::{COLORS, LedData, NUM_COLORS, Settings};
+use crate::animations::{
+    COLORS, COLORS_TOTAL, LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LedData, Settings,
+};
 use core::fmt::Debug;
+use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
@@ -20,7 +23,7 @@ impl MultiColorFadeIn {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
             ascending: true,
-            color_index: prng.random_range(0..NUM_COLORS),
+            color_index: prng.random_range(0..COLORS_TOTAL),
             prng,
             current_step: 0,
         }
@@ -28,18 +31,32 @@ impl MultiColorFadeIn {
 
     pub(crate) async fn render(
         &mut self, data: &LedData,
-        ws2812: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
         let brightness = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
             / f32::from(STEP)) as u8;
 
-        ws2812
-            .write(smart_leds::brightness(
-                gamma(data.iter().copied()),
-                brightness,
-            ))
-            .unwrap();
+        let leds_section_1_future = async {
+            leds_section_1
+                .write(smart_leds::brightness(
+                    gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
+                    brightness,
+                ))
+                .unwrap();
+        };
+
+        let leds_section_2_future = async {
+            leds_section_2
+                .write(smart_leds::brightness(
+                    gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
+                    brightness,
+                ))
+                .unwrap();
+        };
+
+        join(leds_section_1_future, leds_section_2_future).await;
 
         delay.delay_ms(settings.delay()).await;
     }
@@ -56,7 +73,7 @@ impl MultiColorFadeIn {
         } else {
             self.current_step -= 1;
             if self.current_step == 1 {
-                self.color_index = self.prng.random_range(0..NUM_COLORS);
+                self.color_index = self.prng.random_range(0..COLORS_TOTAL);
                 self.ascending = true;
             }
         }

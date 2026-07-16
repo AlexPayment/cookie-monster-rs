@@ -5,12 +5,13 @@ use crate::input::{
     ANALOG_DEFAULT_VALUE, ANALOG_MAXIMUM_VALUE, analog_sensors_task, animation_button_task,
     color_button_task,
 };
+use crate::led::SpiConfig;
 use defmt::{info, unwrap};
 use embassy_executor::Spawner;
 use embassy_nrf::Peri;
 use embassy_nrf::config::Config;
 use embassy_nrf::gpio::AnyPin;
-use embassy_nrf::peripherals::{RNG, SAADC, SPI2};
+use embassy_nrf::peripherals::{RNG, SAADC, SPI2, SPI3};
 use embassy_nrf::saadc::{AnyInput, Input};
 use embassy_time::Delay;
 use embedded_hal_async::delay::DelayNs;
@@ -42,10 +43,16 @@ async fn main(spawner: Spawner) {
         delay: peripherals.P0_03.degrade_saadc(),
 
         // GPIO port 0 pin 13 corresponds to pin 15 on the board.
-        led: peripherals.P0_13.into(),
+        led_1: peripherals.P0_13.into(),
+
+        // GPIO port 0 pin 10 corresponds to pin 8 on the board.
+        led_2: peripherals.P0_10.into(),
 
         // GPIO port 0 pin 17 corresponds to pin 13 on the board.
-        sck: peripherals.P0_17.into(),
+        sck_1: peripherals.P0_17.into(),
+
+        // GPIO port 1 pin 2 corresponds to pin 16 on the board.
+        sck_2: peripherals.P1_02.into(),
     };
 
     spawn_all_tasks(
@@ -53,6 +60,7 @@ async fn main(spawner: Spawner) {
         peripherals.SAADC,
         peripherals.RNG,
         peripherals.SPI2,
+        peripherals.SPI3,
         pins,
     );
 
@@ -70,14 +78,16 @@ struct Pins<'a> {
     brightness: AnyInput<'a>,
     color: Peri<'a, AnyPin>,
     delay: AnyInput<'a>,
-    led: Peri<'a, AnyPin>,
-    sck: Peri<'a, AnyPin>,
+    led_1: Peri<'a, AnyPin>,
+    led_2: Peri<'a, AnyPin>,
+    sck_1: Peri<'a, AnyPin>,
+    sck_2: Peri<'a, AnyPin>,
 }
 
 /// Spawns all the tasks for the inputs and LEDs.
 fn spawn_all_tasks(
     spawner: &Spawner, adc: Peri<'static, SAADC>, rng: Peri<'static, RNG>,
-    spi: Peri<'static, SPI2>, pins: Pins<'static>,
+    spi_1: Peri<'static, SPI2>, spi_2: Peri<'static, SPI3>, pins: Pins<'static>,
 ) {
     info!("Spawning all tasks...");
 
@@ -97,9 +107,16 @@ fn spawn_all_tasks(
     // Spawn the LED task
     spawner.spawn(unwrap!(led::led_task(
         rng,
-        spi,
-        pins.sck,
-        pins.led,
+        SpiConfig {
+            spim: spi_1,
+            sck: pins.sck_1,
+            led_pin: pins.led_1,
+        },
+        SpiConfig {
+            spim: spi_2,
+            sck: pins.sck_2,
+            led_pin: pins.led_2,
+        },
         ANALOG_DEFAULT_VALUE,
         ANALOG_MAXIMUM_VALUE
     )));

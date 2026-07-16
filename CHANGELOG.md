@@ -16,12 +16,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Avoid a copy of the vertical slices on the stack.
 - Stop initializing all the animations when the application starts. Instead, initialize them only when they are needed.
 - Simplify the signature of the render methods to accept a broader range of SmartLedsWrite trait implementations.
+- Split the LEDS writes into two. The first section has 384 LEDs, and the second section has 576. Each section has a
+  dedicated SPI and the writes are done in parallel. Before this change, it took about 28 milliseconds to write. Now
+  it takes about 16 milliseconds, with the second section contributing to the higher duration due to its larger LED
+  count.
 
 ### Removed
 
 - Duplicated constants for the potentiometer values.
 - Reference to the LedData in every animation struct. Instead, pass to the methods a reference or a mutable reference to
   the LedData. This removes the need of RefCell and lifetimes.
+- Remove jitter handling when reading the potentiometer values. It caused the starting value to be incorrect, and it was
+  bringing little value.
 
 ## [1.1.0] - 2026-07-04
 
