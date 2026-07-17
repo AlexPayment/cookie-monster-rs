@@ -62,13 +62,9 @@ impl UniColorSparkle {
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..LEDS_TOTAL);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.random_range(0..=self.brightness(settings));
+            let brightness = self.prng.random_range(0..=settings.brightness());
             data[index] =
                 brightness_correct(gamma_correct(COLORS[settings.color_index()]), brightness);
         }
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        settings.brightness()
     }
 }

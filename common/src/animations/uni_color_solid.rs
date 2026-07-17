@@ -5,6 +5,8 @@ use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
+const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
+
 pub struct UniColorSolid {}
 
 impl UniColorSolid {
@@ -22,7 +24,7 @@ impl UniColorSolid {
             leds_section_1
                 .write(brightness(
                     gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR),
                 ))
                 .unwrap();
         };
@@ -31,7 +33,7 @@ impl UniColorSolid {
             leds_section_2
                 .write(brightness(
                     gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR),
                 ))
                 .unwrap();
         };
@@ -47,9 +49,5 @@ impl UniColorSolid {
         data.iter_mut().for_each(|e| {
             *e = COLORS[settings.color_index()];
         });
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        (f32::from(settings.brightness()) * 0.05) as u8
     }
 }

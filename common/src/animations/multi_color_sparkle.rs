@@ -62,17 +62,13 @@ impl MultiColorSparkle {
         for _ in 0..sparkle_amount {
             let index = self.prng.random_range(0..LEDS_TOTAL);
             // Random brightness between 0% and the set brightness
-            let brightness = self.prng.random_range(0..=self.brightness(settings));
+            let brightness = self.prng.random_range(0..=settings.brightness());
             let random_color = RGB8::new(
-                self.prng.random_range(0..255),
-                self.prng.random_range(0..255),
-                self.prng.random_range(0..255),
+                self.prng.random_range(0..=u8::MAX),
+                self.prng.random_range(0..=u8::MAX),
+                self.prng.random_range(0..=u8::MAX),
             );
             data[index] = brightness_correct(gamma_correct(random_color), brightness);
         }
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        settings.brightness()
     }
 }

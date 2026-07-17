@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - AnimationKind enum to track the state transitions between animations.
+- `Shimmer` and `MultiColorFrontToBack` animations.
 
 ### Changed
 
@@ -20,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   dedicated SPI and the writes are done in parallel. Before this change, it took about 28 milliseconds to write. Now
   it takes about 16 milliseconds, with the second section contributing to the higher duration due to its larger LED
   count.
+- Move the following animations to the end of the rotation:
+  - `MultiColorSolid`
+  - `MultiColorSolidRandom`
+  - `UniColorSolid`
 
 ### Removed
 

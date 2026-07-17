@@ -2,11 +2,13 @@ use crate::animations::carrousel::Carrousel;
 use crate::animations::double_carrousel::DoubleCarrousel;
 use crate::animations::forward_wave::ForwardWave;
 use crate::animations::multi_color_fade_in::MultiColorFadeIn;
+use crate::animations::multi_color_front_to_back_wave::MultiColorFrontToBackWave;
 use crate::animations::multi_color_heartbeat::MultiColorHeartbeat;
 use crate::animations::multi_color_solid::MultiColorSolid;
 use crate::animations::multi_color_solid_random::MultiColorSolidRandom;
 use crate::animations::multi_color_sparkle::MultiColorSparkle;
 use crate::animations::multi_color_strand::MultiColorStrand;
+use crate::animations::shimmer::Shimmer;
 use crate::animations::uni_color_fade_in::UniColorFadeIn;
 use crate::animations::uni_color_front_to_back_wave::UniColorFrontToBackWave;
 use crate::animations::uni_color_heartbeat::UniColorHeartbeat;
@@ -436,11 +438,13 @@ pub enum Animation {
     DoubleCarrousel(DoubleCarrousel),
     ForwardWave(ForwardWave),
     MultiColorFadeIn(MultiColorFadeIn),
+    MultiColorFrontToBackWave(MultiColorFrontToBackWave),
     MultiColorHeartbeat(MultiColorHeartbeat),
     MultiColorSolid(MultiColorSolid),
     MultiColorSolidRandom(MultiColorSolidRandom),
     MultiColorSparkle(MultiColorSparkle),
     MultiColorStrand(MultiColorStrand),
+    Shimmer(Shimmer),
     UniColorFadeIn(UniColorFadeIn),
     UniColorFrontToBackWave(UniColorFrontToBackWave),
     UniColorHeartbeat(UniColorHeartbeat),
@@ -451,37 +455,41 @@ pub enum Animation {
 impl Animation {
     pub fn new(kind: AnimationKind, prng: &mut SmallRng) -> Self {
         match kind {
-            AnimationKind::MultiColorStrand => {
-                Animation::MultiColorStrand(MultiColorStrand::new(prng.random()))
-            }
             AnimationKind::Carrousel => Animation::Carrousel(Carrousel::new(prng.random())),
             AnimationKind::DoubleCarrousel => {
                 Animation::DoubleCarrousel(DoubleCarrousel::new(prng.random()))
             }
-            AnimationKind::UniColorSparkle => {
-                Animation::UniColorSparkle(UniColorSparkle::new(prng.random()))
-            }
-            AnimationKind::MultiColorSparkle => {
-                Animation::MultiColorSparkle(MultiColorSparkle::new(prng.random()))
-            }
             AnimationKind::ForwardWave => Animation::ForwardWave(ForwardWave::new()),
-            AnimationKind::UniColorFadeIn => Animation::UniColorFadeIn(UniColorFadeIn::new()),
             AnimationKind::MultiColorFadeIn => {
                 Animation::MultiColorFadeIn(MultiColorFadeIn::new(prng.random()))
             }
-            AnimationKind::UniColorFrontToBackWave => {
-                Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new())
+            AnimationKind::MultiColorFrontToBackWave => {
+                Animation::MultiColorFrontToBackWave(MultiColorFrontToBackWave::new(prng.random()))
+            }
+            AnimationKind::MultiColorHeartbeat => {
+                Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(prng.random()))
             }
             AnimationKind::MultiColorSolid => Animation::MultiColorSolid(MultiColorSolid::new()),
             AnimationKind::MultiColorSolidRandom => {
                 Animation::MultiColorSolidRandom(MultiColorSolidRandom::new(prng.random()))
             }
-            AnimationKind::UniColorSolid => Animation::UniColorSolid(UniColorSolid::new()),
+            AnimationKind::MultiColorSparkle => {
+                Animation::MultiColorSparkle(MultiColorSparkle::new(prng.random()))
+            }
+            AnimationKind::MultiColorStrand => {
+                Animation::MultiColorStrand(MultiColorStrand::new(prng.random()))
+            }
+            AnimationKind::Shimmer => Animation::Shimmer(Shimmer::new(prng.random())),
+            AnimationKind::UniColorFadeIn => Animation::UniColorFadeIn(UniColorFadeIn::new()),
+            AnimationKind::UniColorFrontToBackWave => {
+                Animation::UniColorFrontToBackWave(UniColorFrontToBackWave::new())
+            }
             AnimationKind::UniColorHeartbeat => {
                 Animation::UniColorHeartbeat(UniColorHeartbeat::new())
             }
-            AnimationKind::MultiColorHeartbeat => {
-                Animation::MultiColorHeartbeat(MultiColorHeartbeat::new(prng.random()))
+            AnimationKind::UniColorSolid => Animation::UniColorSolid(UniColorSolid::new()),
+            AnimationKind::UniColorSparkle => {
+                Animation::UniColorSparkle(UniColorSparkle::new(prng.random()))
             }
         }
     }
@@ -510,6 +518,10 @@ impl Animation {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
                     .await
             }
+            Animation::MultiColorFrontToBackWave(a) => {
+                a.render(data, leds_section_1, leds_section_2, delay, settings)
+                    .await
+            }
             Animation::MultiColorHeartbeat(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
                     .await
@@ -527,6 +539,10 @@ impl Animation {
                     .await
             }
             Animation::MultiColorStrand(a) => {
+                a.render(data, leds_section_1, leds_section_2, delay, settings)
+                    .await
+            }
+            Animation::Shimmer(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
                     .await
             }
@@ -560,11 +576,13 @@ impl Animation {
             Animation::DoubleCarrousel(a) => a.update(data),
             Animation::ForwardWave(a) => a.update(data, settings),
             Animation::MultiColorFadeIn(a) => a.update(data),
+            Animation::MultiColorFrontToBackWave(a) => a.update(data),
             Animation::MultiColorHeartbeat(a) => a.update(data),
             Animation::MultiColorSolid(a) => a.update(data),
             Animation::MultiColorSolidRandom(a) => a.update(data),
             Animation::MultiColorSparkle(a) => a.update(data, settings),
             Animation::MultiColorStrand(a) => a.update(data),
+            Animation::Shimmer(a) => a.update(data),
             Animation::UniColorFadeIn(a) => a.update(data, settings),
             Animation::UniColorFrontToBackWave(a) => a.update(data, settings),
             Animation::UniColorHeartbeat(a) => a.update(data, settings),
@@ -576,27 +594,31 @@ impl Animation {
 
 #[derive(Copy, Clone)]
 pub enum AnimationKind {
-    MultiColorStrand,
     Carrousel,
     DoubleCarrousel,
-    UniColorSparkle,
-    MultiColorSparkle,
     ForwardWave,
-    UniColorFadeIn,
     MultiColorFadeIn,
-    UniColorFrontToBackWave,
+    MultiColorFrontToBackWave,
+    MultiColorHeartbeat,
     MultiColorSolid,
     MultiColorSolidRandom,
-    UniColorSolid,
+    MultiColorSparkle,
+    MultiColorStrand,
+    Shimmer,
+    UniColorFadeIn,
+    UniColorFrontToBackWave,
     UniColorHeartbeat,
-    MultiColorHeartbeat,
+    UniColorSolid,
+    UniColorSparkle,
 }
 
 impl AnimationKind {
     /// Returns the next animation in the sequence.
     pub fn next(self) -> Self {
         match self {
-            AnimationKind::MultiColorStrand => AnimationKind::Carrousel,
+            AnimationKind::MultiColorStrand => AnimationKind::MultiColorFrontToBackWave,
+            AnimationKind::MultiColorFrontToBackWave => AnimationKind::Shimmer,
+            AnimationKind::Shimmer => AnimationKind::Carrousel,
             AnimationKind::Carrousel => AnimationKind::DoubleCarrousel,
             AnimationKind::DoubleCarrousel => AnimationKind::UniColorSparkle,
             AnimationKind::UniColorSparkle => AnimationKind::MultiColorSparkle,
@@ -604,12 +626,12 @@ impl AnimationKind {
             AnimationKind::ForwardWave => AnimationKind::UniColorFadeIn,
             AnimationKind::UniColorFadeIn => AnimationKind::MultiColorFadeIn,
             AnimationKind::MultiColorFadeIn => AnimationKind::UniColorFrontToBackWave,
-            AnimationKind::UniColorFrontToBackWave => AnimationKind::MultiColorSolid,
+            AnimationKind::UniColorFrontToBackWave => AnimationKind::UniColorHeartbeat,
+            AnimationKind::UniColorHeartbeat => AnimationKind::MultiColorHeartbeat,
+            AnimationKind::MultiColorHeartbeat => AnimationKind::MultiColorSolid,
             AnimationKind::MultiColorSolid => AnimationKind::MultiColorSolidRandom,
             AnimationKind::MultiColorSolidRandom => AnimationKind::UniColorSolid,
-            AnimationKind::UniColorSolid => AnimationKind::UniColorHeartbeat,
-            AnimationKind::UniColorHeartbeat => AnimationKind::MultiColorHeartbeat,
-            AnimationKind::MultiColorHeartbeat => AnimationKind::MultiColorStrand,
+            AnimationKind::UniColorSolid => AnimationKind::MultiColorStrand,
         }
     }
 }
@@ -652,6 +674,11 @@ impl Settings {
     #[must_use]
     pub fn brightness(&self) -> u8 {
         self.brightness
+    }
+
+    #[must_use]
+    pub fn brightness_damped(&self, factor: f32) -> u8 {
+        (f32::from(self.brightness) * factor) as u8
     }
 
     #[must_use]
@@ -749,11 +776,13 @@ pub mod carrousel;
 pub mod double_carrousel;
 pub mod forward_wave;
 pub mod multi_color_fade_in;
+pub mod multi_color_front_to_back_wave;
 pub mod multi_color_heartbeat;
 pub mod multi_color_solid;
 pub mod multi_color_solid_random;
 pub mod multi_color_sparkle;
 pub mod multi_color_strand;
+pub mod shimmer;
 pub mod uni_color_fade_in;
 pub mod uni_color_front_to_back_wave;
 pub mod uni_color_heartbeat;

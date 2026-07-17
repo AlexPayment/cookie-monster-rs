@@ -9,6 +9,8 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
+const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
+
 pub struct MultiColorSolidRandom {
     prng: SmallRng,
     rendered_data: [RGB8; LEDS_TOTAL],
@@ -23,9 +25,9 @@ impl MultiColorSolidRandom {
 
         for i in 0..LEDS_TOTAL {
             let random_color = RGB8::new(
-                animation.prng.random_range(0..255),
-                animation.prng.random_range(0..255),
-                animation.prng.random_range(0..255),
+                animation.prng.random_range(0..=u8::MAX),
+                animation.prng.random_range(0..=u8::MAX),
+                animation.prng.random_range(0..=u8::MAX),
             );
             animation.rendered_data[i] = random_color;
         }
@@ -43,7 +45,7 @@ impl MultiColorSolidRandom {
             leds_section_1
                 .write(brightness(
                     gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR),
                 ))
                 .unwrap();
         };
@@ -52,7 +54,7 @@ impl MultiColorSolidRandom {
             leds_section_2
                 .write(brightness(
                     gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR),
                 ))
                 .unwrap();
         };
@@ -66,9 +68,5 @@ impl MultiColorSolidRandom {
 
     pub(crate) fn update(&mut self, data: &mut LedData) {
         data.copy_from_slice(&self.rendered_data);
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        (f32::from(settings.brightness()) * 0.2) as u8
     }
 }

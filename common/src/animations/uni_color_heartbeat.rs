@@ -26,7 +26,8 @@ impl UniColorHeartbeat {
         leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        let brightness = (f32::from(self.brightness(settings)) * f32::from(self.current_step)
+        let brightness = (f32::from(settings.brightness_damped(0.05))
+            * f32::from(self.current_step)
             / f32::from(STEP)) as u8;
 
         let leds_section_1_future = async {
@@ -87,9 +88,5 @@ impl UniColorHeartbeat {
             }
             _ => {}
         }
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        (f32::from(settings.brightness()) * 0.05) as u8
     }
 }

@@ -27,7 +27,7 @@ impl UniColorFrontToBackWave {
             leds_section_1
                 .write(brightness(
                     gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness(),
                 ))
                 .unwrap();
         };
@@ -36,7 +36,7 @@ impl UniColorFrontToBackWave {
             leds_section_2
                 .write(brightness(
                     gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
-                    self.brightness(settings),
+                    settings.brightness(),
                 ))
                 .unwrap();
         };
@@ -58,9 +58,5 @@ impl UniColorFrontToBackWave {
         }
 
         self.position = (self.position + 1) % VERTICAL_SLICES.len();
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        settings.brightness()
     }
 }
