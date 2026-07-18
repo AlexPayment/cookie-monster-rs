@@ -1,20 +1,32 @@
 use crate::animations::{
-    COLORS, COLORS_TOTAL, LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings,
+    LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings,
 };
 use core::fmt::Debug;
 use embassy_futures::join::join;
 use embedded_hal_async::delay::DelayNs;
+use rand::rngs::SmallRng;
+use rand::{RngExt, SeedableRng};
+use smart_leds::hsv::{Hsv, hsv2rgb};
 use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
-const LEDS_PER_COLOR: usize = LEDS_TOTAL / COLORS_TOTAL;
+const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
 
-pub struct MultiColorSolid {}
+pub struct Shimmer {
+    hsv: Hsv,
+}
 
-impl MultiColorSolid {
-    pub(crate) fn new() -> Self {
-        Self {}
+impl Shimmer {
+    pub(crate) fn new(random_seed: u64) -> Self {
+        let mut prng = SmallRng::seed_from_u64(random_seed);
+        Self {
+            hsv: Hsv {
+                // Start the animation with a random hue.
+                hue: prng.random_range(0..=u8::MAX),
+                sat: 255,
+                val: 255,
+            },
+        }
     }
 
     pub(crate) async fn render(
@@ -43,19 +55,12 @@ impl MultiColorSolid {
 
         join(leds_section_1_future, leds_section_2_future).await;
 
-        // Delay from the settings doesn't really matter for the solid animations. So just using a
-        // 1-second delay.
-        delay.delay_ms(1_000u32).await;
+        delay.delay_ms(settings.delay()).await;
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {
-        let mut color_index = 0;
-
-        for (i, led) in data.iter_mut().enumerate() {
-            if i % LEDS_PER_COLOR == 0 {
-                color_index += 1;
-            }
-            *led = COLORS[color_index % COLORS_TOTAL];
-        }
+        let rgb = hsv2rgb(self.hsv);
+        *data = [rgb; LEDS_TOTAL];
+        self.hsv.hue = self.hsv.hue.wrapping_add(1);
     }
 }

@@ -58,7 +58,7 @@ impl MultiColorStrand {
                     leds_section_1
                         .write(brightness(
                             gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
-                            self.brightness(settings),
+                            settings.brightness(),
                         ))
                         .unwrap();
                 },
@@ -72,7 +72,7 @@ impl MultiColorStrand {
                     leds_section_2
                         .write(brightness(
                             gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
-                            self.brightness(settings),
+                            settings.brightness(),
                         ))
                         .unwrap();
                 },
@@ -92,10 +92,6 @@ impl MultiColorStrand {
             strand.update();
             data[usize::from(strand.position)] = COLORS[usize::from(strand.color_index)];
         }
-    }
-
-    fn brightness(&self, settings: &Settings) -> u8 {
-        settings.brightness()
     }
 }
 

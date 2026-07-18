@@ -80,35 +80,31 @@ impl ForwardWave {
         }
     }
 
-    fn brightness(&self, settings: &Settings) -> u8 {
-        settings.brightness()
-    }
-
     fn get_wave(&self, settings: &Settings) -> [u8; WAVE_LENGTH] {
         let mut wave = [0; WAVE_LENGTH];
 
         wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
-            *item = self.brightness(settings) / 10;
+            *item = settings.brightness() / 10;
         });
         wave[WAVE_SECTION_LENGTH..(2 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings);
+                *item = settings.brightness();
             });
         wave[(2 * WAVE_SECTION_LENGTH)..(3 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 4;
+                *item = settings.brightness() / 4;
             });
         wave[(3 * WAVE_SECTION_LENGTH)..(4 * WAVE_SECTION_LENGTH)]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 6;
+                *item = settings.brightness() / 6;
             });
         wave[(4 * WAVE_SECTION_LENGTH)..WAVE_LENGTH]
             .iter_mut()
             .for_each(|item| {
-                *item = self.brightness(settings) / 10;
+                *item = settings.brightness() / 10;
             });
 
         wave
