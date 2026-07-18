@@ -18,20 +18,33 @@ use core::cmp;
 use core::fmt::Debug;
 use core::ops::{Range, RangeFrom};
 use defmt::{Format, trace};
+use embassy_futures::join::join;
 use embassy_time::Instant;
 use embedded_hal_async::delay::DelayNs;
 use rand::RngExt;
 use rand::rngs::SmallRng;
-use smart_leds::RGB8;
 use smart_leds::colors::{
     BLUE, DARK_GREEN, DARK_RED, DARK_TURQUOISE, GOLD, GREEN, INDIGO, MIDNIGHT_BLUE, PURPLE, RED,
     WHITE,
 };
+use smart_leds::{RGB8, brightness, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
 pub type LedData = [RGB8; LEDS_TOTAL];
 
-pub const COLORS: [RGB8; COLORS_TOTAL] = [
+pub const COLORS_INDEX_DEFAULT: usize = 1;
+pub const COLORS_TOTAL: usize = 11;
+/// The number of LEDs in the first section.
+///
+/// There are 96 LEDs per meter, and the first section is four meters.
+pub const LEDS_FIRST_SECTION: usize = LED_DENSITY * 4;
+
+/// The number of LEDs in the second section.
+///
+/// There are 96 LEDs per meter, and the second section is six meters.
+pub const LEDS_SECOND_SECTION: usize = LED_DENSITY * 6;
+
+pub(crate) const COLORS: [RGB8; COLORS_TOTAL] = [
     WHITE,
     RED,
     DARK_RED,
@@ -44,18 +57,6 @@ pub const COLORS: [RGB8; COLORS_TOTAL] = [
     PURPLE,
     INDIGO,
 ];
-pub const COLORS_INDEX_DEFAULT: usize = 1;
-pub const COLORS_TOTAL: usize = 11;
-
-/// The number of LEDs in the first section.
-///
-/// There are 96 LEDs per meter, and the first section is four meters.
-pub const LEDS_FIRST_SECTION: usize = LED_DENSITY * 4;
-
-/// The number of LEDs in the second section.
-///
-/// There are 96 LEDs per meter, and the second section is six meters.
-pub const LEDS_SECOND_SECTION: usize = LED_DENSITY * 6;
 
 pub(crate) const DELAY_SHORTEST: u32 = 5;
 
@@ -501,70 +502,57 @@ impl Animation {
         leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
+        macro_rules! default_render {
+            ($type:ident) => {
+                render(
+                    data,
+                    leds_section_1,
+                    leds_section_2,
+                    $type::brightness_damping_factor(),
+                    delay,
+                    settings,
+                )
+                .await
+            };
+        }
+
         match self {
-            Animation::Carrousel(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
-            Animation::DoubleCarrousel(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::Carrousel(_) => default_render!(Carrousel),
+            Animation::DoubleCarrousel(_) => default_render!(DoubleCarrousel),
             Animation::ForwardWave(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
             Animation::MultiColorFadeIn(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
-            Animation::MultiColorFrontToBackWave(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::MultiColorFrontToBackWave(_) => default_render!(MultiColorFrontToBackWave),
             Animation::MultiColorHeartbeat(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
-            Animation::MultiColorSolid(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
-            Animation::MultiColorSolidRandom(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::MultiColorSolid(_) => default_render!(MultiColorSolid),
+            Animation::MultiColorSolidRandom(_) => default_render!(MultiColorSolidRandom),
             Animation::MultiColorSparkle(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
-            Animation::MultiColorStrand(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
-            Animation::Shimmer(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::MultiColorStrand(_) => default_render!(MultiColorStrand),
+            Animation::Shimmer(_) => default_render!(Shimmer),
             Animation::UniColorFadeIn(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
-            Animation::UniColorFrontToBackWave(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::UniColorFrontToBackWave(_) => default_render!(UniColorFrontToBackWave),
             Animation::UniColorHeartbeat(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
-            Animation::UniColorSolid(a) => {
-                a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
-            }
+            Animation::UniColorSolid(_) => default_render!(UniColorSolid),
             Animation::UniColorSparkle(a) => {
                 a.render(data, leds_section_1, leds_section_2, delay, settings)
-                    .await
+                    .await;
             }
         }
     }
@@ -614,6 +602,7 @@ pub enum AnimationKind {
 
 impl AnimationKind {
     /// Returns the next animation in the sequence.
+    #[must_use]
     pub fn next(self) -> Self {
         match self {
             AnimationKind::MultiColorStrand => AnimationKind::MultiColorFrontToBackWave,
@@ -709,18 +698,6 @@ impl Settings {
     }
 }
 
-/// Correct the RGB8 color based on the brightness value.
-///
-/// [`gamma_correct`] should be called before this function to apply gamma correction properly.
-#[must_use]
-pub fn brightness_correct(color: RGB8, brightness: u8) -> RGB8 {
-    RGB8 {
-        r: (u16::from(color.r) * (u16::from(brightness) + 1) / 256) as u8,
-        g: (u16::from(color.g) * (u16::from(brightness) + 1) / 256) as u8,
-        b: (u16::from(color.b) * (u16::from(brightness) + 1) / 256) as u8,
-    }
-}
-
 #[must_use]
 pub fn calculate_index(value: u16, max_value: u16, num_values: usize) -> usize {
     let index = (f32::from(value) / f32::from(max_value) * num_values as f32) as usize;
@@ -738,6 +715,18 @@ pub fn reset_data(data: &mut LedData) {
     *data = [RGB8::default(); LEDS_TOTAL];
 }
 
+/// Correct the RGB8 color based on the brightness value.
+///
+/// [`gamma_correct`] should be called before this function to apply gamma correction properly.
+#[must_use]
+pub(crate) fn brightness_correct(color: RGB8, brightness: u8) -> RGB8 {
+    RGB8 {
+        r: (u16::from(color.r) * (u16::from(brightness) + 1) / 256) as u8,
+        g: (u16::from(color.g) * (u16::from(brightness) + 1) / 256) as u8,
+        b: (u16::from(color.b) * (u16::from(brightness) + 1) / 256) as u8,
+    }
+}
+
 /// Apply gamma correction to the provided RGB8 color.
 pub(crate) fn gamma_correct(color: RGB8) -> RGB8 {
     RGB8 {
@@ -748,6 +737,7 @@ pub(crate) fn gamma_correct(color: RGB8) -> RGB8 {
 }
 
 /// Measure the time taken to execute a function and log it.
+#[allow(dead_code)]
 pub(crate) fn time_function(function: impl FnOnce(), message: &str) {
     let start = Instant::now();
 
@@ -770,6 +760,41 @@ fn calculate_brightness(value: u16, max_value: u16) -> u8 {
 /// resulting value is then clamped to a minimum of 1.
 fn calculate_delay(value: u16, max_value: u16) -> u32 {
     cmp::max((f32::from(value) / f32::from(max_value) * 1000.0) as u32, 1)
+}
+
+/// Renders LED data to two separate LED sections with brightness damping, gamma correction, and a
+/// configurable delay.
+///
+/// This function writes LED data to two different sections (e.g., `leds_section_1` and
+/// `leds_section_2`) simultaneously, applying gamma correction and brightness damping during the
+/// process. After updating the LED sections, it inserts a delay as specified in the provided
+/// settings.
+async fn render(
+    data: &LedData, leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+    leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
+    brightness_damping_factor: f32, delay: &mut impl DelayNs, settings: &Settings,
+) {
+    let leds_section_1_future = async {
+        leds_section_1
+            .write(brightness(
+                gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
+                settings.brightness_damped(brightness_damping_factor),
+            ))
+            .unwrap();
+    };
+
+    let leds_section_2_future = async {
+        leds_section_2
+            .write(brightness(
+                gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
+                settings.brightness_damped(brightness_damping_factor),
+            ))
+            .unwrap();
+    };
+
+    join(leds_section_1_future, leds_section_2_future).await;
+
+    delay.delay_ms(settings.delay()).await;
 }
 
 pub mod carrousel;
