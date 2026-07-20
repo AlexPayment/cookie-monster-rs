@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - AnimationKind enum to track the state transitions between animations.
 - `Shimmer` and `MultiColorFrontToBack` animations.
+- Default render method.
 
 ### Changed
 
