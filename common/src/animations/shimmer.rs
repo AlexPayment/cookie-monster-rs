@@ -3,13 +3,13 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 use smart_leds::hsv::{Hsv, hsv2rgb};
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
-
 pub struct Shimmer {
     hsv: Hsv,
 }
 
 impl Shimmer {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
@@ -20,10 +20,6 @@ impl Shimmer {
                 val: 255,
             },
         }
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

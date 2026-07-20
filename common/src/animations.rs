@@ -508,7 +508,7 @@ impl Animation {
                     data,
                     leds_section_1,
                     leds_section_2,
-                    $type::brightness_damping_factor(),
+                    $type::BRIGHTNESS_DAMPING_FACTOR,
                     delay,
                     settings,
                 )

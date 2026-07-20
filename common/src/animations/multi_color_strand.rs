@@ -5,7 +5,6 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::RGB8;
 use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 1.0;
 const COLORS: [RGB8; 7] = [
     RED,
     DARK_RED,
@@ -22,6 +21,8 @@ pub struct MultiColorStrand {
 }
 
 impl MultiColorStrand {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 1.0;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
 
@@ -39,10 +40,6 @@ impl MultiColorStrand {
         }
 
         Self { strands }
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

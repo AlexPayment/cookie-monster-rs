@@ -3,14 +3,14 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 use smart_leds::RGB8;
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
-
 pub struct MultiColorSolidRandom {
     prng: SmallRng,
     rendered_data: [RGB8; LEDS_TOTAL],
 }
 
 impl MultiColorSolidRandom {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut animation = Self {
             prng: SmallRng::seed_from_u64(random_seed),
@@ -27,10 +27,6 @@ impl MultiColorSolidRandom {
         }
 
         animation
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

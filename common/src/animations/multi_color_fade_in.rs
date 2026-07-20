@@ -9,7 +9,6 @@ use rand::{RngExt, SeedableRng};
 use smart_leds::{RGB8, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
 const STEP: u8 = 23;
 
 pub struct MultiColorFadeIn {
@@ -20,6 +19,8 @@ pub struct MultiColorFadeIn {
 }
 
 impl MultiColorFadeIn {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         Self {
@@ -36,7 +37,7 @@ impl MultiColorFadeIn {
         leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        let brightness = (f32::from(settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR))
+        let brightness = (f32::from(settings.brightness_damped(Self::BRIGHTNESS_DAMPING_FACTOR))
             * f32::from(self.current_step)
             / f32::from(STEP)) as u8;
 

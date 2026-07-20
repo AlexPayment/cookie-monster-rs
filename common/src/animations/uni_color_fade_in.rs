@@ -6,7 +6,6 @@ use embedded_hal_async::delay::DelayNs;
 use smart_leds::{RGB8, gamma};
 use smart_leds_trait::SmartLedsWrite;
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
 const STEP: u8 = 23;
 
 pub struct UniColorFadeIn {
@@ -15,6 +14,8 @@ pub struct UniColorFadeIn {
 }
 
 impl UniColorFadeIn {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
+
     pub(crate) fn new() -> Self {
         Self {
             ascending: true,
@@ -28,9 +29,10 @@ impl UniColorFadeIn {
         leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
         delay: &mut impl DelayNs, settings: &Settings,
     ) {
-        let brightness: u8 = (f32::from(settings.brightness_damped(BRIGHTNESS_DAMPING_FACTOR))
-            * f32::from(self.current_step)
-            / f32::from(STEP)) as u8;
+        let brightness: u8 =
+            (f32::from(settings.brightness_damped(Self::BRIGHTNESS_DAMPING_FACTOR))
+                * f32::from(self.current_step)
+                / f32::from(STEP)) as u8;
 
         let leds_section_1_future = async {
             leds_section_1

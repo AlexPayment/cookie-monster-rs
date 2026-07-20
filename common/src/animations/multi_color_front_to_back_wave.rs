@@ -2,7 +2,6 @@ use crate::animations::{COLORS, LedData, VERTICAL_SLICES};
 use rand::prelude::SmallRng;
 use rand::{RngExt, SeedableRng};
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
 const SLICES_EVEN: [usize; 8] = [0, 2, 4, 6, 8, 10, 12, 14];
 const SLICES_ODD: [usize; 8] = [1, 3, 5, 7, 9, 11, 13, 15];
 
@@ -14,6 +13,8 @@ pub struct MultiColorFrontToBackWave {
 }
 
 impl MultiColorFrontToBackWave {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.2;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
 
@@ -24,10 +25,6 @@ impl MultiColorFrontToBackWave {
             position: 0,
             prng,
         }
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

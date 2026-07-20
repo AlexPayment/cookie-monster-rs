@@ -2,8 +2,6 @@ use crate::animations::{COLORS, COLORS_TOTAL, LEDS_TOTAL, LedData};
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
-
 pub struct Carrousel {
     color_index: usize,
     position: usize,
@@ -11,6 +9,8 @@ pub struct Carrousel {
 }
 
 impl Carrousel {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 0.05;
+
     pub(crate) fn new(random_seed: u64) -> Self {
         let mut prng = SmallRng::seed_from_u64(random_seed);
         let color_index = prng.random_range(0..COLORS_TOTAL);
@@ -19,10 +19,6 @@ impl Carrousel {
             position: 0,
             prng,
         }
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

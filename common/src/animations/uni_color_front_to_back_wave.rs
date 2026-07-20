@@ -1,19 +1,15 @@
 use crate::animations;
 use crate::animations::{COLORS, LedData, Settings, VERTICAL_SLICES};
 
-const BRIGHTNESS_DAMPING_FACTOR: f32 = 1.0;
-
 pub struct UniColorFrontToBackWave {
     position: usize,
 }
 
 impl UniColorFrontToBackWave {
+    pub(crate) const BRIGHTNESS_DAMPING_FACTOR: f32 = 1.0;
+
     pub(crate) fn new() -> Self {
         Self { position: 0 }
-    }
-
-    pub(crate) fn brightness_damping_factor() -> f32 {
-        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
