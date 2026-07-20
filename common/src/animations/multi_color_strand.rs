@@ -1,16 +1,11 @@
 use crate::animations;
-use crate::animations::{
-    LEDS_SECTION_1_RANGE, LEDS_SECTION_2_RANGE, LEDS_TOTAL, LedData, Settings, time_function,
-};
-use core::fmt::Debug;
-use embassy_futures::join::join;
-use embedded_hal_async::delay::DelayNs;
+use crate::animations::{LEDS_TOTAL, LedData};
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
+use smart_leds::RGB8;
 use smart_leds::colors::{BLUE, DARK_RED, DARK_TURQUOISE, INDIGO, MIDNIGHT_BLUE, PURPLE, RED};
-use smart_leds::{RGB8, brightness, gamma};
-use smart_leds_trait::SmartLedsWrite;
 
+const BRIGHTNESS_DAMPING_FACTOR: f32 = 1.0;
 const COLORS: [RGB8; 7] = [
     RED,
     DARK_RED,
@@ -46,43 +41,8 @@ impl MultiColorStrand {
         Self { strands }
     }
 
-    pub(crate) async fn render(
-        &mut self, data: &LedData,
-        leds_section_1: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
-        leds_section_2: &mut impl SmartLedsWrite<Color = RGB8, Error = impl Debug>,
-        delay: &mut impl DelayNs, settings: &Settings,
-    ) {
-        let leds_section_1_future = async {
-            time_function(
-                || {
-                    leds_section_1
-                        .write(brightness(
-                            gamma(data[LEDS_SECTION_1_RANGE].iter().copied()),
-                            settings.brightness(),
-                        ))
-                        .unwrap();
-                },
-                "Time taken to write data for section 1",
-            );
-        };
-
-        let leds_section_2_future = async {
-            time_function(
-                || {
-                    leds_section_2
-                        .write(brightness(
-                            gamma(data[LEDS_SECTION_2_RANGE].iter().copied()),
-                            settings.brightness(),
-                        ))
-                        .unwrap();
-                },
-                "Time taken to write data for section 2",
-            );
-        };
-
-        join(leds_section_1_future, leds_section_2_future).await;
-
-        delay.delay_ms(settings.delay()).await;
+    pub(crate) fn brightness_damping_factor() -> f32 {
+        BRIGHTNESS_DAMPING_FACTOR
     }
 
     pub(crate) fn update(&mut self, data: &mut LedData) {

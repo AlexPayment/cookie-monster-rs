@@ -55,7 +55,7 @@ impl ForwardWave {
     pub(crate) fn update(&mut self, data: &mut LedData, settings: &Settings) {
         animations::reset_data(data);
 
-        let wave = self.get_wave(settings);
+        let wave = Self::get_wave(settings);
 
         for (i, item) in wave.iter().enumerate() {
             let led_index = self.position as isize - i as isize;
@@ -80,7 +80,7 @@ impl ForwardWave {
         }
     }
 
-    fn get_wave(&self, settings: &Settings) -> [u8; WAVE_LENGTH] {
+    fn get_wave(settings: &Settings) -> [u8; WAVE_LENGTH] {
         let mut wave = [0; WAVE_LENGTH];
 
         wave[0..WAVE_SECTION_LENGTH].iter_mut().for_each(|item| {
